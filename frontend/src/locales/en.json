@@ -1,0 +1,140 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "back": "Back",
+    "home": "Home",
+    "refresh": "Refresh",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "app": {
+    "title": "Tigu Delivery Console",
+    "name": "Tigu Delivery",
+    "description": "Tigu B2B delivery management console"
+  },
+  "navigation": {
+    "taskBoard": "Task Board",
+    "routePlanner": "Route Planner",
+    "orders": "Orders",
+    "login": "Login",
+    "logout": "Logout"
+  },
+  "taskBoard": {
+    "title": "Task Board",
+    "description": "Manage delivery tasks and track progress",
+    "assignments": "Assignments",
+    "pending": "Pending",
+    "pendingPickup": "Pending Pickup",
+    "inProgress": "In Progress",
+    "inTransit": "In Transit",
+    "completed": "Completed",
+    "openRoutePlanner": "Open Route Planner",
+    "pickupTime": "Pickup Time",
+    "deliveryTime": "Delivery Time",
+    "assignDriver": "Assign Driver",
+    "viewDetails": "View Details",
+    "noTasks": "No tasks available",
+    "refreshTasks": "Refresh Tasks"
+  },
+  "routePlanner": {
+    "title": "Route Planner",
+    "description": "Preview stops, optimize routes, and push to driver navigation",
+    "backToTasks": "Back to Tasks",
+    "refreshPlan": "Refresh Plan",
+    "stops": "Stops",
+    "optimizeRoute": "Optimize Route",
+    "sendToDriver": "Send to Driver",
+    "eta": "ETA",
+    "distance": "Distance",
+    "duration": "Duration",
+    "noStops": "No stops planned"
+  },
+  "orderDetail": {
+    "title": "Order Details",
+    "backToAssignments": "Back to assignments",
+    "order": "Order",
+    "orderNumber": "Order Number",
+    "customer": "Customer",
+    "receiver": "Receiver",
+    "pickup": "Pickup",
+    "pickupAddress": "Pickup Address",
+    "dropOff": "Drop-off",
+    "deliveryAddress": "Delivery Address",
+    "status": "Status",
+    "items": "Items",
+    "markPickedUp": "Mark Picked Up",
+    "markDelivered": "Mark Delivered",
+    "reportIssue": "Report Issue",
+    "notes": "Notes",
+    "timeline": "Timeline",
+    "trackingInfo": "Tracking Information",
+    "contactCustomer": "Contact Customer",
+    "updateStatus": "Update Status"
+  },
+  "login": {
+    "title": "Driver Sign In",
+    "username": "Username",
+    "phoneNumber": "Phone Number",
+    "password": "Password",
+    "oneTimeCode": "One-Time Code",
+    "loginButton": "Sign In",
+    "signIn": "Sign In",
+    "forgotPassword": "Forgot Password?",
+    "rememberMe": "Remember Me",
+    "invalidCredentials": "Invalid username or password",
+    "loginRequired": "Please log in to continue"
+  },
+  "pwa": {
+    "installTitle": "Install Tigu Delivery",
+    "installDescription": "Add to your home screen for quick access",
+    "installButton": "Install",
+    "laterButton": "Later",
+    "updateAvailable": "Update Available",
+    "updateDescription": "A new version is available",
+    "updateButton": "Update",
+    "offlineMessage": "You are currently offline"
+  },
+  "errors": {
+    "networkError": "Network connection error",
+    "serverError": "Server error occurred",
+    "notFound": "Resource not found",
+    "unauthorized": "Unauthorized access",
+    "forbidden": "Access forbidden",
+    "validationError": "Validation error",
+    "unknownError": "An unknown error occurred"
+  },
+  "mobile": {
+    "locationPermission": "Location permission required",
+    "cameraPermission": "Camera permission required",
+    "storagePermission": "Storage permission required",
+    "networkOffline": "Device is offline",
+    "gpsDisabled": "GPS is disabled"
+  },
+  "language": {
+    "current": "English",
+    "switch": "Switch Language",
+    "english": "English",
+    "chinese": "中文"
+  },
+  "orderCard": {
+    "pickup": "Pickup:",
+    "dropOff": "Drop-off:",
+    "items": "Items:",
+    "openDetails": "Open Details",
+    "pickedUp": "Picked Up",
+    "delivered": "Delivered"
+  },
+  "mapPanel": {
+    "loadingMessage": "Map preview loads when Google Maps script is available."
+  }
+}

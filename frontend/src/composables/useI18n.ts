@@ -1,9 +1,11 @@
 import { watch } from 'vue';
-import { useI18n } from 'vue-i18n';
-import { useHead } from '@unhead/vue';
+import { useI18n as useVueI18n } from 'vue-i18n';
+
+// Re-export useI18n for convenience
+export { useI18n } from 'vue-i18n';
 
 export function useI18nHead() {
-  const { t, locale } = useI18n();
+  const { t, locale } = useVueI18n();
 
   // Update document title and meta when locale changes
   const updateHead = () => {
@@ -39,7 +41,7 @@ export function useI18nHead() {
 
 // Helper function to get localized error messages
 export function useI18nError() {
-  const { t } = useI18n();
+  const { t } = useVueI18n();
 
   const getErrorMessage = (error: any): string => {
     if (typeof error === 'string') {
@@ -75,7 +77,7 @@ export function useI18nError() {
 
 // Helper function for mobile-specific translations
 export function useI18nMobile() {
-  const { t } = useI18n();
+  const { t } = useVueI18n();
 
   const getMobileMessage = (type: string): string => {
     switch (type) {

@@ -2,12 +2,16 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from sqlalchemy import JSON, DateTime, ForeignKey, Integer, Numeric, String
 from sqlalchemy.dialects.mysql import BIGINT
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+
+if TYPE_CHECKING:
+    from app.models.user import User
 
 
 class Order(Base):
@@ -30,12 +34,15 @@ class Order(Base):
     receiver_postal_code: Mapped[str | None] = mapped_column(String(16), nullable=True)
     logistics_order_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
     warehouse_id: Mapped[int | None] = mapped_column(BIGINT, ForeignKey("tigu_warehouse.id"))
+    driver_id: Mapped[int | None] = mapped_column(BIGINT, ForeignKey("sys_user.user_id"), nullable=True)
     shipping_time: Mapped[datetime | None] = mapped_column(DateTime())
     finish_time: Mapped[datetime | None] = mapped_column(DateTime())
     create_time: Mapped[datetime] = mapped_column(DateTime())
+    updated_time: Mapped[datetime | None] = mapped_column(DateTime(), nullable=True)
 
     items: Mapped[list[OrderItem]] = relationship("OrderItem", back_populates="order", lazy="selectin")
     warehouse: Mapped[Warehouse | None] = relationship("Warehouse", back_populates="orders", lazy="joined")
+    driver: Mapped[User | None] = relationship("User", lazy="joined")
 
 
 class OrderItem(Base):

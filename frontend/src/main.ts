@@ -8,9 +8,15 @@ import { initializeMobile } from '@/utils/mobile';
 
 const app = createApp(App);
 
+// Setup in correct order
 app.use(createPinia());
-app.use(router);
 app.use(i18n);
+app.use(router);
+
+// Initialize admin store after everything is set up
+import { useAdminStore } from '@/store/admin';
+const adminStore = useAdminStore();
+adminStore.checkAuthStatus();
 
 // Initialize mobile features
 initializeMobile().then(() => {

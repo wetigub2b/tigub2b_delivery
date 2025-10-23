@@ -1,15 +1,35 @@
+/* Import design system variables */
+@import './variables.css';
+
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 :root {
-  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-family: var(--font-family-base);
   color-scheme: light;
 }
 
 body {
   margin: 0;
-  background: #f4f6f8;
+  background: var(--color-bg-light);
+  font-family: var(--font-family-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--color-text-primary);
+  line-height: var(--line-height-base);
+  font-size: var(--font-size-base);
 }
 
 button {
   font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  outline: none;
 }
 
 h1,
@@ -19,8 +39,207 @@ h4,
 h5,
 h6 {
   margin: 0;
+  font-family: var(--font-family-heading);
+  font-weight: var(--font-weight-semibold);
 }
 
 p {
   margin: 0;
+}
+
+ul,
+li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color var(--transition-base);
+}
+
+a:hover {
+  color: var(--color-primary-dark);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  vertical-align: middle;
+}
+
+/* Container utilities */
+.container {
+  width: 100%;
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: 0 var(--spacing-lg);
+}
+
+.container-wide {
+  max-width: var(--container-wide-max-width);
+}
+
+/* Button styles matching wetigu.com */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  text-align: center;
+  border-radius: var(--radius-full);
+  transition: all var(--transition-base);
+  user-select: none;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  border: 1px solid var(--color-primary);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+  color: var(--color-white);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--color-black);
+  border: 1px solid var(--color-gray-light);
+}
+
+.btn-secondary:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  background-color: transparent;
+}
+
+.btn-sm {
+  padding: 6px var(--spacing-md);
+  font-size: var(--font-size-sm);
+  height: 32px;
+}
+
+.btn-md {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  height: 36px;
+}
+
+.btn-lg {
+  padding: var(--spacing-md) var(--spacing-2xl);
+  font-size: var(--font-size-lg);
+  height: 44px;
+}
+
+/* Card styles matching wetigu.com */
+.card {
+  background: var(--color-white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: var(--spacing-xl);
+  color: var(--color-gray-dark);
+}
+
+.card-compact {
+  padding: var(--spacing-lg);
+}
+
+/* Form styles */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+input[type="number"],
+textarea,
+select {
+  width: 100%;
+  padding: var(--spacing-md);
+  font-size: var(--font-size-md);
+  font-family: var(--font-family-base);
+  border: 1px solid var(--color-gray-light);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: border-color var(--transition-base);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(251, 110, 1, 0.2);
+}
+
+/* Checkbox styles matching wetigu.com */
+input[type="checkbox"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--color-gray-light);
+  border-radius: var(--radius-sm);
+  outline: none;
+  cursor: pointer;
+  position: relative;
+  vertical-align: middle;
+  margin: 0 var(--spacing-sm) 0 0;
+  transition: all var(--transition-base);
+}
+
+input[type="checkbox"]:checked {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+input[type="checkbox"]:checked::after {
+  content: "✓";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--color-white);
+  font-size: 12px;
+  font-weight: var(--font-weight-bold);
+}
+
+input[type="checkbox"]:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(251, 110, 1, 0.2);
+}
+
+input[type="checkbox"]:disabled {
+  background-color: var(--color-bg-lighter);
+  border-color: var(--color-gray-light);
+  cursor: not-allowed;
+}
+
+/* Utility classes */
+.orange,
+.text-primary {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.underline {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 var(--spacing-md);
+  }
+
+  body {
+    font-size: var(--font-size-sm);
+  }
 }

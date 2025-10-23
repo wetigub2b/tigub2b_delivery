@@ -31,13 +31,13 @@ const isAdminRoute = computed(() => {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f4f6f8;
-  color: #0f172a;
+  background: var(--color-bg-light);
+  color: var(--color-text-primary);
 }
 
 .layout__main {
   flex: 1;
-  padding: 24px;
+  padding: var(--spacing-xl);
 }
 
 .layout__main.admin-layout {
@@ -46,7 +46,8 @@ const isAdminRoute = computed(() => {
 
 @media (max-width: 768px) {
   .layout__main {
-    padding: 16px;
+    padding: var(--spacing-lg);
+    padding-bottom: calc(var(--mobile-nav-height) + var(--spacing-lg));
   }
 
   .layout__main.admin-layout {

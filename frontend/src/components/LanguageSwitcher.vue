@@ -6,11 +6,9 @@
       :aria-expanded="showDropdown"
       :title="$t('language.switch')"
     >
+      <span class="language-switcher__icon">🌐</span>
       <span class="language-switcher__current">
         {{ getCurrentLanguageDisplay() }}
-      </span>
-      <span class="language-switcher__arrow" :class="{ 'language-switcher__arrow--open': showDropdown }">
-        ↓
       </span>
     </button>
 
@@ -105,9 +103,9 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #ffffff;
+  background: var(--lang-switcher-bg, transparent);
+  border: 1px solid var(--lang-switcher-border, var(--color-gray-light));
+  color: var(--lang-switcher-color, var(--color-black));
   padding: 6px 12px;
   border-radius: 6px;
   cursor: pointer;
@@ -118,21 +116,19 @@ onUnmounted(() => {
 }
 
 .language-switcher__button:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: var(--lang-switcher-hover-bg, var(--color-bg-lighter));
+  border-color: var(--lang-switcher-hover-border, var(--color-primary));
+  color: var(--lang-switcher-hover-color, var(--color-primary));
+}
+
+.language-switcher__icon {
+  font-size: 16px;
+  line-height: 1;
 }
 
 .language-switcher__current {
   font-weight: 500;
-}
-
-.language-switcher__arrow {
-  font-size: 12px;
-  transition: transform 0.2s ease;
-}
-
-.language-switcher__arrow--open {
-  transform: rotate(180deg);
+  font-size: 13px;
 }
 
 .language-switcher__dropdown {

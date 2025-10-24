@@ -57,7 +57,10 @@
     "eta": "预计到达",
     "distance": "距离",
     "duration": "时长",
-    "noStops": "暂无规划站点"
+    "noStops": "暂无规划站点",
+    "openFullRoute": "在谷歌地图中打开完整路线",
+    "mapsHint": "在谷歌地图中打开所有站点进行导航",
+    "navigate": "导航"
   },
   "orderDetail": {
     "title": "订单详情",

@@ -176,6 +176,14 @@ const logout = () => {
   align-items: center;
   gap: 16px;
   flex-shrink: 0;
+
+  /* Language switcher styling for purple gradient background */
+  --lang-switcher-bg: rgba(255, 255, 255, 0.1);
+  --lang-switcher-border: rgba(255, 255, 255, 0.2);
+  --lang-switcher-color: #ffffff;
+  --lang-switcher-hover-bg: rgba(255, 255, 255, 0.15);
+  --lang-switcher-hover-border: rgba(255, 255, 255, 0.3);
+  --lang-switcher-hover-color: #ffffff;
 }
 
 .logout-button {

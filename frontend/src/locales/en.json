@@ -57,7 +57,10 @@
     "eta": "ETA",
     "distance": "Distance",
     "duration": "Duration",
-    "noStops": "No stops planned"
+    "noStops": "No stops planned",
+    "openFullRoute": "Open Full Route in Google Maps",
+    "mapsHint": "Opens Google Maps with all stops for navigation",
+    "navigate": "Navigate"
   },
   "orderDetail": {
     "title": "Order Details",

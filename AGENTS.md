@@ -9,6 +9,8 @@
 - Frontend: `npm install`, `npm run dev`, `npm run build`, `npm run test:unit`, `npm run lint` (run from `frontend/`).
 - BFF: `pip install -r requirements.txt`, `uvicorn app.main:app --reload`, `pytest`, `ruff check .` (run from `bff/`).
 - Use Vite proxy (`VITE_API_URL`) to point the frontend at the local BFF during development.
+- to deploy front end use script deploy_frontend.sh
+- to deploy backend use script deploy_backend.sh
 
 ## Coding Style & Naming Conventions
 - Vue components and directories use PascalCase (`DriverDashboard.vue`); composables use `useThing.ts` naming.

@@ -12,11 +12,11 @@ defineProps<{ message: string }>();
 
 <style scoped>
 .empty {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 40px;
+  background: var(--color-white);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-2xl);
   text-align: center;
-  color: #64748b;
-  border: 1px dashed #cbd5f5;
+  color: var(--color-text-secondary);
+  border: 1px dashed var(--color-gray-light);
 }
 </style>

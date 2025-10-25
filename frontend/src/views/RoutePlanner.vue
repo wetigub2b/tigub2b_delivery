@@ -132,154 +132,158 @@ function navigateToStop(stop: RouteStop) {
 .planner {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--spacing-lg);
 }
 
 .planner__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #ffffff;
-  padding: 16px 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  background: var(--color-white);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
 }
 
 .planner__header-content {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--spacing-lg);
 }
 
 .planner__back-btn {
-  background: #f1f5f9;
-  color: #475569;
-  border: 1px solid #e2e8f0;
-  padding: 8px 12px;
-  border-radius: 6px;
+  background: var(--color-bg-lighter);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-gray-light);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s ease;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  transition: all var(--transition-base);
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--spacing-xs);
 }
 
 .planner__back-btn:hover {
-  background: #e2e8f0;
-  color: #334155;
+  background: var(--color-gray-lighter);
+  color: var(--color-text-primary);
+  border-color: var(--color-gray);
 }
 
 .planner__refresh {
-  background: #2563eb;
-  color: #ffffff;
+  background: var(--color-primary);
+  color: var(--color-white);
   border: none;
-  padding: 10px 16px;
-  border-radius: 8px;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-full);
   cursor: pointer;
-  transition: all 0.2s ease;
+  font-weight: var(--font-weight-semibold);
+  transition: all var(--transition-base);
 }
 
 .planner__refresh:hover {
-  background: #1d4ed8;
+  background: var(--color-primary-dark);
 }
 
 .planner__content {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--spacing-lg);
 }
 
 /* Map Actions Section */
 .planner__map-actions {
-  background: #ffffff;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  background: var(--color-white);
+  padding: var(--spacing-xl);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
   text-align: center;
 }
 
 .planner__maps-btn {
-  background: #10b981;
-  color: #ffffff;
+  background: var(--color-success);
+  color: var(--color-white);
   border: none;
-  padding: 14px 24px;
-  border-radius: 8px;
+  padding: var(--spacing-md) var(--spacing-2xl);
+  border-radius: var(--radius-full);
   cursor: pointer;
-  font-size: 16px;
-  font-weight: 600;
-  transition: all 0.2s ease;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  transition: all var(--transition-base);
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
 .planner__maps-btn:hover {
   background: #059669;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
 }
 
 .planner__maps-icon {
-  font-size: 20px;
+  font-size: var(--font-size-xl);
 }
 
 .planner__maps-hint {
-  margin: 12px 0 0;
-  color: #64748b;
-  font-size: 14px;
+  margin: var(--spacing-md) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
 }
 
 /* Stops Section */
 .planner__stops {
-  background: #ffffff;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  background: var(--color-white);
+  padding: var(--spacing-xl);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
 }
 
 .planner__stops h3 {
-  margin: 0 0 16px;
-  color: #1e293b;
-  font-size: 18px;
+  margin: 0 0 var(--spacing-lg);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
 }
 
 .planner__stops-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--spacing-md);
 }
 
 .planner__stop {
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 16px;
-  transition: all 0.2s ease;
+  border: 1px solid var(--color-gray-light);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-lg);
+  transition: all var(--transition-base);
 }
 
 .planner__stop:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  border-color: var(--color-gray);
+  box-shadow: var(--shadow-sm);
 }
 
 .planner__stop-header {
   display: flex;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
 }
 
 .planner__stop-number {
   flex-shrink: 0;
   width: 32px;
   height: 32px;
-  background: #2563eb;
-  color: #ffffff;
-  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-white);
+  border-radius: var(--radius-circle);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
 }
 
 .planner__stop-info {
@@ -289,50 +293,51 @@ function navigateToStop(stop: RouteStop) {
 
 .planner__stop-name {
   display: block;
-  color: #1e293b;
-  font-size: 16px;
-  margin-bottom: 4px;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-xs);
 }
 
 .planner__stop-address {
-  margin: 0 0 4px;
-  color: #64748b;
-  font-size: 14px;
-  line-height: 1.5;
+  margin: 0 0 var(--spacing-xs);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
 }
 
 .planner__stop-eta {
-  color: #94a3b8;
-  font-size: 13px;
+  color: var(--color-text-light);
+  font-size: var(--font-size-xs);
 }
 
 .planner__stop-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
 .planner__stop-btn {
   flex: 1;
   border: none;
-  padding: 10px 16px;
-  border-radius: 6px;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-full);
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  transition: all var(--transition-base);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: var(--spacing-xs);
 }
 
 .planner__stop-btn--navigate {
-  background: #3b82f6;
-  color: #ffffff;
+  background: var(--color-primary);
+  color: var(--color-white);
 }
 
 .planner__stop-btn--navigate:hover {
-  background: #2563eb;
+  background: var(--color-primary-dark);
   transform: translateY(-1px);
 }
 

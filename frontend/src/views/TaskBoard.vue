@@ -65,48 +65,64 @@ function updateStatus(payload: { orderSn: string; shippingStatus: number }) {
 .board {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--spacing-lg);
 }
 
 .board__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #ffffff;
-  padding: 16px 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  background: var(--color-white);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
 }
 
 .board__route {
-  background: #2563eb;
-  color: #ffffff;
-  padding: 10px 16px;
-  border-radius: 8px;
+  background: var(--color-primary);
+  color: var(--color-white);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-full);
   text-decoration: none;
+  font-weight: var(--font-weight-semibold);
+  transition: all var(--transition-base);
+}
+
+.board__route:hover {
+  background: var(--color-primary-dark);
+  color: var(--color-white);
 }
 
 .board__filters {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
 .board__filter {
-  padding: 8px 16px;
-  border-radius: 20px;
-  border: 1px solid #cbd5f5;
-  background: #ffffff;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-gray-light);
+  background: var(--color-white);
   cursor: pointer;
+  font-weight: var(--font-weight-medium);
+  transition: all var(--transition-base);
+  color: var(--color-text-primary);
+}
+
+.board__filter:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 .board__filter--active {
-  background: #2563eb;
-  color: #ffffff;
+  background: var(--color-primary);
+  color: var(--color-white);
+  border-color: var(--color-primary);
 }
 
 .board__list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 16px;
+  gap: var(--spacing-lg);
 }
 </style>

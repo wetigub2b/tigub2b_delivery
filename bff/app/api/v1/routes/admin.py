@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from decimal import Decimal
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import and_, desc, func, select, update
@@ -86,34 +87,49 @@ async def get_dashboard_stats(
 async def get_all_drivers(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    search: Optional[str] = Query(None, description="Search by name, phone, or license plate"),
-    role: Optional[str] = Query(None, description="Filter by role"),
-    status: Optional[str] = Query(None, description="Filter by status"),
+    search: Optional[str] = Query(None, description="Search by name, phone, or vehicle plate"),
+    status: Optional[int] = Query(None, description="Filter by status (1=active, 0=inactive)"),
     session: AsyncSession = Depends(get_db_session),
     current_admin: User = Depends(get_current_admin)
 ) -> List[DriverResponse]:
-    """Get list of all drivers with pagination and filtering"""
+    """Get list of all drivers with pagination and filtering (with optional user account info)"""
 
-    query = select(User).where(User.del_flag == "0")
+    # LEFT JOIN with sys_user to get login info when available
+    query = select(Driver, User).outerjoin(
+        User, Driver.phone == User.phonenumber
+    )
 
     if search:
         search_pattern = f"%{search}%"
         query = query.where(
-            (User.nick_name.ilike(search_pattern)) |
-            (User.phonenumber.ilike(search_pattern))
+            (Driver.name.ilike(search_pattern)) |
+            (Driver.phone.ilike(search_pattern)) |
+            (Driver.vehicle_plate.ilike(search_pattern))
         )
 
-    # Note: role filter removed as role column doesn't exist in sys_user table
+    if status is not None:
+        query = query.where(Driver.status == status)
 
-    if status:
-        query = query.where(User.status == status)
-
-    query = query.order_by(desc(User.create_time)).offset(skip).limit(limit)
+    query = query.order_by(desc(Driver.created_at)).offset(skip).limit(limit)
 
     result = await session.execute(query)
-    drivers = result.scalars().all()
+    driver_user_pairs = result.all()
 
-    return [DriverResponse.from_attributes(driver) for driver in drivers]
+    # Build response with hybrid data
+    response = []
+    for driver, user in driver_user_pairs:
+        driver_data = DriverResponse.model_validate(driver)
+        # Add mapped fields for frontend compatibility
+        driver_data.user_id = user.user_id if user else driver.id
+        driver_data.user_name = user.user_name if user else driver.name
+        driver_data.nick_name = user.nick_name if user else driver.name
+        driver_data.phonenumber = driver.phone
+        driver_data.license_plate = driver.vehicle_plate
+        driver_data.role = user.effective_role if user else "driver"
+        driver_data.last_login = user.login_date if user else None
+        response.append(driver_data)
+
+    return response
 
 
 @router.get("/drivers/{driver_id}", response_model=DriverResponse)
@@ -122,17 +138,31 @@ async def get_driver(
     session: AsyncSession = Depends(get_db_session),
     current_admin: User = Depends(get_current_admin)
 ) -> DriverResponse:
-    """Get specific driver details"""
+    """Get specific driver details (with optional user account info)"""
 
+    # LEFT JOIN with sys_user to get login info when available
     result = await session.execute(
-        select(User).where(User.user_id == driver_id, User.del_flag == "0")
+        select(Driver, User).outerjoin(
+            User, Driver.phone == User.phonenumber
+        ).where(Driver.id == driver_id)
     )
-    driver = result.scalars().first()
+    driver_user_pair = result.first()
 
-    if not driver:
+    if not driver_user_pair:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Driver not found")
 
-    return DriverResponse.from_attributes(driver)
+    driver, user = driver_user_pair
+    driver_data = DriverResponse.model_validate(driver)
+    # Add mapped fields for frontend compatibility
+    driver_data.user_id = user.user_id if user else driver.id
+    driver_data.user_name = user.user_name if user else driver.name
+    driver_data.nick_name = user.nick_name if user else driver.name
+    driver_data.phonenumber = driver.phone
+    driver_data.license_plate = driver.vehicle_plate
+    driver_data.role = user.effective_role if user else "driver"
+    driver_data.last_login = user.login_date if user else None
+
+    return driver_data
 
 
 @router.post("/drivers", response_model=DriverResponse)
@@ -143,46 +173,46 @@ async def create_driver(
 ) -> DriverResponse:
     """Create a new driver"""
 
-    # Check if username already exists
-    existing_user = await session.execute(
-        select(User).where(User.user_name == driver_data.user_name, User.del_flag == "0")
+    # Check if phone number already exists
+    existing_driver = await session.execute(
+        select(Driver).where(Driver.phone == driver_data.phone)
     )
-    if existing_user.scalars().first():
+    if existing_driver.scalars().first():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already exists"
+            detail="Phone number already exists"
         )
-
-    # Check if phone number already exists
-    if driver_data.phonenumber:
-        existing_phone = await session.execute(
-            select(User).where(User.phonenumber == driver_data.phonenumber, User.del_flag == "0")
-        )
-        if existing_phone.scalars().first():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Phone number already exists"
-            )
 
     # Create new driver
-    hashed_password = get_password_hash(driver_data.password)
-    new_driver = User(
-        user_name=driver_data.user_name,
-        nick_name=driver_data.nick_name,
-        phonenumber=driver_data.phonenumber,
+    new_driver = Driver(
+        name=driver_data.name,
+        phone=driver_data.phone,
         email=driver_data.email,
-        remark=driver_data.notes,  # Map notes to remark field
-        password=hashed_password,
-        status="0",
-        del_flag="0",
-        create_time=datetime.now()
+        license_number=driver_data.license_number,
+        vehicle_type=driver_data.vehicle_type,
+        vehicle_plate=driver_data.vehicle_plate,
+        vehicle_model=driver_data.vehicle_model,
+        notes=driver_data.notes,
+        status=1,  # Active by default
+        rating=Decimal("5.00"),
+        total_deliveries=0
     )
 
     session.add(new_driver)
     await session.commit()
     await session.refresh(new_driver)
 
-    return DriverResponse.from_attributes(new_driver)
+    # Map fields for frontend compatibility
+    driver_data = DriverResponse.model_validate(new_driver)
+    driver_data.user_id = new_driver.id
+    driver_data.user_name = new_driver.name
+    driver_data.nick_name = new_driver.name
+    driver_data.phonenumber = new_driver.phone
+    driver_data.license_plate = new_driver.vehicle_plate
+    driver_data.role = "driver"
+    driver_data.last_login = None
+
+    return driver_data
 
 
 @router.put("/drivers/{driver_id}", response_model=DriverResponse)
@@ -195,7 +225,7 @@ async def update_driver(
     """Update driver information"""
 
     result = await session.execute(
-        select(User).where(User.user_id == driver_id, User.del_flag == "0")
+        select(Driver).where(Driver.id == driver_id)
     )
     driver = result.scalars().first()
 
@@ -206,12 +236,27 @@ async def update_driver(
     update_data = driver_data.dict(exclude_unset=True)
     if update_data:
         await session.execute(
-            update(User).where(User.user_id == driver_id).values(**update_data)
+            update(Driver).where(Driver.id == driver_id).values(**update_data)
         )
         await session.commit()
         await session.refresh(driver)
 
-    return DriverResponse.from_attributes(driver)
+    # Map fields for frontend compatibility (check if sys_user account exists)
+    result = await session.execute(
+        select(User).where(User.phonenumber == driver.phone)
+    )
+    user = result.scalars().first()
+
+    response_data = DriverResponse.model_validate(driver)
+    response_data.user_id = user.user_id if user else driver.id
+    response_data.user_name = user.user_name if user else driver.name
+    response_data.nick_name = user.nick_name if user else driver.name
+    response_data.phonenumber = driver.phone
+    response_data.license_plate = driver.vehicle_plate
+    response_data.role = user.effective_role if user else "driver"
+    response_data.last_login = user.login_date if user else None
+
+    return response_data
 
 
 @router.delete("/drivers/{driver_id}")
@@ -220,20 +265,18 @@ async def delete_driver(
     session: AsyncSession = Depends(get_db_session),
     current_admin: User = Depends(get_current_admin)
 ) -> dict:
-    """Soft delete a driver"""
+    """Delete a driver"""
 
     result = await session.execute(
-        select(User).where(User.user_id == driver_id, User.del_flag == "0")
+        select(Driver).where(Driver.id == driver_id)
     )
     driver = result.scalars().first()
 
     if not driver:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Driver not found")
 
-    # Soft delete
-    await session.execute(
-        update(User).where(User.user_id == driver_id).values(del_flag="1")
-    )
+    # Hard delete (tigu_driver doesn't have soft delete)
+    await session.delete(driver)
     await session.commit()
 
     return {"message": "Driver deleted successfully"}
@@ -248,7 +291,7 @@ async def activate_driver(
     """Activate a driver"""
 
     await session.execute(
-        update(User).where(User.user_id == driver_id).values(status="0")
+        update(Driver).where(Driver.id == driver_id).values(status=1)
     )
     await session.commit()
 
@@ -264,7 +307,7 @@ async def deactivate_driver(
     """Deactivate a driver"""
 
     await session.execute(
-        update(User).where(User.user_id == driver_id).values(status="1")
+        update(Driver).where(Driver.id == driver_id).values(status=0)
     )
     await session.commit()
 
@@ -324,26 +367,24 @@ async def bulk_driver_action(
 
     if action_data.action == "activate":
         await session.execute(
-            update(User).where(User.user_id.in_(action_data.driver_ids)).values(status="0")
+            update(Driver).where(Driver.id.in_(action_data.driver_ids)).values(status=1)
         )
     elif action_data.action == "deactivate":
         await session.execute(
-            update(User).where(User.user_id.in_(action_data.driver_ids)).values(status="1")
+            update(Driver).where(Driver.id.in_(action_data.driver_ids)).values(status=0)
         )
     elif action_data.action == "delete":
+        # Hard delete for tigu_driver
         await session.execute(
-            update(User).where(User.user_id.in_(action_data.driver_ids)).values(del_flag="1")
+            select(Driver).where(Driver.id.in_(action_data.driver_ids))
         )
-    elif action_data.action == "assign_role" and action_data.value:
-        # Only super admin can change roles
-        if not current_admin.is_super_admin:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Super admin access required for role changes"
+        for driver_id in action_data.driver_ids:
+            result = await session.execute(
+                select(Driver).where(Driver.id == driver_id)
             )
-        await session.execute(
-            update(User).where(User.user_id.in_(action_data.driver_ids)).values(role=action_data.value)
-        )
+            driver = result.scalars().first()
+            if driver:
+                await session.delete(driver)
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -375,10 +416,9 @@ async def assign_order_to_driver(
 
     # Check if driver exists and is active
     driver_result = await session.execute(
-        select(User).where(
-            User.user_id == assignment.driver_id,
-            User.status == "0",
-            User.del_flag == "0"
+        select(Driver).where(
+            Driver.id == assignment.driver_id,
+            Driver.status == 1
         )
     )
     driver = driver_result.scalars().first()
@@ -395,7 +435,7 @@ async def assign_order_to_driver(
     )
     await session.commit()
 
-    return {"message": f"Order {order_sn} assigned to driver {driver.nick_name}"}
+    return {"message": f"Order {order_sn} assigned to driver {driver.name}"}
 
 
 @router.post("/orders/dispatch")
@@ -423,10 +463,9 @@ async def dispatch_orders(
 
         # Check if driver exists and is active
         driver_result = await session.execute(
-            select(User).where(
-                User.user_id == dispatch.driver_id,
-                User.status == "0",
-                User.del_flag == "0"
+            select(Driver).where(
+                Driver.id == dispatch.driver_id,
+                Driver.status == 1
             )
         )
         driver = driver_result.scalars().first()
@@ -462,8 +501,8 @@ async def get_drivers_performance(
     """Get performance metrics for drivers within a time period"""
 
     # Base query for performance data
-    query = select(DriverPerformanceModel, User.nick_name).join(
-        User, DriverPerformanceModel.driver_id == User.user_id
+    query = select(DriverPerformanceModel, Driver.name).join(
+        Driver, DriverPerformanceModel.driver_id == Driver.id
     ).where(
         and_(
             DriverPerformanceModel.period_start >= start_date,
@@ -531,7 +570,7 @@ async def get_driver_performance_logs(
     result = await session.execute(query)
     logs = result.scalars().all()
 
-    return [DriverPerformanceLogEntry.from_attributes(log) for log in logs]
+    return [DriverPerformanceLogEntry.model_validate(log) for log in logs]
 
 
 @router.get("/performance/alerts", response_model=List[DriverAlertResponse])
@@ -546,8 +585,8 @@ async def get_performance_alerts(
 ) -> List[DriverAlertResponse]:
     """Get performance alerts with filtering options"""
 
-    query = select(DriverAlert, User.nick_name).join(
-        User, DriverAlert.driver_id == User.user_id
+    query = select(DriverAlert, Driver.name).join(
+        Driver, DriverAlert.driver_id == Driver.id
     )
 
     if status:
@@ -645,8 +684,8 @@ async def get_performance_analytics(
     """Get comprehensive performance analytics and comparisons"""
 
     # Base query for performance data
-    query = select(DriverPerformanceModel, User.nick_name).join(
-        User, DriverPerformanceModel.driver_id == User.user_id
+    query = select(DriverPerformanceModel, Driver.name).join(
+        Driver, DriverPerformanceModel.driver_id == Driver.id
     ).where(
         and_(
             DriverPerformanceModel.period_start >= analytics_request.start_date,
@@ -713,7 +752,7 @@ async def log_driver_action(
 
     # Verify driver exists
     driver_result = await session.execute(
-        select(User).where(User.user_id == driver_id, User.del_flag == "0")
+        select(Driver).where(Driver.id == driver_id)
     )
     driver = driver_result.scalars().first()
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 
 
 class AdminLoginRequest(BaseModel):
@@ -12,39 +12,61 @@ class AdminLoginRequest(BaseModel):
 
 
 class DriverBase(BaseModel):
-    user_name: str
-    nick_name: str
-    phonenumber: Optional[str] = None
+    name: str
+    phone: str
     email: Optional[str] = None
+    license_number: Optional[str] = None
     vehicle_type: Optional[str] = None
-    license_plate: Optional[str] = None
+    vehicle_plate: Optional[str] = None
+    vehicle_model: Optional[str] = None
     notes: Optional[str] = None
-    role: str = "driver"
 
 
 class DriverCreate(DriverBase):
-    password: str = Field(..., min_length=6, description="Driver password")
+    pass
 
 
 class DriverUpdate(BaseModel):
-    nick_name: Optional[str] = None
-    phonenumber: Optional[str] = None
+    name: Optional[str] = None
+    phone: Optional[str] = None
     email: Optional[str] = None
+    license_number: Optional[str] = None
     vehicle_type: Optional[str] = None
-    license_plate: Optional[str] = None
+    vehicle_plate: Optional[str] = None
+    vehicle_model: Optional[str] = None
     notes: Optional[str] = None
-    status: Optional[str] = None
-    role: Optional[str] = None
+    status: Optional[int] = None
 
 
 class DriverResponse(DriverBase):
-    user_id: int
-    status: str
-    del_flag: str
+    id: int
+    status: int  # 1=active, 0=inactive
+    rating: Decimal
+    total_deliveries: int
     created_at: datetime
-    last_login: Optional[datetime] = None
-    is_active: bool
-    is_admin: bool
+    updated_at: datetime
+
+    # Fields for frontend compatibility (mapped from tigu_driver + sys_user)
+    user_id: Optional[int] = None  # From sys_user if linked
+    user_name: Optional[str] = None  # From sys_user if linked
+    nick_name: Optional[str] = None  # From sys_user if linked
+    phonenumber: Optional[str] = None  # Mapped from phone
+    license_plate: Optional[str] = None  # Mapped from vehicle_plate
+    role: str = "driver"  # Default role
+    last_login: Optional[datetime] = None  # From sys_user if linked
+
+    @property
+    def is_active(self) -> bool:
+        return self.status == 1
+
+    @property
+    def is_admin(self) -> bool:
+        return self.role in ["admin", "super_admin"]
+
+    @field_serializer('rating')
+    def serialize_rating(self, value: Decimal) -> float:
+        """Serialize Decimal rating as float for JSON compatibility"""
+        return float(value)
 
     class Config:
         from_attributes = True
@@ -127,6 +149,13 @@ class DriverPerformanceMetrics(BaseModel):
     customer_rating: Optional[Decimal] = None
     on_time_percentage: Optional[Decimal] = None
 
+    @field_serializer('avg_delivery_time', 'total_active_time', 'total_distance',
+                      'orders_per_hour', 'fuel_efficiency', 'customer_rating',
+                      'on_time_percentage')
+    def serialize_decimal_fields(self, value: Optional[Decimal]) -> Optional[float]:
+        """Serialize Decimal fields as float for JSON compatibility"""
+        return float(value) if value is not None else None
+
     class Config:
         from_attributes = True
 
@@ -142,6 +171,11 @@ class DriverPerformanceLogEntry(BaseModel):
     distance_km: Optional[Decimal] = None
     status: str
     notes: Optional[str] = None
+
+    @field_serializer('duration_minutes', 'distance_km')
+    def serialize_decimal_fields(self, value: Optional[Decimal]) -> Optional[float]:
+        """Serialize Decimal fields as float for JSON compatibility"""
+        return float(value) if value is not None else None
 
     class Config:
         from_attributes = True
@@ -162,6 +196,11 @@ class DriverAlertResponse(BaseModel):
     created_at: datetime
     acknowledged_at: Optional[datetime] = None
     resolved_at: Optional[datetime] = None
+
+    @field_serializer('metric_value', 'threshold_value')
+    def serialize_decimal_fields(self, value: Optional[Decimal]) -> Optional[float]:
+        """Serialize Decimal fields as float for JSON compatibility"""
+        return float(value) if value is not None else None
 
     class Config:
         from_attributes = True

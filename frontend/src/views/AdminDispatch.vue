@@ -58,6 +58,9 @@
           </div>
 
           <div class="order-list">
+            <div v-if="ordersLoading" class="order-loading">
+              {{ $t('common.loading') }}...
+            </div>
             <div
               v-for="order in pendingOrders"
               :key="order.order_sn"
@@ -73,8 +76,8 @@
                   @change="toggleOrderSelection(order.order_sn)"
                 />
                 <strong>{{ order.order_sn }}</strong>
-                <span class="priority-badge" :class="order.priority">
-                  {{ getPriorityLabel(order.priority) }}
+                <span class="priority-badge" :class="getPriorityClass(order)">
+                  {{ getPriorityLabel(order) }}
                 </span>
               </div>
 
@@ -245,7 +248,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from '@/composables/useI18n';
 import AdminNavigation from '@/components/AdminNavigation.vue';
-import { getDispatchDrivers, type DispatchDriver } from '@/api/admin';
+import { getDispatchDrivers, getAdminOrders, type DispatchDriver, type AdminOrderSummary } from '@/api/admin';
 
 const { t } = useI18n();
 
@@ -261,30 +264,10 @@ const showAssignmentModal = ref(false);
 const currentOrder = ref<any>(null);
 const todayAssignments = ref(15);
 const driversLoading = ref(false);
+const ordersLoading = ref(false);
 
 // Mock data
-const pendingOrders = ref([
-  {
-    order_sn: 'ORD-2024-001',
-    receiver_name: 'John Doe',
-    receiver_phone: '+1234567890',
-    receiver_address: '123 Main St',
-    receiver_city: 'Toronto',
-    priority: 'normal',
-    create_time: '2024-01-15T10:30:00Z',
-    items: [{}, {}]
-  },
-  {
-    order_sn: 'ORD-2024-002',
-    receiver_name: 'Jane Smith',
-    receiver_phone: '+1234567891',
-    receiver_address: '456 Oak Ave',
-    receiver_city: 'Vancouver',
-    priority: 'high',
-    create_time: '2024-01-15T11:00:00Z',
-    items: [{}]
-  }
-]);
+const pendingOrders = ref<AdminOrderSummary[]>([]);
 
 const availableDrivers = ref<DispatchDriver[]>([]);
 
@@ -343,7 +326,7 @@ const selectDriver = (driver: DispatchDriver) => {
   selectedDriver.value = driver;
 };
 
-const assignToDriver = (order: any) => {
+const assignToDriver = (order: AdminOrderSummary) => {
   currentOrder.value = order;
   showAssignmentModal.value = true;
 };
@@ -377,12 +360,13 @@ const sortDrivers = () => {
   console.log('Sort drivers by:', driverSortBy.value);
 };
 
-const getPriorityLabel = (priority: string) => {
-  switch (priority) {
-    case 'high': return t('admin.dispatch.high');
-    case 'urgent': return t('admin.dispatch.urgent');
-    default: return t('admin.dispatch.normal');
-  }
+const getPriorityLabel = (order: AdminOrderSummary) => {
+  // Placeholder mapping; extend when backend exposes explicit priority.
+  return t('admin.dispatch.normal');
+};
+
+const getPriorityClass = (order: AdminOrderSummary) => {
+  return 'normal';
 };
 
 const getAssignmentStatusLabel = (status: string) => {
@@ -409,8 +393,29 @@ const loadAvailableDrivers = async () => {
   }
 };
 
-onMounted(() => {
+const loadPendingOrders = async () => {
+  ordersLoading.value = true;
+  try {
+    pendingOrders.value = await getAdminOrders({
+      status: 0,
+      unassigned: true,
+      limit: 200
+    });
+  } catch (error) {
+    console.error('Failed to fetch pending orders', error);
+    pendingOrders.value = [];
+  } finally {
+    ordersLoading.value = false;
+  }
+};
+
+const refreshData = () => {
   loadAvailableDrivers();
+  loadPendingOrders();
+};
+
+onMounted(() => {
+  refreshData();
 });
 </script>
 
@@ -560,6 +565,13 @@ onMounted(() => {
   max-height: 600px;
   overflow-y: auto;
   padding: 16px;
+}
+
+.order-loading {
+  padding: 12px;
+  text-align: center;
+  color: #718096;
+  font-weight: 500;
 }
 
 .order-card, .driver-card, .assignment-card {

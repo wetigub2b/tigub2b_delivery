@@ -234,7 +234,7 @@
               <h3>{{ $t('admin.reports.topDrivers') }}</h3>
               <select v-model="driverMetric">
                 <option value="deliveries">{{ $t('admin.reports.byDeliveries') }}</option>
-                <option value="revenue">{{ $t('admin.reports.byRevenue') }}</option>
+                <option value="success_rate">{{ $t('admin.reports.bySuccessRate') }}</option>
                 <option value="rating">{{ $t('admin.reports.byRating') }}</option>
               </select>
             </div>
@@ -245,7 +245,8 @@
                     <th>{{ $t('admin.reports.rank') }}</th>
                     <th>{{ $t('admin.reports.driver') }}</th>
                     <th>{{ $t('admin.reports.deliveries') }}</th>
-                    <th>{{ $t('admin.reports.revenue') }}</th>
+                    <th>{{ $t('admin.reports.successRate') }}</th>
+                    <th>{{ $t('admin.reports.onTimeRate') }}</th>
                     <th>{{ $t('admin.reports.rating') }}</th>
                   </tr>
                 </thead>
@@ -259,16 +260,22 @@
                     <td>
                       <div class="driver-info">
                         <strong>{{ driver.name }}</strong>
-                        <small>{{ driver.vehicle }}</small>
+                        <small v-if="driver.avgDeliveryTime">{{ driver.avgDeliveryTime }} min avg</small>
+                        <small v-else>—</small>
                       </div>
                     </td>
                     <td>{{ driver.deliveries }}</td>
-                    <td>${{ formatNumber(driver.revenue) }}</td>
+                    <td>{{ formatPercentage(driver.successRate) }}</td>
                     <td>
-                      <div class="rating">
+                      <span v-if="driver.onTimeRate !== null">{{ formatPercentage(driver.onTimeRate || 0) }}</span>
+                      <span v-else class="text-muted">N/A</span>
+                    </td>
+                    <td>
+                      <span v-if="driver.rating !== null" class="rating">
                         <span class="stars">⭐</span>
-                        {{ driver.rating }}
-                      </div>
+                        {{ formatRating(driver.rating) }}
+                      </span>
+                      <span v-else class="text-muted">N/A</span>
                     </td>
                   </tr>
                 </tbody>
@@ -337,12 +344,50 @@ const adminStore = useAdminStore();
 const isLoading = ref(false);
 const startDate = ref(getDateString(-30)); // 30 days ago
 const endDate = ref(getDateString(0)); // today
+const driverMetric = ref<'deliveries' | 'success_rate' | 'rating'>('deliveries');
 
 // Computed properties
 const criticalAlerts = computed(() => adminStore.getCriticalAlerts());
 const performanceMetrics = computed(() => adminStore.performanceMetrics);
 const performanceAlerts = computed(() => adminStore.performanceAlerts);
 const performanceAnalytics = computed(() => adminStore.performanceAnalytics);
+const topDrivers = computed(() => {
+  const metrics = performanceMetrics.value || [];
+  const metricKeyMap = {
+    deliveries: 'total_deliveries',
+    success_rate: 'success_rate',
+    rating: 'customer_rating'
+  } as const;
+  const metricKey = metricKeyMap[driverMetric.value];
+
+  return metrics
+    .slice()
+    .sort((a, b) => ((b as any)[metricKey] ?? 0) - ((a as any)[metricKey] ?? 0))
+    .slice(0, 5)
+    .map(metric => ({
+      id: metric.driver_id,
+      name: metric.driver_name,
+      deliveries: metric.total_deliveries,
+      successRate: metric.success_rate,
+      onTimeRate: metric.on_time_percentage ?? null,
+      rating: metric.customer_rating ?? null,
+      avgDeliveryTime: metric.avg_delivery_time ?? null
+    }));
+});
+
+const recentActivities = computed(() => {
+  return performanceAlerts.value
+    .slice()
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 8)
+    .map(alert => ({
+      id: alert.id,
+      timestamp: alert.created_at,
+      title: alert.title,
+      description: alert.description,
+      type: alert.severity?.toLowerCase() || 'info'
+    }));
+});
 
 // Helper functions
 function getDateString(daysOffset: number): string {
@@ -450,6 +495,31 @@ const getPerformanceColor = (metric: string, value: number) => {
     default:
       return 'neutral';
   }
+};
+
+const getRankClass = (index: number) => {
+  if (index === 0) return 'gold';
+  if (index === 1) return 'silver';
+  if (index === 2) return 'bronze';
+  return 'regular';
+};
+
+const getActivityIcon = (type: string) => {
+  switch (type) {
+    case 'critical':
+      return '⚠️';
+    case 'warning':
+      return '🚧';
+    case 'info':
+    default:
+      return 'ℹ️';
+  }
+};
+
+const formatTime = (dateString: string) => {
+  if (!dateString) return '-';
+  const date = new Date(dateString);
+  return date.toLocaleString();
 };
 
 onMounted(() => {

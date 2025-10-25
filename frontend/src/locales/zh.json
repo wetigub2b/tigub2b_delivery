@@ -171,6 +171,7 @@
       "shipped": "已发货",
       "partialShipped": "部分发货",
       "delivered": "已送达",
+      "unknown": "未知",
       "allDrivers": "所有司机",
       "unassigned": "未分配",
       "orderNumber": "订单号",
@@ -213,7 +214,10 @@
       "urgent": "紧急",
       "notes": "备注",
       "notesPlaceholder": "添加特殊说明...",
-      "confirmAssignment": "确认分配"
+      "confirmAssignment": "确认分配",
+      "accepted": "已接受",
+      "inProgress": "进行中",
+      "completed": "已完成"
     },
     "reports": {
       "title": "报告与分析",

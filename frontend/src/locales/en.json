@@ -227,6 +227,7 @@
       "shipped": "Shipped",
       "partialShipped": "Partial Shipped",
       "delivered": "Delivered",
+      "unknown": "Unknown",
       "allDrivers": "All Drivers",
       "unassigned": "Unassigned",
       "orderNumber": "Order Number",
@@ -269,7 +270,10 @@
       "urgent": "Urgent",
       "notes": "Notes",
       "notesPlaceholder": "Add any special instructions...",
-      "confirmAssignment": "Confirm Assignment"
+      "confirmAssignment": "Confirm Assignment",
+      "accepted": "Accepted",
+      "inProgress": "In Progress",
+      "completed": "Completed"
     },
     "reports": {
       "title": "Reports & Analytics",

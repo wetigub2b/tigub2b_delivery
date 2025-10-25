@@ -58,3 +58,33 @@ class User(Base):
         """Get the effective role, with fallback for compatibility"""
         # Assign role based on username for compatibility
         return "super_admin" if self.user_name == "admin" else "driver"
+
+    @property
+    def role(self) -> str:
+        """Alias for effective_role for schema compatibility"""
+        return self.effective_role
+
+    @property
+    def vehicle_type(self) -> str | None:
+        """Placeholder for schema compatibility - field doesn't exist in sys_user"""
+        return None
+
+    @property
+    def license_plate(self) -> str | None:
+        """Placeholder for schema compatibility - field doesn't exist in sys_user"""
+        return None
+
+    @property
+    def notes(self) -> str | None:
+        """Map remark field to notes for schema compatibility"""
+        return self.remark
+
+    @property
+    def created_at(self) -> datetime | None:
+        """Map create_time to created_at for schema compatibility"""
+        return self.create_time
+
+    @property
+    def last_login(self) -> datetime | None:
+        """Map login_date to last_login for schema compatibility"""
+        return self.login_date

@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_admin, get_current_super_admin, get_db_session
 from app.core.security import get_password_hash
+from app.models.driver import Driver
 from app.models.driver_performance import DriverAlert, DriverPerformance as DriverPerformanceModel, DriverPerformanceLog
 from app.models.order import Order
 from app.models.user import User
@@ -38,18 +39,14 @@ async def get_dashboard_stats(
 ) -> AdminDashboardStats:
     """Get admin dashboard statistics"""
 
-    # Get driver statistics
+    # Get driver statistics from tigu_driver table
     total_drivers_result = await session.execute(
-        select(func.count(User.user_id)).where(User.role == "driver", User.del_flag == "0")
+        select(func.count(Driver.id))
     )
     total_drivers = total_drivers_result.scalar() or 0
 
     active_drivers_result = await session.execute(
-        select(func.count(User.user_id)).where(
-            User.role == "driver",
-            User.status == "0",
-            User.del_flag == "0"
-        )
+        select(func.count(Driver.id)).where(Driver.status == 1)
     )
     active_drivers = active_drivers_result.scalar() or 0
 
@@ -103,17 +100,15 @@ async def get_all_drivers(
         search_pattern = f"%{search}%"
         query = query.where(
             (User.nick_name.ilike(search_pattern)) |
-            (User.phonenumber.ilike(search_pattern)) |
-            (User.license_plate.ilike(search_pattern))
+            (User.phonenumber.ilike(search_pattern))
         )
 
-    if role:
-        query = query.where(User.role == role)
+    # Note: role filter removed as role column doesn't exist in sys_user table
 
     if status:
         query = query.where(User.status == status)
 
-    query = query.order_by(desc(User.created_at)).offset(skip).limit(limit)
+    query = query.order_by(desc(User.create_time)).offset(skip).limit(limit)
 
     result = await session.execute(query)
     drivers = result.scalars().all()
@@ -176,14 +171,11 @@ async def create_driver(
         nick_name=driver_data.nick_name,
         phonenumber=driver_data.phonenumber,
         email=driver_data.email,
-        vehicle_type=driver_data.vehicle_type,
-        license_plate=driver_data.license_plate,
-        notes=driver_data.notes,
-        role=driver_data.role,
+        remark=driver_data.notes,  # Map notes to remark field
         password=hashed_password,
         status="0",
         del_flag="0",
-        created_at=datetime.now()
+        create_time=datetime.now()
     )
 
     session.add(new_driver)
@@ -385,7 +377,6 @@ async def assign_order_to_driver(
     driver_result = await session.execute(
         select(User).where(
             User.user_id == assignment.driver_id,
-            User.role == "driver",
             User.status == "0",
             User.del_flag == "0"
         )
@@ -434,7 +425,6 @@ async def dispatch_orders(
         driver_result = await session.execute(
             select(User).where(
                 User.user_id == dispatch.driver_id,
-                User.role == "driver",
                 User.status == "0",
                 User.del_flag == "0"
             )
@@ -723,7 +713,7 @@ async def log_driver_action(
 
     # Verify driver exists
     driver_result = await session.execute(
-        select(User).where(User.user_id == driver_id, User.role == "driver", User.del_flag == "0")
+        select(User).where(User.user_id == driver_id, User.del_flag == "0")
     )
     driver = driver_result.scalars().first()
 

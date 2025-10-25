@@ -104,21 +104,22 @@ const logout = () => {
 
 <style scoped>
 .admin-nav {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: var(--color-white);
+  box-shadow: var(--shadow-header);
   position: sticky;
   top: 0;
-  z-index: 1000;
+  z-index: var(--z-sticky);
+  border-bottom: 1px solid var(--color-gray-lighter);
 }
 
 .nav-container {
-  max-width: 1200px;
+  max-width: var(--container-wide-max-width);
   margin: 0 auto;
-  padding: 0 20px;
+  padding: var(--spacing-md) var(--spacing-xl);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 70px;
+  height: var(--nav-height);
 }
 
 .nav-brand {
@@ -126,87 +127,88 @@ const logout = () => {
 }
 
 .brand-link {
-  color: white;
+  color: var(--color-primary);
   text-decoration: none;
-  font-size: 24px;
-  font-weight: 700;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-sm);
+  transition: color var(--transition-base);
+}
+
+.brand-link:hover {
+  color: var(--color-primary-dark);
 }
 
 .nav-menu {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-sm);
   flex: 1;
   justify-content: center;
 }
 
 .nav-link {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--color-black);
   text-decoration: none;
-  padding: 10px 16px;
-  border-radius: 8px;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-full);
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  gap: var(--spacing-sm);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-md);
+  transition: all var(--transition-base);
   white-space: nowrap;
+  border: 1px solid transparent;
 }
 
 .nav-link:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
+  color: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 .nav-link.router-link-active {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  font-weight: 600;
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  border-bottom-width: 2px;
 }
 
 .nav-icon {
-  font-size: 16px;
+  font-size: var(--font-size-md);
 }
 
 .nav-actions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--spacing-lg);
   flex-shrink: 0;
-
-  /* Language switcher styling for purple gradient background */
-  --lang-switcher-bg: rgba(255, 255, 255, 0.1);
-  --lang-switcher-border: rgba(255, 255, 255, 0.2);
-  --lang-switcher-color: #ffffff;
-  --lang-switcher-hover-bg: rgba(255, 255, 255, 0.15);
-  --lang-switcher-hover-border: rgba(255, 255, 255, 0.3);
-  --lang-switcher-hover-color: #ffffff;
 }
 
 .logout-button {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  padding: 8px 16px;
+  background: transparent;
+  color: var(--color-black);
+  border: 1px solid var(--color-gray-light);
+  border-radius: var(--radius-full);
+  padding: var(--spacing-sm) var(--spacing-lg);
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  gap: var(--spacing-sm);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-md);
+  font-family: var(--font-family-base);
+  transition: all var(--transition-base);
 }
 
 .logout-button:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.3);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 .logout-icon {
-  font-size: 16px;
+  font-size: var(--font-size-md);
 }
 
 .mobile-menu-toggle {
@@ -215,16 +217,17 @@ const logout = () => {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px;
-  gap: 4px;
+  padding: var(--spacing-sm);
+  gap: var(--spacing-xs);
 }
 
 .mobile-menu-toggle span {
   width: 24px;
-  height: 3px;
-  background: white;
+  height: 2px;
+  background: var(--color-black);
   border-radius: 2px;
-  transition: all 0.3s ease;
+  transition: all var(--transition-slow);
+  transform-origin: center;
 }
 
 .mobile-menu-toggle[aria-expanded="true"] span:nth-child(1) {
@@ -241,7 +244,8 @@ const logout = () => {
 
 @media (max-width: 768px) {
   .nav-container {
-    padding: 0 16px;
+    padding: var(--spacing-md);
+    height: var(--header-height-mobile);
   }
 
   .mobile-menu-toggle {
@@ -253,16 +257,17 @@ const logout = () => {
     top: 100%;
     left: 0;
     right: 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--color-white);
     flex-direction: column;
     align-items: stretch;
-    padding: 20px;
-    gap: 4px;
+    padding: var(--spacing-lg);
+    gap: var(--spacing-xs);
     transform: translateY(-100%);
     opacity: 0;
     visibility: hidden;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all var(--transition-slow);
+    box-shadow: var(--shadow-lg);
+    border-top: 1px solid var(--color-gray-lighter);
   }
 
   .nav-menu.active {
@@ -272,8 +277,13 @@ const logout = () => {
   }
 
   .nav-link {
-    padding: 12px 16px;
+    padding: var(--spacing-md);
     justify-content: flex-start;
+    border-bottom: 1px solid var(--color-gray-lighter);
+  }
+
+  .nav-link:last-child {
+    border-bottom: none;
   }
 
   .nav-actions {
@@ -281,14 +291,14 @@ const logout = () => {
     top: 100%;
     left: 0;
     right: 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--color-white);
+    padding: var(--spacing-lg);
+    border-top: 1px solid var(--color-gray-lighter);
     justify-content: space-between;
     transform: translateY(-100%);
     opacity: 0;
     visibility: hidden;
-    transition: all 0.3s ease 0.1s;
+    transition: all var(--transition-slow) 0.1s;
   }
 
   .nav-menu.active ~ .nav-actions {
@@ -298,7 +308,7 @@ const logout = () => {
   }
 
   .logout-button {
-    padding: 10px 16px;
+    padding: var(--spacing-sm) var(--spacing-lg);
     flex: 1;
     justify-content: center;
     max-width: 120px;
@@ -307,11 +317,7 @@ const logout = () => {
 
 @media (max-width: 480px) {
   .brand-link {
-    font-size: 20px;
-  }
-
-  .nav-container {
-    height: 60px;
+    font-size: var(--font-size-lg);
   }
 }
 </style>

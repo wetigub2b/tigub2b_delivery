@@ -95,131 +95,135 @@ const handleLogin = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
+  background: var(--color-bg-light);
+  padding: var(--spacing-lg);
 }
 
 .login-container {
-  background: white;
-  border-radius: 12px;
-  padding: 40px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  background: var(--color-white);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-3xl);
+  box-shadow: var(--shadow-md);
   width: 100%;
   max-width: 400px;
 }
 
 .login-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: var(--spacing-2xl);
 }
 
 .login-header h1 {
-  font-size: 28px;
-  font-weight: 700;
-  color: #2d3748;
-  margin-bottom: 8px;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-gray-dark);
+  margin-bottom: var(--spacing-sm);
 }
 
 .login-header p {
-  color: #718096;
-  font-size: 16px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
 }
 
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--spacing-lg);
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
 .form-group label {
-  font-weight: 600;
-  color: #2d3748;
-  font-size: 14px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-gray-dark);
+  font-size: var(--font-size-sm);
 }
 
 .form-group input {
-  padding: 12px 16px;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 16px;
-  transition: border-color 0.2s ease;
+  padding: var(--spacing-md);
+  border: 1px solid var(--color-gray-light);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
+  font-family: var(--font-family-base);
+  transition: border-color var(--transition-base);
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(251, 110, 1, 0.2);
 }
 
 .form-group input:disabled {
-  background-color: #f7fafc;
+  background-color: var(--color-bg-lighter);
   cursor: not-allowed;
 }
 
 .error-message {
-  color: #e53e3e;
-  font-size: 14px;
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
   text-align: center;
-  padding: 12px;
+  padding: var(--spacing-md);
   background-color: #fed7d7;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: 1px solid #feb2b2;
 }
 
 .login-button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 14px 20px;
-  font-size: 16px;
-  font-weight: 600;
+  background: var(--color-primary);
+  color: var(--color-white);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-full);
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  font-family: var(--font-family-base);
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: all var(--transition-base);
 }
 
 .login-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+}
+
+.login-button:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 .login-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
 }
 
 .login-footer {
-  margin-top: 30px;
+  margin-top: var(--spacing-2xl);
   text-align: center;
 }
 
 .back-link {
-  color: #667eea;
+  color: var(--color-primary);
   text-decoration: none;
-  font-size: 14px;
-  transition: color 0.2s ease;
+  font-size: var(--font-size-sm);
+  transition: color var(--transition-base);
 }
 
 .back-link:hover {
-  color: #5a67d8;
+  color: var(--color-primary-dark);
   text-decoration: underline;
 }
 
 @media (max-width: 480px) {
   .login-container {
-    padding: 30px 20px;
+    padding: var(--spacing-xl);
   }
 
   .login-header h1 {
-    font-size: 24px;
+    font-size: var(--font-size-xl);
   }
 }
 </style>

@@ -87,11 +87,26 @@ def _serialize_detail(order: Order) -> OrderDetail:
     )
 
 
-async def fetch_assigned_orders(session: AsyncSession, driver_id: int) -> List[OrderSummary]:
+async def fetch_assigned_orders(session: AsyncSession, driver_id: int, include_completed: bool = False) -> List[OrderSummary]:
+    """
+    Fetch assigned orders for a driver.
+
+    Args:
+        session: Database session
+        driver_id: ID of the driver
+        include_completed: If True, includes completed orders (shipping_status=3).
+                          If False, only active orders (0,1,2) for route planning.
+    """
+    if include_completed:
+        status_filter = [0, 1, 2, 3]  # All statuses for TaskBoard
+    else:
+        status_filter = [0, 1, 2]  # Only active orders for RoutePlanner
+
     stmt = (
         select(Order)
-        .options(selectinload(Order.items), selectinload(Order.warehouse))
-        .where(Order.shipping_status.in_([0, 1, 2]))
+        .options(selectinload(Order.items), selectinload(Order.warehouse), selectinload(Order.driver))
+        .where(Order.driver_id == driver_id)
+        .where(Order.shipping_status.in_(status_filter))
         .order_by(Order.create_time.desc())
         .limit(50)
     )
@@ -103,7 +118,7 @@ async def fetch_assigned_orders(session: AsyncSession, driver_id: int) -> List[O
 async def fetch_order_detail(session: AsyncSession, order_sn: str, driver_id: int) -> OrderDetail | None:
     stmt = (
         select(Order)
-        .options(selectinload(Order.items), selectinload(Order.warehouse))
+        .options(selectinload(Order.items), selectinload(Order.warehouse), selectinload(Order.driver))
         .where(Order.order_sn == order_sn)
     )
     result = await session.execute(stmt)

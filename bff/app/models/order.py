@@ -38,7 +38,7 @@ class Order(Base):
     shipping_time: Mapped[datetime | None] = mapped_column(DateTime())
     finish_time: Mapped[datetime | None] = mapped_column(DateTime())
     create_time: Mapped[datetime] = mapped_column(DateTime())
-    updated_time: Mapped[datetime | None] = mapped_column(DateTime(), nullable=True)
+    update_time: Mapped[datetime | None] = mapped_column(DateTime(), nullable=True)
 
     items: Mapped[list[OrderItem]] = relationship("OrderItem", back_populates="order", lazy="selectin")
     warehouse: Mapped[Warehouse | None] = relationship("Warehouse", back_populates="orders", lazy="joined")

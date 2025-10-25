@@ -32,3 +32,6 @@
 - Never commit secrets; rely on `.env.local` (frontend) and `.env` (BFF) ignored by Git.
 - Restrict BFF credentials to read/write accounts scoped to `tigu_b2b`; rotate keys quarterly.
 - Validate all status transitions against `sys_dict_data` enumerations to prevent invalid delivery states.
+## mysql data base
+- use database tigu_b2b
+- use sudo mysql command to investigate the mysql database data

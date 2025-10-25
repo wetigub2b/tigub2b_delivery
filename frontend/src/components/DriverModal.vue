@@ -37,6 +37,19 @@
           />
         </div>
 
+        <!-- Password field - only for creating new drivers -->
+        <div v-if="!isEdit" class="form-group">
+          <label>{{ $t('admin.drivers.password') }}</label>
+          <input
+            v-model="form.password"
+            type="password"
+            :placeholder="$t('admin.drivers.passwordPlaceholder')"
+            minlength="6"
+            required
+          />
+          <small class="form-hint">{{ $t('admin.drivers.passwordHint') }}</small>
+        </div>
+
         <div class="form-group">
           <label>{{ $t('admin.drivers.vehicleType') }}</label>
           <select v-model="form.vehicleType" required>
@@ -55,6 +68,15 @@
             type="text"
             :placeholder="$t('admin.drivers.licensePlatePlaceholder')"
             required
+          />
+        </div>
+
+        <div class="form-group">
+          <label>{{ $t('admin.drivers.vehicleModel') }}</label>
+          <input
+            v-model="form.vehicleModel"
+            type="text"
+            :placeholder="$t('admin.drivers.vehicleModelPlaceholder')"
           />
         </div>
 
@@ -98,8 +120,10 @@ const form = reactive({
   name: '',
   phone: '',
   email: '',
+  password: '',
   vehicleType: '',
   licensePlate: '',
+  vehicleModel: '',
   status: 'active'
 });
 
@@ -214,6 +238,12 @@ const handleSubmit = () => {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 2px rgba(251, 110, 1, 0.2);
+}
+
+.form-hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-xs);
 }
 
 .modal-actions {

@@ -23,7 +23,7 @@ class DriverBase(BaseModel):
 
 
 class DriverCreate(DriverBase):
-    pass
+    password: str = Field(..., description="Login password", min_length=6)
 
 
 class DriverUpdate(BaseModel):

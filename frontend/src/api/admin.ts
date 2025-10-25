@@ -25,15 +25,15 @@ export interface Driver {
 }
 
 export interface DriverCreate {
-  user_name: string;
-  nick_name: string;
-  phonenumber?: string;
+  name: string;
+  phone: string;
   email?: string;
-  vehicle_type?: string;
-  license_plate?: string;
-  notes?: string;
-  role?: string;
   password: string;
+  license_number?: string;
+  vehicle_type?: string;
+  vehicle_plate?: string;
+  vehicle_model?: string;
+  notes?: string;
 }
 
 export interface DriverUpdate {

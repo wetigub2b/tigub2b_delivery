@@ -171,19 +171,71 @@ async def create_driver(
     session: AsyncSession = Depends(get_db_session),
     current_admin: User = Depends(get_current_admin)
 ) -> DriverResponse:
-    """Create a new driver"""
+    """Create a new driver (creates records in both sys_user and tigu_driver tables)"""
 
-    # Check if phone number already exists
+    # Check if phone number already exists in tigu_driver
     existing_driver = await session.execute(
         select(Driver).where(Driver.phone == driver_data.phone)
     )
     if existing_driver.scalars().first():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Phone number already exists"
+            detail="Phone number already exists in driver table"
         )
 
-    # Create new driver
+    # Check if phone number already exists in sys_user
+    existing_user = await session.execute(
+        select(User).where(User.phonenumber == driver_data.phone)
+    )
+    if existing_user.scalars().first():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Phone number already exists in user table"
+        )
+
+    # Create username from phone number (can be customized)
+    username = f"driver_{driver_data.phone}"
+
+    # Check if username already exists
+    existing_username = await session.execute(
+        select(User).where(User.user_name == username)
+    )
+    if existing_username.scalars().first():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username already exists"
+        )
+
+    # Hash the password
+    hashed_password = get_password_hash(driver_data.password)
+
+    # Generate new user_id (get max user_id and increment)
+    max_user_id_result = await session.execute(
+        select(func.max(User.user_id))
+    )
+    max_user_id = max_user_id_result.scalar()
+    new_user_id = (max_user_id or 0) + 1
+
+    # Create sys_user record for login
+    new_user = User(
+        user_id=new_user_id,
+        user_name=username,
+        nick_name=driver_data.name,
+        phonenumber=driver_data.phone,
+        email=driver_data.email,
+        password=hashed_password,
+        status="0",  # 0 = active in sys_user
+        del_flag="0",  # 0 = not deleted
+        user_type="00",  # Regular user type
+        create_time=datetime.now(),
+        update_time=datetime.now(),
+        remark=driver_data.notes
+    )
+
+    session.add(new_user)
+    await session.flush()  # Flush to get the user_id
+
+    # Create tigu_driver record for driver details
     new_driver = Driver(
         name=driver_data.name,
         phone=driver_data.phone,
@@ -193,7 +245,7 @@ async def create_driver(
         vehicle_plate=driver_data.vehicle_plate,
         vehicle_model=driver_data.vehicle_model,
         notes=driver_data.notes,
-        status=1,  # Active by default
+        status=1,  # Active by default (1 = active in tigu_driver)
         rating=Decimal("5.00"),
         total_deliveries=0
     )
@@ -201,18 +253,19 @@ async def create_driver(
     session.add(new_driver)
     await session.commit()
     await session.refresh(new_driver)
+    await session.refresh(new_user)
 
-    # Map fields for frontend compatibility
-    driver_data = DriverResponse.model_validate(new_driver)
-    driver_data.user_id = new_driver.id
-    driver_data.user_name = new_driver.name
-    driver_data.nick_name = new_driver.name
-    driver_data.phonenumber = new_driver.phone
-    driver_data.license_plate = new_driver.vehicle_plate
-    driver_data.role = "driver"
-    driver_data.last_login = None
+    # Build response with hybrid data from both tables
+    response_data = DriverResponse.model_validate(new_driver)
+    response_data.user_id = new_user.user_id
+    response_data.user_name = new_user.user_name
+    response_data.nick_name = new_user.nick_name
+    response_data.phonenumber = new_driver.phone
+    response_data.license_plate = new_driver.vehicle_plate
+    response_data.role = new_user.effective_role
+    response_data.last_login = new_user.login_date
 
-    return driver_data
+    return response_data
 
 
 @router.put("/drivers/{driver_id}", response_model=DriverResponse)

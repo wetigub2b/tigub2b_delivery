@@ -328,9 +328,37 @@ const closeModals = () => {
   selectedDriver.value = null;
 };
 
-const handleDriverSuccess = () => {
-  closeModals();
-  loadDrivers();
+const handleDriverSuccess = async (formData: any) => {
+  try {
+    if (showCreateModal.value) {
+      // Creating a new driver - map form fields to API schema
+      await adminStore.createDriver({
+        name: formData.name,
+        phone: formData.phone,
+        email: formData.email,
+        password: formData.password,
+        vehicle_type: formData.vehicleType,
+        vehicle_plate: formData.licensePlate,
+        vehicle_model: formData.vehicleModel,
+        notes: formData.notes
+      });
+    } else if (showEditModal.value && selectedDriver.value) {
+      // Updating existing driver
+      await adminStore.updateDriver(selectedDriver.value.user_id, {
+        nick_name: formData.name,
+        phonenumber: formData.phone,
+        email: formData.email,
+        vehicle_type: formData.vehicleType,
+        license_plate: formData.licensePlate,
+        notes: formData.notes,
+        status: formData.status
+      });
+    }
+    closeModals();
+    await loadDrivers();
+  } catch (err) {
+    console.error('Failed to save driver:', err);
+  }
 };
 
 const clearError = () => {

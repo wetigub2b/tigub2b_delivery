@@ -4,7 +4,7 @@
 
     <div class="reports-content">
       <div class="reports-header">
-        <h1>Performance Analytics & Reports</h1>
+        <h1>{{ $t('admin.reports.title') }}</h1>
         <div class="header-actions">
           <div class="date-range-picker">
             <input

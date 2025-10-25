@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import json
-from typing import List
+from typing import List, Optional
 
-from sqlalchemy import select, update
+from sqlalchemy import or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -64,6 +64,8 @@ def _serialize(order: Order) -> OrderSummary:
         order_sn=order.order_sn,
         shipping_status=order.shipping_status,
         order_status=order.order_status,
+        driver_id=order.driver_id,
+        driver_name=order.driver.name if order.driver else None,
         receiver_name=order.receiver_name,
         receiver_phone=order.receiver_phone,
         receiver_address=order.receiver_address,
@@ -72,6 +74,7 @@ def _serialize(order: Order) -> OrderSummary:
         receiver_postal_code=order.receiver_postal_code,
         shipping_status_label=SHIPPING_STATUS_LABELS.get(order.shipping_status, "Unknown"),
         order_status_label=ORDER_STATUS_LABELS.get(order.order_status, "Unknown"),
+        create_time=order.create_time,
         pickup_location=pickup,
         items=items
     )
@@ -142,3 +145,42 @@ async def update_order_shipping_status(
     result = await session.execute(stmt)
     await session.commit()
     return result.rowcount > 0
+
+
+async def fetch_orders(
+    session: AsyncSession,
+    status: Optional[int] = None,
+    driver_id: Optional[int] = None,
+    unassigned: bool = False,
+    search: Optional[str] = None,
+    limit: int = 100
+) -> List[OrderSummary]:
+    stmt = (
+        select(Order)
+        .options(selectinload(Order.items), selectinload(Order.warehouse), selectinload(Order.driver))
+        .order_by(Order.create_time.desc())
+        .limit(limit)
+    )
+
+    if status is not None:
+        stmt = stmt.where(Order.shipping_status == status)
+
+    if driver_id is not None:
+        stmt = stmt.where(Order.driver_id == driver_id)
+
+    if unassigned:
+        stmt = stmt.where(Order.driver_id.is_(None))
+
+    if search:
+        pattern = f"%{search}%"
+        stmt = stmt.where(
+            or_(
+                Order.order_sn.ilike(pattern),
+                Order.receiver_name.ilike(pattern),
+                Order.receiver_phone.ilike(pattern)
+            )
+        )
+
+    result = await session.execute(stmt)
+    orders = result.scalars().unique().all()
+    return [_serialize(order) for order in orders]

@@ -131,9 +131,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useI18n } from '@/composables/useI18n';
 import AdminNavigation from '@/components/AdminNavigation.vue';
+import { getAdminOrders, type AdminOrderSummary } from '@/api/admin';
 
 const { t } = useI18n();
 
@@ -142,61 +143,51 @@ const searchQuery = ref('');
 const statusFilter = ref('');
 const driverFilter = ref('');
 const isLoading = ref(false);
-const orders = ref<any[]>([]);
+const orders = ref<AdminOrderSummary[]>([]);
 
-// Mock data for demonstration
-const mockOrders = [
-  {
-    order_sn: 'ORD-2024-001',
-    receiver_name: 'John Doe',
-    receiver_phone: '+1234567890',
-    receiver_address: '123 Main St',
-    receiver_city: 'Toronto',
-    receiver_province: 'ON',
-    shipping_status: 0,
-    driver_id: null,
-    driver_name: null,
-    create_time: '2024-01-15T10:30:00Z'
-  },
-  {
-    order_sn: 'ORD-2024-002',
-    receiver_name: 'Jane Smith',
-    receiver_phone: '+1234567891',
-    receiver_address: '456 Oak Ave',
-    receiver_city: 'Vancouver',
-    receiver_province: 'BC',
-    shipping_status: 1,
-    driver_id: 1,
-    driver_name: 'Mike Johnson',
-    create_time: '2024-01-15T11:00:00Z'
+const buildQueryParams = () => {
+  const params: Record<string, string | number | boolean> = {};
+  if (searchQuery.value.trim()) {
+    params.search = searchQuery.value.trim();
   }
-];
+  if (statusFilter.value !== '') {
+    params.status = Number(statusFilter.value);
+  }
+  if (driverFilter.value === 'unassigned') {
+    params.unassigned = true;
+  }
+  return params;
+};
 
-// Methods
-const refreshOrders = async () => {
+const loadOrders = async () => {
   isLoading.value = true;
   try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    orders.value = mockOrders;
+    orders.value = await getAdminOrders(buildQueryParams());
   } catch (error) {
     console.error('Failed to load orders:', error);
+    orders.value = [];
   } finally {
     isLoading.value = false;
   }
+};
+
+// Methods
+const refreshOrders = async () => {
+  await loadOrders();
 };
 
 const debouncedSearch = (() => {
   let timeout: NodeJS.Timeout;
   return () => {
     clearTimeout(timeout);
-    timeout = setTimeout(applyFilters, 300);
+    timeout = setTimeout(() => {
+      loadOrders();
+    }, 300);
   };
 })();
 
 const applyFilters = () => {
-  // Apply filters logic here
-  console.log('Applying filters:', { searchQuery: searchQuery.value, statusFilter: statusFilter.value, driverFilter: driverFilter.value });
+  loadOrders();
 };
 
 const getStatusClass = (status: number) => {
@@ -219,28 +210,29 @@ const getStatusLabel = (status: number) => {
   }
 };
 
-const viewOrder = (order: any) => {
+const viewOrder = (order: AdminOrderSummary) => {
   console.log('View order:', order);
   // Implement order detail view
 };
 
-const assignOrder = (order: any) => {
+const assignOrder = (order: AdminOrderSummary) => {
   console.log('Assign order:', order);
   // Implement order assignment
 };
 
-const reassignOrder = (order: any) => {
+const reassignOrder = (order: AdminOrderSummary) => {
   console.log('Reassign order:', order);
   // Implement order reassignment
 };
 
-const formatDate = (dateString: string) => {
+const formatDate = (dateString?: string) => {
+  if (!dateString) return '-';
   return new Date(dateString).toLocaleString();
 };
 
 // Lifecycle
 onMounted(() => {
-  refreshOrders();
+  loadOrders();
 });
 </script>
 

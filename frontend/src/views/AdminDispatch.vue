@@ -118,10 +118,10 @@
           <div class="driver-list">
             <div
               v-for="driver in availableDrivers"
-              :key="driver.user_id"
+              :key="driver.user_id ?? driver.driver_id"
               class="driver-card"
               @click="selectDriver(driver)"
-              :class="{ 'selected': selectedDriver?.user_id === driver.user_id }"
+              :class="{ 'selected': selectedDriver?.driver_id === driver.driver_id }"
             >
               <div class="driver-header">
                 <div class="driver-avatar">
@@ -141,7 +141,7 @@
                 <div class="driver-stats">
                   <div class="stat">
                     <span class="stat-label">{{ $t('admin.dispatch.currentLoad') }}</span>
-                    <span class="stat-value">{{ driver.current_load || 0 }}/{{ driver.max_load || 10 }}</span>
+                    <span class="stat-value">{{ driver.current_load }}/{{ driver.max_load || 10 }}</span>
                   </div>
                   <div class="stat">
                     <span class="stat-label">{{ $t('admin.dispatch.rating') }}</span>
@@ -211,7 +211,7 @@
               <label>{{ $t('admin.dispatch.selectDriver') }}</label>
               <select v-model="selectedDriverId">
                 <option value="">{{ $t('admin.dispatch.chooseDriver') }}</option>
-                <option v-for="driver in availableDrivers" :key="driver.user_id" :value="driver.user_id">
+                <option v-for="driver in availableDrivers" :key="driver.user_id ?? driver.driver_id" :value="driver.driver_id">
                   {{ driver.nick_name }} ({{ driver.current_load || 0 }}/{{ driver.max_load || 10 }})
                 </option>
               </select>
@@ -245,13 +245,14 @@
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from '@/composables/useI18n';
 import AdminNavigation from '@/components/AdminNavigation.vue';
+import { getDispatchDrivers, type DispatchDriver } from '@/api/admin';
 
 const { t } = useI18n();
 
 // State
 const isLoading = ref(false);
 const selectedOrders = ref<string[]>([]);
-const selectedDriver = ref<any>(null);
+const selectedDriver = ref<DispatchDriver | null>(null);
 const selectedDriverId = ref('');
 const assignmentPriority = ref('1');
 const assignmentNotes = ref('');
@@ -259,6 +260,7 @@ const driverSortBy = ref('name');
 const showAssignmentModal = ref(false);
 const currentOrder = ref<any>(null);
 const todayAssignments = ref(15);
+const driversLoading = ref(false);
 
 // Mock data
 const pendingOrders = ref([
@@ -284,26 +286,7 @@ const pendingOrders = ref([
   }
 ]);
 
-const availableDrivers = ref([
-  {
-    user_id: 1,
-    nick_name: 'Mike Johnson',
-    vehicle_type: 'Van',
-    current_load: 3,
-    max_load: 10,
-    rating: 4.8,
-    current_location: 'Downtown Toronto'
-  },
-  {
-    user_id: 2,
-    nick_name: 'Sarah Wilson',
-    vehicle_type: 'Truck',
-    current_load: 1,
-    max_load: 8,
-    rating: 4.9,
-    current_location: 'North Vancouver'
-  }
-]);
+const availableDrivers = ref<DispatchDriver[]>([]);
 
 const recentAssignments = ref([
   {
@@ -356,7 +339,7 @@ const selectAllOrders = () => {
   }
 };
 
-const selectDriver = (driver: any) => {
+const selectDriver = (driver: DispatchDriver) => {
   selectedDriver.value = driver;
 };
 
@@ -365,7 +348,7 @@ const assignToDriver = (order: any) => {
   showAssignmentModal.value = true;
 };
 
-const assignSelectedToDriver = (driver: any) => {
+const assignSelectedToDriver = (driver: DispatchDriver) => {
   if (selectedOrders.value.length === 0) return;
   console.log('Assign selected orders to driver:', { orders: selectedOrders.value, driver: driver.nick_name });
   selectedOrders.value = [];
@@ -415,8 +398,19 @@ const formatTime = (dateString: string) => {
   return new Date(dateString).toLocaleTimeString();
 };
 
+const loadAvailableDrivers = async () => {
+  driversLoading.value = true;
+  try {
+    availableDrivers.value = await getDispatchDrivers();
+  } catch (error) {
+    console.error('Failed to fetch available drivers', error);
+  } finally {
+    driversLoading.value = false;
+  }
+};
+
 onMounted(() => {
-  console.log('Dispatch view mounted');
+  loadAvailableDrivers();
 });
 </script>
 

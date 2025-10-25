@@ -17,6 +17,7 @@ from app.schemas.admin import (
     AdminDashboardStats,
     AlertActionRequest,
     BulkActionRequest,
+    DispatchDriver,
     DriverAlertResponse,
     DriverAssignment,
     DriverCreate,
@@ -29,6 +30,8 @@ from app.schemas.admin import (
     PerformanceAnalyticsRequest,
     PerformanceComparisonResponse
 )
+from app.schemas.order import OrderSummary
+from app.services import order_service
 
 router = APIRouter()
 
@@ -81,6 +84,60 @@ async def get_dashboard_stats(
         completed_orders=completed_orders,
         completion_rate=completion_rate
     )
+
+
+@router.get("/dispatch/drivers", response_model=List[DispatchDriver])
+async def get_dispatch_drivers(
+    session: AsyncSession = Depends(get_db_session),
+    current_admin: User = Depends(get_current_admin)
+) -> List[DispatchDriver]:
+    """Return drivers that are available for manual/auto dispatch."""
+
+    active_loads_subquery = (
+        select(
+            Order.driver_id.label("driver_id"),
+            func.count(Order.id).label("current_load")
+        )
+        .where(Order.shipping_status.in_([0, 1, 2]))
+        .group_by(Order.driver_id)
+        .subquery()
+    )
+
+    query = (
+        select(
+            Driver,
+            User,
+            func.coalesce(active_loads_subquery.c.current_load, 0).label("current_load")
+        )
+        .outerjoin(User, Driver.phone == User.phonenumber)
+        .outerjoin(active_loads_subquery, Driver.id == active_loads_subquery.c.driver_id)
+        .where(Driver.status == 1)
+        .order_by(Driver.name)
+    )
+
+    result = await session.execute(query)
+    rows = result.all()
+
+    dispatch_drivers: List[DispatchDriver] = []
+    for driver, user, current_load in rows:
+        dispatch_drivers.append(DispatchDriver(
+            driver_id=driver.id,
+            user_id=user.user_id if user else None,
+            name=driver.name,
+            nick_name=user.nick_name if user else driver.name,
+            phone=driver.phone,
+            vehicle_type=driver.vehicle_type,
+            vehicle_plate=driver.vehicle_plate,
+            status=driver.status,
+            rating=float(driver.rating or 0),
+            total_deliveries=driver.total_deliveries or 0,
+            current_load=current_load or 0,
+            max_load=10,
+            current_location=None,
+            is_available=driver.status == 1
+        ))
+
+    return dispatch_drivers
 
 
 @router.get("/drivers", response_model=List[DriverResponse])
@@ -829,3 +886,26 @@ async def log_driver_action(
     await session.commit()
 
     return {"message": "Driver action logged successfully"}
+
+
+@router.get("/orders", response_model=List[OrderSummary])
+async def list_orders(
+    status: Optional[int] = Query(None, ge=0, le=3),
+    driver_id: Optional[int] = Query(None, ge=1),
+    unassigned: bool = Query(False),
+    search: Optional[str] = Query(None, min_length=1),
+    limit: int = Query(100, ge=1, le=500),
+    session: AsyncSession = Depends(get_db_session),
+    current_admin: User = Depends(get_current_admin)
+) -> List[OrderSummary]:
+    """List orders for admin console with optional filtering."""
+
+    orders = await order_service.fetch_orders(
+        session=session,
+        status=status,
+        driver_id=driver_id,
+        unassigned=unassigned,
+        search=search,
+        limit=limit
+    )
+    return orders

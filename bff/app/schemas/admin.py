@@ -72,6 +72,23 @@ class DriverResponse(DriverBase):
         from_attributes = True
 
 
+class DispatchDriver(BaseModel):
+    driver_id: int
+    user_id: Optional[int] = None
+    name: str
+    nick_name: str
+    phone: str
+    vehicle_type: Optional[str] = None
+    vehicle_plate: Optional[str] = None
+    status: int
+    rating: float
+    total_deliveries: int
+    current_load: int
+    max_load: Optional[int] = None
+    current_location: Optional[str] = None
+    is_available: bool
+
+
 class DriverAssignment(BaseModel):
     driver_id: int
     order_sn: str

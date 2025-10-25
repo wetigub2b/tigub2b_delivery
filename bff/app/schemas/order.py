@@ -23,6 +23,8 @@ class OrderSummary(BaseModel):
     order_sn: str
     shipping_status: int
     order_status: int
+    driver_id: Optional[int] = None
+    driver_name: Optional[str] = None
     receiver_name: str
     receiver_phone: str
     receiver_address: str
@@ -31,6 +33,7 @@ class OrderSummary(BaseModel):
     receiver_postal_code: Optional[str]
     shipping_status_label: str
     order_status_label: str
+    create_time: datetime
     pickup_location: Optional[WarehouseSnapshot]
     items: List[OrderItem]
 

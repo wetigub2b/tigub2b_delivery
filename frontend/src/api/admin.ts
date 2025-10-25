@@ -77,6 +77,57 @@ export interface OrderDispatch {
   estimated_delivery_time?: string;
 }
 
+export interface DispatchDriver {
+  driver_id: number;
+  user_id?: number;
+  name: string;
+  nick_name: string;
+  phone: string;
+  vehicle_type?: string;
+  vehicle_plate?: string;
+  status: number;
+  rating: number;
+  total_deliveries: number;
+  current_load: number;
+  max_load?: number;
+  current_location?: string;
+  is_available: boolean;
+}
+
+export interface AdminWarehouseSnapshot {
+  id: number;
+  name: string;
+  address: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+export interface AdminOrderItem {
+  sku_id: number;
+  sku_code?: string;
+  product_name: string;
+  quantity: number;
+}
+
+export interface AdminOrderSummary {
+  order_sn: string;
+  shipping_status: number;
+  order_status: number;
+  driver_id?: number;
+  driver_name?: string;
+  receiver_name: string;
+  receiver_phone: string;
+  receiver_address: string;
+  receiver_city?: string;
+  receiver_province?: string;
+  receiver_postal_code?: string;
+  shipping_status_label: string;
+  order_status_label: string;
+  create_time: string;
+  pickup_location?: AdminWarehouseSnapshot;
+  items: AdminOrderItem[];
+}
+
 export interface BulkActionRequest {
   action: 'activate' | 'deactivate' | 'delete' | 'assign_role';
   driver_ids: number[];
@@ -157,6 +208,22 @@ export async function assignOrderToDriver(orderSn: string, driverId: number, not
 
 export async function dispatchOrders(dispatches: OrderDispatch[]) {
   await adminClient.post('/admin/orders/dispatch', dispatches);
+}
+
+export async function getDispatchDrivers() {
+  const { data } = await adminClient.get<DispatchDriver[]>('/admin/dispatch/drivers');
+  return data;
+}
+
+export async function getAdminOrders(params?: {
+  status?: number;
+  driver_id?: number;
+  unassigned?: boolean;
+  search?: string;
+  limit?: number;
+}) {
+  const { data } = await adminClient.get<AdminOrderSummary[]>('/admin/orders', { params });
+  return data;
 }
 
 // Performance monitoring interfaces

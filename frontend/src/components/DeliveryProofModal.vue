@@ -76,6 +76,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { Capacitor } from '@capacitor/core';
 import type { DeliveryOrder } from '@/store/orders';
 
 const props = defineProps<{
@@ -92,8 +93,17 @@ const photoPreview = ref<string>('');
 const notes = ref('');
 const photoError = ref('');
 const isProcessing = ref(false);
+const fileInputRef = ref<HTMLInputElement>();
+
+const isWeb = Capacitor.getPlatform() === 'web';
 
 async function takePhoto() {
+  if (isWeb) {
+    // Web fallback - use file input with camera
+    triggerFileInput(true);
+    return;
+  }
+
   try {
     photoError.value = '';
 
@@ -116,16 +126,7 @@ async function takePhoto() {
     });
 
     if (photo.dataUrl) {
-      // Validate size
-      const sizeBytes = Math.ceil(photo.dataUrl.length * 0.75); // Approximate base64 size
-      const sizeMB = sizeBytes / (1024 * 1024);
-
-      if (sizeMB > 4) {
-        photoError.value = `Photo size (${sizeMB.toFixed(1)}MB) exceeds 4MB limit`;
-        return;
-      }
-
-      photoPreview.value = photo.dataUrl;
+      validateAndSetPhoto(photo.dataUrl);
     }
   } catch (error) {
     console.error('Camera error:', error);
@@ -134,6 +135,12 @@ async function takePhoto() {
 }
 
 async function uploadPhoto() {
+  if (isWeb) {
+    // Web fallback - use file input
+    triggerFileInput(false);
+    return;
+  }
+
   try {
     photoError.value = '';
 
@@ -155,21 +162,73 @@ async function uploadPhoto() {
     });
 
     if (photo.dataUrl) {
-      // Validate size
-      const sizeBytes = Math.ceil(photo.dataUrl.length * 0.75);
-      const sizeMB = sizeBytes / (1024 * 1024);
-
-      if (sizeMB > 4) {
-        photoError.value = `Photo size (${sizeMB.toFixed(1)}MB) exceeds 4MB limit`;
-        return;
-      }
-
-      photoPreview.value = photo.dataUrl;
+      validateAndSetPhoto(photo.dataUrl);
     }
   } catch (error) {
     console.error('Upload error:', error);
     photoError.value = 'Failed to upload photo';
   }
+}
+
+function triggerFileInput(useCamera: boolean) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/jpeg,image/jpg,image/png';
+  if (useCamera) {
+    input.capture = 'environment';
+  }
+
+  input.onchange = (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (file) {
+      handleFileSelect(file);
+    }
+  };
+
+  input.click();
+}
+
+function handleFileSelect(file: File) {
+  photoError.value = '';
+
+  // Validate file type
+  if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
+    photoError.value = 'Only JPEG and PNG images are allowed';
+    return;
+  }
+
+  // Validate file size
+  const sizeMB = file.size / (1024 * 1024);
+  if (sizeMB > 4) {
+    photoError.value = `Photo size (${sizeMB.toFixed(1)}MB) exceeds 4MB limit`;
+    return;
+  }
+
+  // Convert to base64
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const dataUrl = e.target?.result as string;
+    if (dataUrl) {
+      photoPreview.value = dataUrl;
+    }
+  };
+  reader.onerror = () => {
+    photoError.value = 'Failed to read file';
+  };
+  reader.readAsDataURL(file);
+}
+
+function validateAndSetPhoto(dataUrl: string) {
+  // Validate size
+  const sizeBytes = Math.ceil(dataUrl.length * 0.75); // Approximate base64 size
+  const sizeMB = sizeBytes / (1024 * 1024);
+
+  if (sizeMB > 4) {
+    photoError.value = `Photo size (${sizeMB.toFixed(1)}MB) exceeds 4MB limit`;
+    return;
+  }
+
+  photoPreview.value = dataUrl;
 }
 
 function clearPhoto() {

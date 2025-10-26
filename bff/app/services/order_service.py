@@ -131,12 +131,12 @@ async def fetch_assigned_orders(session: AsyncSession, driver_id: int, include_c
         session: Database session
         driver_id: ID of the driver
         include_completed: If True, includes completed orders (shipping_status=3).
-                          If False, only active orders (0,1,2) for route planning.
+                          If False, only in-transit orders (1,2) for route planning.
     """
     if include_completed:
         status_filter = [0, 1, 2, 3]  # All statuses for TaskBoard
     else:
-        status_filter = [0, 1, 2]  # Only active orders for RoutePlanner
+        status_filter = [1, 2]  # Only in-transit orders for RoutePlanner (exclude pending pickup)
 
     stmt = (
         select(Order)

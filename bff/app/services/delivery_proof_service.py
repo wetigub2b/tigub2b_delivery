@@ -1,4 +1,5 @@
 import base64
+import logging
 import os
 from datetime import datetime
 from pathlib import Path
@@ -16,12 +17,17 @@ UPLOAD_DIR = Path("/var/www/deliveries/photos")
 MAX_FILE_SIZE = 4 * 1024 * 1024  # 4MB in bytes
 ALLOWED_MIME_TYPES = {"image/jpeg", "image/jpg", "image/png"}
 
+logger = logging.getLogger(__name__)
+
 
 def ensure_upload_directory():
     """Create upload directory if it doesn't exist"""
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-    # Set permissions
-    os.chmod(UPLOAD_DIR, 0o755)
+    # Attempt to set permissions, but don't fail if the process lacks rights (e.g. non-root)
+    try:
+        os.chmod(UPLOAD_DIR, 0o755)
+    except PermissionError:
+        logger.warning("Unable to change permissions for %s; continuing anyway", UPLOAD_DIR)
 
 
 def decode_base64_image(data_url: str) -> tuple[bytes, str]:

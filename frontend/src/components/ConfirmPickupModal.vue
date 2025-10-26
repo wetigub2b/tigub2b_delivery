@@ -215,6 +215,7 @@ function handleCancel() {
 
 .modal-button--confirm:hover:not(:disabled) {
   background: var(--color-primary-dark);
+  color: var(--color-white);
 }
 
 .modal-button--confirm:disabled {

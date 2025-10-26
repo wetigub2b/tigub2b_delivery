@@ -151,6 +151,7 @@ function emitStatus(shippingStatus: number) {
 
 .card__button--primary:hover {
   background: var(--color-primary-dark);
+  color: var(--color-white);
   border-color: var(--color-primary-dark);
 }
 

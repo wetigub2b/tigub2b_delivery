@@ -156,6 +156,12 @@ async function handlePickup(orderSn: string) {
   border-color: var(--color-primary);
 }
 
+.board__filter--active:hover {
+  background: var(--color-primary-dark);
+  color: var(--color-white);
+  border-color: var(--color-primary-dark);
+}
+
 .board__list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));

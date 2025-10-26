@@ -174,6 +174,7 @@ async function handleConfirm() {
 
 .card__button--primary:hover:not(:disabled) {
   background: var(--color-primary-dark);
+  color: var(--color-white);
   border-color: var(--color-primary-dark);
 }
 

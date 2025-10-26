@@ -28,10 +28,24 @@
     <section class="detail__card">
       <h3>{{ $t('orderDetail.items') }}</h3>
       <ul>
-        <li v-for="item in order?.items" :key="item.skuId">
-          <strong>{{ item.productName }}</strong>
-          <span>SKU: {{ item.skuCode }}</span>
-          <span>Qty: {{ item.quantity }}</span>
+        <li v-for="item in order?.items" :key="item.skuId" class="detail__item">
+          <img
+            v-if="item.skuImage"
+            :src="item.skuImage"
+            :alt="item.productName"
+            class="detail__item-image"
+          />
+          <div v-else class="detail__item-placeholder">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+              <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/>
+            </svg>
+          </div>
+          <div class="detail__item-info">
+            <strong>{{ item.productName }}</strong>
+            <span>SKU: {{ item.skuCode }}</span>
+            <span>Qty: {{ item.quantity }}</span>
+          </div>
         </li>
       </ul>
     </section>
@@ -98,5 +112,53 @@ const order = computed(() => ordersStore.activeBySn(orderSn));
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.detail__item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.detail__item-image {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+  border: 1px solid #e2e8f0;
+}
+
+.detail__item-placeholder {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e2e8f0;
+  border-radius: 8px;
+  flex-shrink: 0;
+  color: #94a3b8;
+}
+
+.detail__item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.detail__item-info strong {
+  font-size: 16px;
+  color: #1f2937;
+}
+
+.detail__item-info span {
+  font-size: 14px;
+  color: #6b7280;
 }
 </style>

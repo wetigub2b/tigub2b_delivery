@@ -14,6 +14,16 @@ if TYPE_CHECKING:
     from app.models.driver import Driver
 
 
+class UploadedFile(Base):
+    __tablename__ = "tigu_uploaded_files"
+
+    id: Mapped[int] = mapped_column(BIGINT(unsigned=True), primary_key=True)
+    file_url: Mapped[str] = mapped_column(String(500))
+    biz_type: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    biz_id: Mapped[int | None] = mapped_column(BIGINT(unsigned=True), nullable=True)
+    is_main: Mapped[int | None] = mapped_column(Integer, nullable=True, default=0)
+
+
 class Order(Base):
     __tablename__ = "tigu_order"
 

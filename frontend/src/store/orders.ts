@@ -33,6 +33,7 @@ export interface DeliveryOrder {
     skuCode: string;
     productName: string;
     quantity: number;
+    skuImage?: string;
   }>;
 }
 

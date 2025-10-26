@@ -21,6 +21,7 @@ class OrderItem(BaseModel):
     sku_code: Optional[str] = Field(alias='skuCode')
     product_name: str = Field(alias='productName')
     quantity: int
+    sku_image: Optional[str] = Field(default=None, alias='skuImage')
 
 
 class OrderSummary(BaseModel):

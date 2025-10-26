@@ -7,7 +7,7 @@ from sqlalchemy import or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.order import Order, OrderItem, Warehouse
+from app.models.order import Order, OrderItem, UploadedFile, Warehouse
 from app.schemas.order import OrderDetail, OrderItem as OrderItemSchema, OrderSummary, WarehouseSnapshot
 
 SHIPPING_STATUS_LABELS = {
@@ -35,12 +35,32 @@ def _resolve_text(value: str | dict | None) -> str:
     return str(value)
 
 
-def _build_item(item: OrderItem) -> OrderItemSchema:
+async def _build_item(session: AsyncSession, item: OrderItem) -> OrderItemSchema:
+    # Fetch main SKU image from uploaded files
+    sku_image = None
+    stmt = (
+        select(UploadedFile.file_url)
+        .where(UploadedFile.biz_type == 'product_sku')
+        .where(UploadedFile.biz_id == item.sku_id)
+        .where(UploadedFile.is_main == 1)
+        .limit(1)
+    )
+    result = await session.execute(stmt)
+    file_url = result.scalar_one_or_none()
+
+    if file_url:
+        # Prepend base URL if the path is relative
+        if file_url.startswith('/'):
+            sku_image = f"https://api.wetigu.com{file_url}"
+        else:
+            sku_image = file_url
+
     return OrderItemSchema(
         sku_id=item.sku_id,
         sku_code=item.sku_code,
         product_name=_resolve_text(item.product_name),
-        quantity=item.quantity
+        quantity=item.quantity,
+        sku_image=sku_image
     )
 
 
@@ -57,9 +77,9 @@ def _build_pickup_location(warehouse: Warehouse | None) -> WarehouseSnapshot | N
     )
 
 
-def _serialize(order: Order) -> OrderSummary:
+async def _serialize(session: AsyncSession, order: Order) -> OrderSummary:
     pickup = _build_pickup_location(order.warehouse)
-    items = [_build_item(item) for item in order.items]
+    items = [await _build_item(session, item) for item in order.items]
     return OrderSummary(
         order_sn=order.order_sn,
         shipping_status=order.shipping_status,
@@ -80,8 +100,8 @@ def _serialize(order: Order) -> OrderSummary:
     )
 
 
-def _serialize_detail(order: Order) -> OrderDetail:
-    base = _serialize(order)
+async def _serialize_detail(session: AsyncSession, order: Order) -> OrderDetail:
+    base = await _serialize(session, order)
     return OrderDetail(
         **base.model_dump(),
         logistics_order_number=order.logistics_order_number,
@@ -115,7 +135,7 @@ async def fetch_assigned_orders(session: AsyncSession, driver_id: int, include_c
     )
     result = await session.execute(stmt)
     orders = result.scalars().unique().all()
-    return [_serialize(order) for order in orders]
+    return [await _serialize(session, order) for order in orders]
 
 
 async def fetch_order_detail(session: AsyncSession, order_sn: str, driver_id: int) -> OrderDetail | None:
@@ -128,7 +148,7 @@ async def fetch_order_detail(session: AsyncSession, order_sn: str, driver_id: in
     order = result.scalars().unique().first()
     if not order:
         return None
-    return _serialize_detail(order)
+    return await _serialize_detail(session, order)
 
 
 async def update_order_shipping_status(
@@ -210,4 +230,4 @@ async def fetch_orders(
 
     result = await session.execute(stmt)
     orders = result.scalars().unique().all()
-    return [_serialize(order) for order in orders]
+    return [await _serialize(session, order) for order in orders]

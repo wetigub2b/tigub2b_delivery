@@ -5,6 +5,7 @@ export interface OrderItemDto {
   skuCode: string;
   productName: string;
   quantity: number;
+  skuImage?: string;
 }
 
 export interface DeliveryOrderDto {

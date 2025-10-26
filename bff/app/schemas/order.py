@@ -14,6 +14,14 @@ class WarehouseSnapshot(BaseModel):
     longitude: Optional[float] = None
 
 
+class DeliveryProofInfo(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    photo_url: str = Field(alias='photoUrl')
+    notes: Optional[str] = None
+    created_at: datetime = Field(alias='createdAt')
+
+
 class OrderItem(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
@@ -49,6 +57,7 @@ class OrderDetail(OrderSummary):
     logistics_order_number: Optional[str] = Field(alias='logisticsOrderNumber')
     shipping_time: Optional[datetime] = Field(alias='shippingTime')
     finish_time: Optional[datetime] = Field(alias='finishTime')
+    delivery_proof: Optional[DeliveryProofInfo] = Field(default=None, alias='deliveryProof')
 
 
 class UpdateShippingStatus(BaseModel):

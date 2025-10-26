@@ -10,6 +10,12 @@ import {
   uploadDeliveryProof
 } from '@/api/orders';
 
+export interface DeliveryProof {
+  photoUrl: string;
+  notes?: string;
+  createdAt: string;
+}
+
 export interface DeliveryOrder {
   orderSn: string;
   shippingStatus: number;
@@ -22,6 +28,7 @@ export interface DeliveryOrder {
   receiverPostalCode: string;
   shippingStatusLabel: string;
   orderStatusLabel: string;
+  deliveryProof?: DeliveryProof;
   pickupLocation?: {
     name: string;
     address: string;

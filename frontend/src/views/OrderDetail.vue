@@ -49,6 +49,24 @@
         </li>
       </ul>
     </section>
+
+    <section v-if="order?.deliveryProof" class="detail__card">
+      <h3>{{ $t('orderDetail.deliveryProof') }}</h3>
+      <div class="detail__proof">
+        <img
+          :src="order.deliveryProof.photoUrl"
+          alt="Delivery Proof"
+          class="detail__proof-image"
+        />
+        <div v-if="order.deliveryProof.notes" class="detail__proof-notes">
+          <strong>{{ $t('orderDetail.notes') }}:</strong>
+          <p>{{ order.deliveryProof.notes }}</p>
+        </div>
+        <div class="detail__proof-date">
+          <small>{{ $t('orderDetail.deliveredAt') }}: {{ new Date(order.deliveryProof.createdAt).toLocaleString() }}</small>
+        </div>
+      </div>
+    </section>
   </article>
 </template>
 
@@ -160,5 +178,46 @@ const order = computed(() => ordersStore.activeBySn(orderSn));
 .detail__item-info span {
   font-size: 14px;
   color: #6b7280;
+}
+
+.detail__proof {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detail__proof-image {
+  width: 100%;
+  max-width: 500px;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  object-fit: contain;
+}
+
+.detail__proof-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.detail__proof-notes strong {
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.detail__proof-notes p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.detail__proof-date {
+  color: #6b7280;
+  font-size: 13px;
 }
 </style>

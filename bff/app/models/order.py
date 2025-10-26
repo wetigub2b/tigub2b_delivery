@@ -12,6 +12,7 @@ from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.models.driver import Driver
+    from app.models.delivery_proof import DeliveryProof
 
 
 class UploadedFile(Base):
@@ -53,6 +54,7 @@ class Order(Base):
     items: Mapped[list[OrderItem]] = relationship("OrderItem", back_populates="order", lazy="selectin")
     warehouse: Mapped[Warehouse | None] = relationship("Warehouse", back_populates="orders", lazy="joined")
     driver: Mapped[Driver | None] = relationship("Driver", lazy="joined")
+    delivery_proof: Mapped["DeliveryProof | None"] = relationship("DeliveryProof", back_populates="order", lazy="joined", uselist=False)
 
 
 class OrderItem(Base):

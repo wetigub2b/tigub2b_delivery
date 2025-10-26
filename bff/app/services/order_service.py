@@ -8,7 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.order import Order, OrderItem, UploadedFile, Warehouse
-from app.schemas.order import OrderDetail, OrderItem as OrderItemSchema, OrderSummary, WarehouseSnapshot
+from app.models.delivery_proof import DeliveryProof
+from app.schemas.order import DeliveryProofInfo, OrderDetail, OrderItem as OrderItemSchema, OrderSummary, WarehouseSnapshot
 
 SHIPPING_STATUS_LABELS = {
     0: "Not Shipped",
@@ -77,6 +78,16 @@ def _build_pickup_location(warehouse: Warehouse | None) -> WarehouseSnapshot | N
     )
 
 
+def _build_delivery_proof(proof: DeliveryProof | None) -> DeliveryProofInfo | None:
+    if not proof:
+        return None
+    return DeliveryProofInfo(
+        photo_url=proof.photo_url,
+        notes=proof.notes,
+        created_at=proof.created_at
+    )
+
+
 async def _serialize(session: AsyncSession, order: Order) -> OrderSummary:
     pickup = _build_pickup_location(order.warehouse)
     items = [await _build_item(session, item) for item in order.items]
@@ -102,11 +113,13 @@ async def _serialize(session: AsyncSession, order: Order) -> OrderSummary:
 
 async def _serialize_detail(session: AsyncSession, order: Order) -> OrderDetail:
     base = await _serialize(session, order)
+    proof = _build_delivery_proof(order.delivery_proof)
     return OrderDetail(
         **base.model_dump(),
         logistics_order_number=order.logistics_order_number,
         shipping_time=order.shipping_time,
-        finish_time=order.finish_time
+        finish_time=order.finish_time,
+        delivery_proof=proof
     )
 
 

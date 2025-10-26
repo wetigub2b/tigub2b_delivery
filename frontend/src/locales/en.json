@@ -84,7 +84,9 @@
     "timeline": "Timeline",
     "trackingInfo": "Tracking Information",
     "contactCustomer": "Contact Customer",
-    "updateStatus": "Update Status"
+    "updateStatus": "Update Status",
+    "deliveryProof": "Delivery Proof",
+    "deliveredAt": "Delivered At"
   },
   "login": {
     "title": "Driver Sign In",

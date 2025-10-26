@@ -326,7 +326,7 @@
     "pickUp": "接单",
     "pickedUp": "已取货",
     "delivered": "已送达",
-    "confirmPickup": "确认接取此订单？",
+    "confirmPickup": "确认接单",
     "pickupSuccess": "订单接取成功",
     "pickupError": "订单接取失败"
   },

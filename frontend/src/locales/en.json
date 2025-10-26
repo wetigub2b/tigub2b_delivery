@@ -139,7 +139,7 @@
     "pickUp": "Pick Up",
     "pickedUp": "Picked Up",
     "delivered": "Delivered",
-    "confirmPickup": "Confirm pickup of this order?",
+    "confirmPickup": "Confirm Order Pickup",
     "pickupSuccess": "Order picked up successfully",
     "pickupError": "Failed to pick up order"
   },

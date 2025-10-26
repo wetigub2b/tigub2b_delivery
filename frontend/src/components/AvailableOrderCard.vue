@@ -17,41 +17,41 @@
     <footer class="card__footer">
       <RouterLink :to="`/orders/${order.orderSn}`" class="card__link">{{ $t('orderCard.openDetails') }}</RouterLink>
       <button
-        @click="handlePickup"
+        @click="showModal = true"
         :disabled="isProcessing"
         class="card__button card__button--primary"
       >
-        {{ isProcessing ? $t('common.loading') : $t('orderCard.pickUp') }}
+        {{ $t('orderCard.pickUp') }}
       </button>
     </footer>
   </article>
+
+  <ConfirmPickupModal
+    :show="showModal"
+    :order="order"
+    :is-processing="isProcessing"
+    @confirm="handleConfirm"
+    @cancel="showModal = false"
+  />
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useI18n } from 'vue-i18n';
 import type { DeliveryOrder } from '@/store/orders';
+import ConfirmPickupModal from './ConfirmPickupModal.vue';
 
 const props = defineProps<{ order: DeliveryOrder }>();
 const emit = defineEmits(['pickup']);
 
-const { t } = useI18n();
+const showModal = ref(false);
 const isProcessing = ref(false);
 
-async function handlePickup() {
+async function handleConfirm() {
   if (isProcessing.value) return;
 
-  if (!confirm(t('orderCard.confirmPickup'))) {
-    return;
-  }
-
   isProcessing.value = true;
-  try {
-    emit('pickup', props.order.orderSn);
-  } finally {
-    // Keep processing state until parent handles it
-    // Parent will remove this card from the list
-  }
+  emit('pickup', props.order.orderSn);
+  showModal.value = false;
 }
 </script>
 

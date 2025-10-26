@@ -18,21 +18,46 @@
       <RouterLink :to="`/orders/${order.orderSn}`" class="card__link">{{ $t('orderCard.openDetails') }}</RouterLink>
       <div class="card__actions">
         <button @click="emitStatus(1)" class="card__button">{{ $t('orderCard.pickedUp') }}</button>
-        <button @click="emitStatus(3)" class="card__button card__button--primary">{{ $t('orderCard.delivered') }}</button>
+        <button @click="showProofModal = true" class="card__button card__button--primary">{{ $t('orderCard.delivered') }}</button>
       </div>
     </footer>
+
+    <DeliveryProofModal
+      :show="showProofModal"
+      :order="order"
+      @submit="handleProofSubmit"
+      @cancel="showProofModal = false"
+    />
   </article>
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits } from 'vue';
+import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useOrdersStore } from '@/store/orders';
 import type { DeliveryOrder } from '@/store/orders';
+import DeliveryProofModal from './DeliveryProofModal.vue';
 
 const props = defineProps<{ order: DeliveryOrder }>();
 const emit = defineEmits(['status-update']);
 
+const { t } = useI18n();
+const ordersStore = useOrdersStore();
+const showProofModal = ref(false);
+
 function emitStatus(shippingStatus: number) {
   emit('status-update', { orderSn: props.order.orderSn, shippingStatus });
+}
+
+async function handleProofSubmit(photo: string, notes: string) {
+  try {
+    await ordersStore.uploadDeliveryProof(props.order.orderSn, photo, notes);
+    showProofModal.value = false;
+    alert(t('orderCard.deliverySuccess'));
+  } catch (error) {
+    console.error('Failed to upload delivery proof:', error);
+    alert(t('orderCard.deliveryError'));
+  }
 }
 </script>
 

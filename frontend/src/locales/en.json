@@ -141,7 +141,16 @@
     "delivered": "Delivered",
     "confirmPickup": "Confirm Order Pickup",
     "pickupSuccess": "Order picked up successfully",
-    "pickupError": "Failed to pick up order"
+    "pickupError": "Failed to pick up order",
+    "deliveryProof": "Delivery Proof",
+    "takePhoto": "Take Photo",
+    "uploadPhoto": "Upload Photo",
+    "retakePhoto": "Retake Photo",
+    "deliveryNotes": "Delivery Notes (Optional)",
+    "deliveryNotesPlaceholder": "Add any delivery notes...",
+    "submitDelivery": "Submit Delivery",
+    "deliverySuccess": "Delivery proof uploaded successfully",
+    "deliveryError": "Failed to upload delivery proof"
   },
   "mapPanel": {
     "loadingMessage": "Map preview loads when Google Maps script is available."

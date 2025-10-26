@@ -39,6 +39,13 @@ export interface RoutePlanDto {
   }>;
 }
 
+export interface DeliveryProofDto {
+  status: string;
+  photoUrl: string;
+  orderSn: string;
+  uploadedAt: string;
+}
+
 export async function fetchAssignedOrders() {
   const { data } = await client.get<DeliveryOrderDto[]>('/orders/assigned');
   return data;
@@ -64,6 +71,14 @@ export async function updateShippingStatus(orderSn: string, payload: { shippingS
 
 export async function fetchRoutePlan() {
   const { data } = await client.post<RoutePlanDto>('/routes/optimize');
+  return data;
+}
+
+export async function uploadDeliveryProof(orderSn: string, photo: string, notes?: string) {
+  const { data } = await client.post<DeliveryProofDto>(
+    `/orders/${orderSn}/proof`,
+    { photo, notes }
+  );
   return data;
 }
 

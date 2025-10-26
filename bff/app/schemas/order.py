@@ -57,6 +57,21 @@ class UpdateShippingStatus(BaseModel):
 
 
 class ProofOfDelivery(BaseModel):
-    notes: Optional[str] = None
-    photo_url: Optional[str] = None
-    signature_url: Optional[str] = None
+    model_config = ConfigDict(populate_by_name=True)
+
+    photo: str = Field(..., description="Base64 encoded image or data URL")
+    notes: Optional[str] = Field(default=None, max_length=1000)
+
+    @property
+    def is_data_url(self) -> bool:
+        """Check if photo is a data URL"""
+        return self.photo.startswith('data:image/')
+
+
+class ProofOfDeliveryResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    status: str
+    photo_url: str = Field(alias='photoUrl')
+    order_sn: str = Field(alias='orderSn')
+    uploaded_at: datetime = Field(alias='uploadedAt')

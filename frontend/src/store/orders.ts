@@ -6,7 +6,8 @@ import {
   fetchRoutePlan,
   login,
   pickupOrder,
-  updateShippingStatus
+  updateShippingStatus,
+  uploadDeliveryProof
 } from '@/api/orders';
 
 export interface DeliveryOrder {
@@ -173,6 +174,12 @@ export const useOrdersStore = defineStore('orders', {
         order.shippingStatus = payload.shippingStatus;
         order.shippingStatusLabel = shippingLabels[payload.shippingStatus] || 'Unknown';
       }
+    },
+    async uploadDeliveryProof(orderSn: string, photo: string, notes?: string) {
+      const result = await uploadDeliveryProof(orderSn, photo, notes);
+      // Order status is automatically updated to delivered (3) by the backend
+      this.patchOrderStatus({ orderSn, shippingStatus: 3 });
+      return result;
     },
     async fetchRoutePlan() {
       const data = await fetchRoutePlan();

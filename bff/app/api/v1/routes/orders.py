@@ -4,8 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api import deps
 from app.models.driver import Driver
-from app.schemas.order import OrderDetail, OrderSummary, ProofOfDelivery, UpdateShippingStatus
+from app.schemas.order import OrderDetail, OrderSummary, ProofOfDelivery, ProofOfDeliveryResponse, UpdateShippingStatus
 from app.services import order_service
+from app.services import delivery_proof_service
 
 router = APIRouter()
 
@@ -87,18 +88,44 @@ async def update_shipping_status(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
 
 
-@router.post("/{order_sn}/proof", status_code=status.HTTP_202_ACCEPTED)
+@router.post("/{order_sn}/proof", response_model=ProofOfDeliveryResponse, response_model_by_alias=True)
 async def upload_proof_of_delivery(
     order_sn: str,
     payload: ProofOfDelivery,
-    current_user=Depends(deps.get_current_user)
-) -> dict:
-    # TODO: integrate with object storage and persistence tables.
-    return {
-        "order_sn": order_sn,
-        "status": "queued",
-        "notes": payload.notes,
-        "photo_url": payload.photo_url,
-        "signature_url": payload.signature_url,
-        "driver_id": current_user.user_id
-    }
+    current_user=Depends(deps.get_current_user),
+    session: AsyncSession = Depends(deps.get_db_session)
+) -> ProofOfDeliveryResponse:
+    """
+    Upload delivery proof photo and notes.
+    Photo must be base64 encoded, max 4MB.
+    After successful upload, order status is automatically updated to delivered (3).
+    """
+    # Look up driver by phone number to get driver_id
+    result = await session.execute(select(Driver).where(Driver.phone == current_user.phonenumber))
+    driver = result.scalars().first()
+    if not driver:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Driver not found")
+
+    # Upload photo and create delivery proof record
+    proof = await delivery_proof_service.upload_delivery_proof(
+        session=session,
+        order_sn=order_sn,
+        driver_id=driver.id,
+        photo_data=payload.photo,
+        notes=payload.notes
+    )
+
+    # Update order status to delivered (3)
+    await order_service.update_order_shipping_status(
+        session=session,
+        order_sn=order_sn,
+        shipping_status=3,
+        driver_id=driver.id
+    )
+
+    return ProofOfDeliveryResponse(
+        status="uploaded",
+        photo_url=proof.photo_url,
+        order_sn=order_sn,
+        uploaded_at=proof.created_at
+    )

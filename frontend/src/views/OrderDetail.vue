@@ -35,12 +35,6 @@
         </li>
       </ul>
     </section>
-
-    <section class="detail__actions">
-      <button @click="markShipped" class="detail__button detail__button--primary">{{ $t('orderDetail.markPickedUp') }}</button>
-      <button @click="markDelivered" class="detail__button detail__button--success">{{ $t('orderDetail.markDelivered') }}</button>
-      <button @click="reportIssue" class="detail__button detail__button--ghost">{{ $t('orderDetail.reportIssue') }}</button>
-    </section>
   </article>
 </template>
 
@@ -58,19 +52,6 @@ onMounted(() => {
 });
 
 const order = computed(() => ordersStore.activeBySn(orderSn));
-
-function markShipped() {
-  ordersStore.updateShippingStatus(orderSn, 1);
-}
-
-function markDelivered() {
-  ordersStore.updateShippingStatus(orderSn, 3);
-}
-
-function reportIssue() {
-  // placeholder for future modal integration
-  console.warn('Report issue for order', orderSn);
-}
 </script>
 
 <style scoped>
@@ -117,34 +98,5 @@ function reportIssue() {
   display: flex;
   flex-direction: column;
   gap: 4px;
-}
-
-.detail__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.detail__button {
-  border: none;
-  padding: 12px 18px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.detail__button--primary {
-  background: #2563eb;
-  color: #ffffff;
-}
-
-.detail__button--success {
-  background: #16a34a;
-  color: #ffffff;
-}
-
-.detail__button--ghost {
-  background: transparent;
-  color: #1f2937;
-  border: 1px solid #cbd5f5;
 }
 </style>

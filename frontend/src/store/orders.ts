@@ -85,7 +85,7 @@ export const useOrdersStore = defineStore('orders', {
     byWorkflowState: state => (workflowState: string) => {
       switch (workflowState) {
         case 'available':
-          return state.availableOrders;
+          return state.availableOrders.filter(order => order.orderStatus !== 4);
         case 'pending_pickup':
           return state.orders.filter(order => order.shippingStatus === 0);
         case 'in_transit':

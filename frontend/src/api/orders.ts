@@ -44,6 +44,15 @@ export async function fetchAssignedOrders() {
   return data;
 }
 
+export async function fetchAvailableOrders() {
+  const { data } = await client.get<DeliveryOrderDto[]>('/orders/available');
+  return data;
+}
+
+export async function pickupOrder(orderSn: string) {
+  await client.post(`/orders/${orderSn}/pickup`);
+}
+
 export async function fetchOrderBySn(orderSn: string) {
   const { data } = await client.get<DeliveryOrderDto>(`/orders/${orderSn}`);
   return data;

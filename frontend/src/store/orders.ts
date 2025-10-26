@@ -1,9 +1,11 @@
 import { defineStore } from 'pinia';
 import {
   fetchAssignedOrders,
+  fetchAvailableOrders,
   fetchOrderBySn,
   fetchRoutePlan,
   login,
+  pickupOrder,
   updateShippingStatus
 } from '@/api/orders';
 
@@ -73,6 +75,7 @@ function decorate(order: DeliveryOrder): DeliveryOrder {
 export const useOrdersStore = defineStore('orders', {
   state: () => ({
     orders: [] as DeliveryOrder[],
+    availableOrders: [] as DeliveryOrder[],
     routePlan: null as RoutePlan | null,
     isLoading: false
   }),
@@ -80,6 +83,8 @@ export const useOrdersStore = defineStore('orders', {
     activeBySn: state => (orderSn: string) => state.orders.find(order => order.orderSn === orderSn),
     byWorkflowState: state => (workflowState: string) => {
       switch (workflowState) {
+        case 'available':
+          return state.availableOrders;
         case 'pending_pickup':
           return state.orders.filter(order => order.shippingStatus === 0);
         case 'in_transit':
@@ -100,6 +105,7 @@ export const useOrdersStore = defineStore('orders', {
     logout() {
       localStorage.removeItem('delivery_token');
       this.orders = [];
+      this.availableOrders = [];
       this.routePlan = null;
     },
     async fetchAssignedOrders() {
@@ -113,6 +119,34 @@ export const useOrdersStore = defineStore('orders', {
         }));
       } finally {
         this.isLoading = false;
+      }
+    },
+    async fetchAvailableOrders() {
+      this.isLoading = true;
+      try {
+        const orders = await fetchAvailableOrders();
+        this.availableOrders = orders.map(order => decorate({
+          ...order,
+          shippingStatusLabel: order.shippingStatusLabel || '',
+          orderStatusLabel: order.orderStatusLabel || ''
+        }));
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async pickupOrder(orderSn: string) {
+      await pickupOrder(orderSn);
+      // Remove from available orders
+      const index = this.availableOrders.findIndex(order => order.orderSn === orderSn);
+      if (index >= 0) {
+        const order = this.availableOrders[index];
+        this.availableOrders.splice(index, 1);
+        // Add to assigned orders with pending_pickup status (shippingStatus = 0)
+        this.orders.push({
+          ...order,
+          shippingStatus: 0,
+          shippingStatusLabel: shippingLabels[0]
+        });
       }
     },
     async fetchOrderDetail(orderSn: string) {

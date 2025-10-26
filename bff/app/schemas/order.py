@@ -1,10 +1,12 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class WarehouseSnapshot(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     id: int
     name: str
     address: str
@@ -13,35 +15,39 @@ class WarehouseSnapshot(BaseModel):
 
 
 class OrderItem(BaseModel):
-    sku_id: int
-    sku_code: Optional[str]
-    product_name: str
+    model_config = ConfigDict(populate_by_name=True)
+
+    sku_id: int = Field(alias='skuId')
+    sku_code: Optional[str] = Field(alias='skuCode')
+    product_name: str = Field(alias='productName')
     quantity: int
 
 
 class OrderSummary(BaseModel):
-    order_sn: str
-    shipping_status: int
-    order_status: int
-    driver_id: Optional[int] = None
-    driver_name: Optional[str] = None
-    receiver_name: str
-    receiver_phone: str
-    receiver_address: str
-    receiver_city: Optional[str]
-    receiver_province: Optional[str]
-    receiver_postal_code: Optional[str]
-    shipping_status_label: str
-    order_status_label: str
-    create_time: datetime
-    pickup_location: Optional[WarehouseSnapshot]
+    model_config = ConfigDict(populate_by_name=True)
+
+    order_sn: str = Field(alias='orderSn')
+    shipping_status: int = Field(alias='shippingStatus')
+    order_status: int = Field(alias='orderStatus')
+    driver_id: Optional[int] = Field(default=None, alias='driverId')
+    driver_name: Optional[str] = Field(default=None, alias='driverName')
+    receiver_name: str = Field(alias='receiverName')
+    receiver_phone: str = Field(alias='receiverPhone')
+    receiver_address: str = Field(alias='receiverAddress')
+    receiver_city: Optional[str] = Field(alias='receiverCity')
+    receiver_province: Optional[str] = Field(alias='receiverProvince')
+    receiver_postal_code: Optional[str] = Field(alias='receiverPostalCode')
+    shipping_status_label: str = Field(alias='shippingStatusLabel')
+    order_status_label: str = Field(alias='orderStatusLabel')
+    create_time: datetime = Field(alias='createTime')
+    pickup_location: Optional[WarehouseSnapshot] = Field(default=None, alias='pickupLocation')
     items: List[OrderItem]
 
 
 class OrderDetail(OrderSummary):
-    logistics_order_number: Optional[str]
-    shipping_time: Optional[datetime]
-    finish_time: Optional[datetime]
+    logistics_order_number: Optional[str] = Field(alias='logisticsOrderNumber')
+    shipping_time: Optional[datetime] = Field(alias='shippingTime')
+    finish_time: Optional[datetime] = Field(alias='finishTime')
 
 
 class UpdateShippingStatus(BaseModel):

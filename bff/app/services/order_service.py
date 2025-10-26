@@ -147,6 +147,33 @@ async def update_order_shipping_status(
     return result.rowcount > 0
 
 
+async def pickup_order(
+    session: AsyncSession,
+    order_sn: str,
+    driver_id: int
+) -> bool:
+    """
+    Assign an unassigned order to a driver and set shipping_status to 0 (pending pickup).
+
+    Args:
+        session: Database session
+        order_sn: Order serial number
+        driver_id: ID of the driver picking up the order
+
+    Returns:
+        bool: True if order was successfully assigned, False if not found or already assigned
+    """
+    stmt = (
+        update(Order)
+        .where(Order.order_sn == order_sn)
+        .where(Order.driver_id.is_(None))  # Only pickup unassigned orders
+        .values(driver_id=driver_id, shipping_status=0)
+    )
+    result = await session.execute(stmt)
+    await session.commit()
+    return result.rowcount > 0
+
+
 async def fetch_orders(
     session: AsyncSession,
     status: Optional[int] = None,

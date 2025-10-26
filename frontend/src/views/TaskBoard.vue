@@ -20,31 +20,43 @@
     </nav>
 
     <section class="board__list" v-if="filteredOrders.length">
-      <OrderCard
-        v-for="order in filteredOrders"
-        :key="order.orderSn"
-        :order="order"
-        @status-update="updateStatus"
-      />
+      <template v-if="activeStatus === 'available'">
+        <AvailableOrderCard
+          v-for="order in filteredOrders"
+          :key="order.orderSn"
+          :order="order"
+          @pickup="handlePickup"
+        />
+      </template>
+      <template v-else>
+        <OrderCard
+          v-for="order in filteredOrders"
+          :key="order.orderSn"
+          :order="order"
+          @status-update="updateStatus"
+        />
+      </template>
     </section>
 
-    <EmptyState v-else :message="$t('taskBoard.noTasks')" />
+    <EmptyState v-else :message="activeStatus === 'available' ? $t('taskBoard.noAvailableOrders') : $t('taskBoard.noTasks')" />
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useOrdersStore } from '@/store/orders';
 import OrderCard from '@/components/OrderCard.vue';
+import AvailableOrderCard from '@/components/AvailableOrderCard.vue';
 import EmptyState from '@/components/EmptyState.vue';
 
 const { t } = useI18n();
 const ordersStore = useOrdersStore();
-const activeStatus = ref('pending_pickup');
+const activeStatus = ref('available');
 
 const statuses = computed(() => [
+  { key: 'available', label: t('taskBoard.available') },
   { key: 'pending_pickup', label: t('taskBoard.pendingPickup') },
   { key: 'in_transit', label: t('taskBoard.inTransit') },
   { key: 'completed', label: t('taskBoard.completed') }
@@ -52,12 +64,31 @@ const statuses = computed(() => [
 
 onMounted(() => {
   ordersStore.fetchAssignedOrders();
+  ordersStore.fetchAvailableOrders();
+});
+
+// Watch for active status changes and fetch data accordingly
+watch(activeStatus, (newStatus) => {
+  if (newStatus === 'available') {
+    ordersStore.fetchAvailableOrders();
+  }
 });
 
 const filteredOrders = computed(() => ordersStore.byWorkflowState(activeStatus.value));
 
 function updateStatus(payload: { orderSn: string; shippingStatus: number }) {
   ordersStore.patchOrderStatus(payload);
+}
+
+async function handlePickup(orderSn: string) {
+  try {
+    await ordersStore.pickupOrder(orderSn);
+    // Automatically switch to pending_pickup tab to show the picked up order
+    activeStatus.value = 'pending_pickup';
+  } catch (error) {
+    console.error('Failed to pickup order:', error);
+    alert(t('orderCard.pickupError'));
+  }
 }
 </script>
 

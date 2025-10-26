@@ -34,6 +34,7 @@
     "description": "管理配送任务并跟踪进度",
     "assignments": "任务分配",
     "pending": "待处理",
+    "available": "可接单",
     "pendingPickup": "待取货",
     "inProgress": "进行中",
     "inTransit": "运输中",
@@ -44,6 +45,7 @@
     "assignDriver": "分配司机",
     "viewDetails": "查看详情",
     "noTasks": "暂无任务",
+    "noAvailableOrders": "暂无可接订单",
     "refreshTasks": "刷新任务"
   },
   "routePlanner": {
@@ -321,8 +323,12 @@
     "dropOff": "送达：",
     "items": "物品：",
     "openDetails": "查看详情",
+    "pickUp": "接单",
     "pickedUp": "已取货",
-    "delivered": "已送达"
+    "delivered": "已送达",
+    "confirmPickup": "确认接取此订单？",
+    "pickupSuccess": "订单接取成功",
+    "pickupError": "订单接取失败"
   },
   "mapPanel": {
     "loadingMessage": "谷歌地图脚本可用时将加载地图预览。"

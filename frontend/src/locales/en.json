@@ -34,6 +34,7 @@
     "description": "Manage delivery tasks and track progress",
     "assignments": "Assignments",
     "pending": "Pending",
+    "available": "Available",
     "pendingPickup": "Pending Pickup",
     "inProgress": "In Progress",
     "inTransit": "In Transit",
@@ -44,6 +45,7 @@
     "assignDriver": "Assign Driver",
     "viewDetails": "View Details",
     "noTasks": "No tasks available",
+    "noAvailableOrders": "No available orders to pick up",
     "refreshTasks": "Refresh Tasks"
   },
   "routePlanner": {
@@ -134,8 +136,12 @@
     "dropOff": "Drop-off:",
     "items": "Items:",
     "openDetails": "Open Details",
+    "pickUp": "Pick Up",
     "pickedUp": "Picked Up",
-    "delivered": "Delivered"
+    "delivered": "Delivered",
+    "confirmPickup": "Confirm pickup of this order?",
+    "pickupSuccess": "Order picked up successfully",
+    "pickupError": "Failed to pick up order"
   },
   "mapPanel": {
     "loadingMessage": "Map preview loads when Google Maps script is available."

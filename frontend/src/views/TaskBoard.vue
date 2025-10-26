@@ -76,8 +76,13 @@ watch(activeStatus, (newStatus) => {
 
 const filteredOrders = computed(() => ordersStore.byWorkflowState(activeStatus.value));
 
-function updateStatus(payload: { orderSn: string; shippingStatus: number }) {
-  ordersStore.patchOrderStatus(payload);
+async function updateStatus(payload: { orderSn: string; shippingStatus: number }) {
+  try {
+    await ordersStore.updateShippingStatus(payload.orderSn, payload.shippingStatus);
+  } catch (error) {
+    console.error('Failed to update order status:', error);
+    alert(t('orderCard.pickupError'));
+  }
 }
 
 async function handlePickup(orderSn: string) {

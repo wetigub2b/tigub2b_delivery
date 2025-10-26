@@ -51,7 +51,9 @@ class OrderDetail(OrderSummary):
 
 
 class UpdateShippingStatus(BaseModel):
-    shipping_status: int = Field(..., ge=0, le=3)
+    model_config = ConfigDict(populate_by_name=True)
+
+    shipping_status: int = Field(..., ge=0, le=3, alias='shippingStatus')
 
 
 class ProofOfDelivery(BaseModel):

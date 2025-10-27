@@ -7,6 +7,12 @@
         <span class="nav__title">Tigu Delivery</span>
       </router-link>
 
+      <!-- User Info (Center) -->
+      <div class="nav__user" v-if="ordersStore.currentUserPhone">
+        <span class="nav__user-icon">👤</span>
+        <span class="nav__user-phone">{{ ordersStore.currentUserPhone }}</span>
+      </div>
+
       <!-- Navigation Links -->
       <div class="nav__links">
         <router-link
@@ -49,6 +55,10 @@
       class="nav__mobile-menu"
       :class="{ 'nav__mobile-menu--open': showMobileMenu }"
     >
+      <div class="nav__mobile-user" v-if="ordersStore.currentUserPhone">
+        <span class="nav__mobile-user-icon">👤</span>
+        <span class="nav__mobile-user-phone">{{ ordersStore.currentUserPhone }}</span>
+      </div>
       <router-link
         to="/"
         class="nav__mobile-link"
@@ -125,6 +135,7 @@ router.afterEach(() => {
   max-width: var(--container-wide-max-width);
   margin: 0 auto;
   height: var(--nav-height);
+  gap: var(--spacing-lg);
 }
 
 .nav__home {
@@ -149,6 +160,31 @@ router.afterEach(() => {
 
 .nav__title {
   font-weight: var(--font-weight-bold);
+}
+
+.nav__user {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--color-gray-lightest);
+  border-radius: var(--radius-full);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-md);
+  flex: 1;
+  justify-content: center;
+  max-width: 300px;
+}
+
+.nav__user-icon {
+  font-size: var(--font-size-lg);
+}
+
+.nav__user-phone {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .nav__links {
@@ -284,6 +320,26 @@ router.afterEach(() => {
   color: var(--color-primary);
 }
 
+.nav__mobile-user {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--color-gray-lightest);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-md);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.nav__mobile-user-icon {
+  font-size: var(--font-size-xl);
+}
+
+.nav__mobile-user-phone {
+  flex: 1;
+}
+
 .nav__mobile-language {
   padding: var(--spacing-md) 0;
   border-top: 1px solid var(--color-gray-lighter);
@@ -297,6 +353,16 @@ router.afterEach(() => {
   .nav__content {
     padding: var(--spacing-md);
     height: var(--header-height-mobile);
+  }
+
+  .nav__user {
+    max-width: 180px;
+    padding: var(--spacing-xs) var(--spacing-md);
+    font-size: var(--font-size-sm);
+  }
+
+  .nav__user-phone {
+    font-size: var(--font-size-sm);
   }
 
   .nav__links {
@@ -319,6 +385,20 @@ router.afterEach(() => {
 
   .nav__title {
     display: none;
+  }
+
+  .nav__user {
+    max-width: 140px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    gap: var(--spacing-xs);
+  }
+
+  .nav__user-icon {
+    font-size: var(--font-size-md);
+  }
+
+  .nav__user-phone {
+    font-size: var(--font-size-xs);
   }
 }
 </style>

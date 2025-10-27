@@ -10,6 +10,33 @@ import {
   uploadDeliveryProof
 } from '@/api/orders';
 
+// Helper function to decode JWT token
+function decodeJWT(token: string): any {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    console.error('Failed to decode JWT:', error);
+    return null;
+  }
+}
+
+// Get phone number from stored token
+function getPhoneFromToken(): string {
+  const token = localStorage.getItem('delivery_token');
+  if (!token) return '';
+
+  const payload = decodeJWT(token);
+  return payload?.phonenumber || payload?.phone || payload?.sub || '';
+}
+
 export interface DeliveryProof {
   photoUrl: string;
   notes?: string;
@@ -86,10 +113,12 @@ export const useOrdersStore = defineStore('orders', {
     orders: [] as DeliveryOrder[],
     availableOrders: [] as DeliveryOrder[],
     routePlan: null as RoutePlan | null,
-    isLoading: false
+    isLoading: false,
+    userPhone: localStorage.getItem('user_phone') || getPhoneFromToken()
   }),
   getters: {
     activeBySn: state => (orderSn: string) => state.orders.find(order => order.orderSn === orderSn),
+    currentUserPhone: state => state.userPhone || getPhoneFromToken(),
     byWorkflowState: state => (workflowState: string) => {
       switch (workflowState) {
         case 'available':
@@ -109,13 +138,17 @@ export const useOrdersStore = defineStore('orders', {
     async login(phone: string, code: string) {
       const tokens = await login(phone, code);
       localStorage.setItem('delivery_token', tokens.accessToken);
+      localStorage.setItem('user_phone', phone);
+      this.userPhone = phone;
       return tokens;
     },
     logout() {
       localStorage.removeItem('delivery_token');
+      localStorage.removeItem('user_phone');
       this.orders = [];
       this.availableOrders = [];
       this.routePlan = null;
+      this.userPhone = '';
     },
     async fetchAssignedOrders() {
       this.isLoading = true;

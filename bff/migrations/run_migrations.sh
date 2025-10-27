@@ -36,8 +36,11 @@ run_migration() {
 # Run migrations in order
 run_migration "001_create_driver_table.sql" "Step 1: Create driver table"
 run_migration "002_add_driver_id_to_orders.sql" "Step 2: Add driver_id column and foreign key to orders"
-run_migration "test_data_driver_15888888888.sql" "Step 3: Create test driver with phone 15888888888"
-run_migration "test_data_orders_insert.sql" "Step 4: Create test orders assigned to driver"
+run_migration "003_create_driver_performance_tables.sql" "Step 3: Create driver performance tables"
+run_migration "005_create_delivery_proof_table.sql" "Step 4: Create delivery proof table"
+run_migration "test_data_driver_15888888888.sql" "Step 5: Create test driver with phone 15888888888"
+run_migration "test_data_orders_insert.sql" "Step 6: Create test orders assigned to driver"
+run_migration "004_seed_driver_performance_data.sql" "Step 7: Seed driver performance metrics/logs"
 
 echo -e "${GREEN}===========================================${NC}"
 echo -e "${GREEN}All migrations completed successfully!${NC}"

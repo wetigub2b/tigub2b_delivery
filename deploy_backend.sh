@@ -74,10 +74,10 @@ if ! [[ "${WORKERS}" =~ ^[0-9]+$ ]]; then
   WORKERS=1
 fi
 
-EXISTING_PIDS=$(pgrep -f "${UVICORN_BIN}[[:space:]]+app.main:app" || true)
+EXISTING_PIDS=$(pgrep -f "uvicorn app.main:app.*--port ${PORT}" || true)
 if [[ -n "${EXISTING_PIDS}" ]]; then
   echo "[deploy_backend] Stopping existing FastAPI process: ${EXISTING_PIDS}" >&2
-  pkill -9 -f "${UVICORN_BIN}[[:space:]]+app.main:app" || true
+  pkill -9 -f "uvicorn app.main:app.*--port ${PORT}" || true
   sleep 2
 fi
 

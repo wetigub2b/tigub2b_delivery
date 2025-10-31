@@ -48,6 +48,9 @@ class Order(Base):
     driver_id: Mapped[int | None] = mapped_column(BIGINT(unsigned=True), ForeignKey("tigu_driver.id"), nullable=True)
     shipping_time: Mapped[datetime | None] = mapped_column(DateTime())
     finish_time: Mapped[datetime | None] = mapped_column(DateTime())
+    driver_receive_time: Mapped[datetime | None] = mapped_column(DateTime(), nullable=True)
+    arrive_warehouse_time: Mapped[datetime | None] = mapped_column(DateTime(), nullable=True)
+    warehouse_shipping_time: Mapped[datetime | None] = mapped_column(DateTime(), nullable=True)
     create_time: Mapped[datetime] = mapped_column(DateTime())
     update_time: Mapped[datetime | None] = mapped_column(DateTime(), nullable=True)
 
@@ -91,3 +94,28 @@ class Warehouse(Base):
     latitude: Mapped[Decimal | None] = mapped_column(Numeric(10, 6))
 
     orders: Mapped[list[Order]] = relationship("Order", back_populates="warehouse")
+
+
+class OrderAction(Base):
+    """
+    Order action audit trail table.
+    Tracks all workflow steps with photo evidence linking.
+    """
+    __tablename__ = "tigu_order_action"
+
+    id: Mapped[int] = mapped_column(BIGINT(unsigned=True), primary_key=True)
+    order_id: Mapped[int] = mapped_column(BIGINT(unsigned=True), ForeignKey("tigu_order.id"), index=True)
+    order_status: Mapped[int] = mapped_column(Integer, default=0)
+    shipping_status: Mapped[int] = mapped_column(Integer)
+    shipping_type: Mapped[int] = mapped_column(Integer, default=0)
+    action_type: Mapped[int] = mapped_column(Integer)  # 0-10: action type codes
+    logistics_voucher_file: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+
+    create_by: Mapped[str] = mapped_column(String(64), default="")
+    create_time: Mapped[datetime] = mapped_column(DateTime())
+    update_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    update_time: Mapped[datetime | None] = mapped_column(DateTime(), nullable=True)
+    remark: Mapped[str | None] = mapped_column(String(5000), nullable=True)
+
+    # Relationship to order
+    order: Mapped[Order] = relationship("Order", backref="actions")

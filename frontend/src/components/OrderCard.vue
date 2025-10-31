@@ -5,13 +5,38 @@
         <h3>{{ order.orderSn }}</h3>
         <p>{{ order.receiverName }} · {{ order.receiverCity }}</p>
       </div>
-      <span class="card__badge">{{ order.shippingStatusLabel }}</span>
+      <div class="card__badges">
+        <span class="card__badge card__badge--status">{{ order.shippingStatusLabel }}</span>
+        <span class="card__badge card__badge--type" :class="deliveryTypeClass">
+          {{ deliveryTypeLabel }}
+        </span>
+      </div>
     </header>
 
     <section class="card__body">
       <p><strong>{{ $t('orderCard.pickup') }}</strong> {{ order.pickupLocation?.name }}</p>
       <p><strong>{{ $t('orderCard.dropOff') }}</strong> {{ order.receiverAddress }}</p>
       <p><strong>{{ $t('orderCard.items') }}</strong> {{ order.items.length }}</p>
+
+      <!-- Warehouse workflow timeline -->
+      <div v-if="order.shippingType === 1 && order.shippingStatus >= 2" class="warehouse-timeline">
+        <div class="timeline-step" :class="{ completed: order.driverReceiveTime }">
+          <span class="timeline-icon">{{ order.driverReceiveTime ? '✓' : '○' }}</span>
+          <span class="timeline-label">{{ $t('orderCard.driverPickup') || 'Driver Pickup' }}</span>
+        </div>
+        <div class="timeline-step" :class="{ completed: order.arriveWarehouseTime }">
+          <span class="timeline-icon">{{ order.arriveWarehouseTime ? '✓' : '○' }}</span>
+          <span class="timeline-label">{{ $t('orderCard.arriveWarehouse') || 'Arrive Warehouse' }}</span>
+        </div>
+        <div class="timeline-step" :class="{ completed: order.warehouseShippingTime }">
+          <span class="timeline-icon">{{ order.warehouseShippingTime ? '✓' : '○' }}</span>
+          <span class="timeline-label">{{ $t('orderCard.warehouseShip') || 'Warehouse Ships' }}</span>
+        </div>
+        <div class="timeline-step" :class="{ completed: order.finishTime }">
+          <span class="timeline-icon">{{ order.finishTime ? '✓' : '○' }}</span>
+          <span class="timeline-label">{{ $t('orderCard.delivered') || 'Delivered' }}</span>
+        </div>
+      </div>
     </section>
 
     <footer class="card__footer">
@@ -32,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useOrdersStore } from '@/store/orders';
 import type { DeliveryOrder } from '@/store/orders';
@@ -44,6 +69,16 @@ const emit = defineEmits(['status-update']);
 const { t } = useI18n();
 const ordersStore = useOrdersStore();
 const showProofModal = ref(false);
+
+const deliveryTypeLabel = computed(() => {
+  return props.order.shippingType === 1
+    ? t('orderCard.viaWarehouse') || 'Via Warehouse'
+    : t('orderCard.directDelivery') || 'Direct';
+});
+
+const deliveryTypeClass = computed(() => {
+  return props.order.shippingType === 1 ? 'warehouse' : 'direct';
+});
 
 function emitStatus(shippingStatus: number) {
   emit('status-update', { orderSn: props.order.orderSn, shippingStatus });
@@ -96,14 +131,40 @@ async function handleProofSubmit(photo: string, notes: string) {
   color: var(--color-text-secondary);
 }
 
+.card__badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--spacing-xs);
+}
+
 .card__badge {
-  background: var(--color-primary);
-  color: var(--color-white);
   padding: var(--spacing-xs) var(--spacing-md);
   border-radius: var(--radius-full);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   white-space: nowrap;
+}
+
+.card__badge--status {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+.card__badge--type {
+  font-size: var(--font-size-xs);
+}
+
+.card__badge--type.warehouse {
+  background: var(--color-info-light);
+  color: var(--color-info-dark);
+  border: 1px solid var(--color-info);
+}
+
+.card__badge--type.direct {
+  background: var(--color-success-light);
+  color: var(--color-success-dark);
+  border: 1px solid var(--color-success);
 }
 
 .card__body {
@@ -178,6 +239,38 @@ async function handleProofSubmit(photo: string, notes: string) {
   background: var(--color-primary-dark);
   color: var(--color-white);
   border-color: var(--color-primary-dark);
+}
+
+.warehouse-timeline {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-gray-lighter);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.timeline-step {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.timeline-step.completed {
+  color: var(--color-success);
+  font-weight: var(--font-weight-medium);
+}
+
+.timeline-icon {
+  font-size: var(--font-size-md);
+  width: 20px;
+  text-align: center;
+}
+
+.timeline-label {
+  flex: 1;
 }
 
 @media (max-width: 768px) {

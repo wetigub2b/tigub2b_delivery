@@ -67,23 +67,135 @@
         </div>
       </div>
     </section>
+
+    <!-- Workflow action buttons -->
+    <section v-if="order && order.shippingStatus < 5" class="detail__actions">
+      <!-- Warehouse Delivery Path (shippingType === 1) -->
+      <template v-if="order.shippingType === 1">
+        <button
+          v-if="order.shippingStatus === 2"
+          @click="showArriveWarehouseModal = true"
+          class="detail__button detail__button--primary"
+        >
+          {{ $t('orderDetail.arriveWarehouse') || 'Arrive at Warehouse' }}
+        </button>
+
+        <button
+          v-if="order.shippingStatus === 3"
+          @click="showWarehouseShipModal = true"
+          class="detail__button detail__button--primary"
+        >
+          {{ $t('orderDetail.warehouseShip') || 'Ship from Warehouse' }}
+        </button>
+
+        <button
+          v-if="order.shippingStatus === 4"
+          @click="showCompleteModal = true"
+          class="detail__button detail__button--success"
+        >
+          {{ $t('orderDetail.completeDelivery') || 'Complete Delivery' }}
+        </button>
+      </template>
+
+      <!-- Direct Delivery Path (shippingType === 0) -->
+      <template v-else-if="order.shippingType === 0">
+        <button
+          v-if="order.shippingStatus === 4"
+          @click="showCompleteModal = true"
+          class="detail__button detail__button--success"
+        >
+          {{ $t('orderDetail.completeDelivery') || 'Complete Delivery' }}
+        </button>
+      </template>
+    </section>
+
+    <!-- Photo upload modals -->
+    <PhotoUploadModal
+      v-if="showArriveWarehouseModal"
+      :title="$t('orderDetail.arriveWarehouse') || 'Arrive at Warehouse'"
+      @submit="handleArriveWarehouse"
+      @cancel="showArriveWarehouseModal = false"
+    />
+
+    <PhotoUploadModal
+      v-if="showWarehouseShipModal"
+      :title="$t('orderDetail.warehouseShip') || 'Ship from Warehouse'"
+      @submit="handleWarehouseShip"
+      @cancel="showWarehouseShipModal = false"
+    />
+
+    <PhotoUploadModal
+      v-if="showCompleteModal"
+      :title="$t('orderDetail.completeDelivery') || 'Complete Delivery'"
+      @submit="handleComplete"
+      @cancel="showCompleteModal = false"
+    />
   </article>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
-import { RouterLink, useRoute } from 'vue-router';
+import { computed, onMounted, ref } from 'vue';
+import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { useOrdersStore } from '@/store/orders';
+import { useI18n } from 'vue-i18n';
+import PhotoUploadModal from '@/components/PhotoUploadModal.vue';
 
 const route = useRoute();
+const router = useRouter();
 const ordersStore = useOrdersStore();
+const { t } = useI18n();
 const orderSn = String(route.params.orderSn);
+
+const showArriveWarehouseModal = ref(false);
+const showWarehouseShipModal = ref(false);
+const showCompleteModal = ref(false);
 
 onMounted(() => {
   ordersStore.fetchOrderDetail(orderSn);
 });
 
 const order = computed(() => ordersStore.activeBySn(orderSn));
+
+async function handleArriveWarehouse(photo: string, notes: string) {
+  try {
+    await ordersStore.arriveWarehouse(orderSn, photo, notes);
+    showArriveWarehouseModal.value = false;
+    // Refresh order details
+    await ordersStore.fetchOrderDetail(orderSn);
+    alert(t('orderDetail.arriveWarehouseSuccess') || 'Successfully arrived at warehouse!');
+  } catch (error) {
+    console.error('Failed to mark warehouse arrival:', error);
+    alert(t('orderDetail.arriveWarehouseError') || 'Failed to mark warehouse arrival');
+  }
+}
+
+async function handleWarehouseShip(photo: string, notes: string) {
+  try {
+    await ordersStore.warehouseShip(orderSn, photo, notes);
+    showWarehouseShipModal.value = false;
+    // Refresh order details
+    await ordersStore.fetchOrderDetail(orderSn);
+    alert(t('orderDetail.warehouseShipSuccess') || 'Successfully shipped from warehouse!');
+  } catch (error) {
+    console.error('Failed to mark warehouse shipping:', error);
+    alert(t('orderDetail.warehouseShipError') || 'Failed to mark warehouse shipping');
+  }
+}
+
+async function handleComplete(photo: string, notes: string) {
+  try {
+    await ordersStore.uploadDeliveryProof(orderSn, photo, notes);
+    showCompleteModal.value = false;
+    // Refresh order details
+    await ordersStore.fetchOrderDetail(orderSn);
+    alert(t('orderDetail.deliverySuccess') || 'Delivery completed successfully!');
+    // Navigate back to task board after a short delay
+    setTimeout(() => router.push('/'), 1500);
+  } catch (error) {
+    console.error('Failed to complete delivery:', error);
+    alert(t('orderDetail.deliveryError') || 'Failed to complete delivery');
+  }
+}
 </script>
 
 <style scoped>
@@ -219,5 +331,68 @@ const order = computed(() => ordersStore.activeBySn(orderSn));
 .detail__proof-date {
   color: #6b7280;
   font-size: 13px;
+}
+
+.detail__actions {
+  display: flex;
+  gap: 12px;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  position: sticky;
+  bottom: 20px;
+}
+
+.detail__button {
+  flex: 1;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.detail__button--primary {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.detail__button--primary:hover {
+  background: #1d4ed8;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.detail__button--success {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.detail__button--success:hover {
+  background: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.detail__button:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .detail__actions {
+    flex-direction: column;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+    border-radius: 12px 12px 0 0;
+    padding: 16px;
+    box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.1);
+  }
 }
 </style>

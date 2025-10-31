@@ -6,10 +6,13 @@ from app.services.route_service import build_route_plan
 
 @pytest.mark.asyncio
 async def test_build_route_plan_generates_sequence():
+    from datetime import datetime
+
     orders = [
         OrderSummary(
             order_sn="TOD1",
             shipping_status=0,
+            shipping_type=1,  # Add required field
             order_status=1,
             receiver_name="Jane",
             receiver_phone="555",
@@ -19,6 +22,7 @@ async def test_build_route_plan_generates_sequence():
             receiver_postal_code="M5J",
             shipping_status_label="Not Shipped",
             order_status_label="Pending",
+            create_time=datetime.now(),  # Add required field
             pickup_location=WarehouseSnapshot(
                 id=1,
                 name="Warehouse A",

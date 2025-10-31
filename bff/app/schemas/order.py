@@ -37,6 +37,7 @@ class OrderSummary(BaseModel):
 
     order_sn: str = Field(alias='orderSn')
     shipping_status: int = Field(alias='shippingStatus')
+    shipping_type: int = Field(alias='shippingType')
     order_status: int = Field(alias='orderStatus')
     driver_id: Optional[int] = Field(default=None, alias='driverId')
     driver_name: Optional[str] = Field(default=None, alias='driverName')
@@ -57,6 +58,9 @@ class OrderDetail(OrderSummary):
     logistics_order_number: Optional[str] = Field(alias='logisticsOrderNumber')
     shipping_time: Optional[datetime] = Field(alias='shippingTime')
     finish_time: Optional[datetime] = Field(alias='finishTime')
+    driver_receive_time: Optional[datetime] = Field(default=None, alias='driverReceiveTime')
+    arrive_warehouse_time: Optional[datetime] = Field(default=None, alias='arriveWarehouseTime')
+    warehouse_shipping_time: Optional[datetime] = Field(default=None, alias='warehouseShippingTime')
     delivery_proof: Optional[DeliveryProofInfo] = Field(default=None, alias='deliveryProof')
 
 

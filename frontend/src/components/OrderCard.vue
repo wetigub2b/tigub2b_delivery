@@ -42,8 +42,7 @@
     <footer class="card__footer">
       <RouterLink :to="`/orders/${order.orderSn}`" class="card__link">{{ $t('orderCard.openDetails') }}</RouterLink>
       <div class="card__actions">
-        <button v-if="order.shippingStatus === 0" @click="emitStatus(1)" class="card__button">{{ $t('orderCard.pickedUp') }}</button>
-        <button v-if="order.shippingStatus !== 0 && order.shippingStatus !== 3" @click="showProofModal = true" class="card__button card__button--primary">{{ $t('orderCard.delivered') }}</button>
+        <button v-if="order.shippingStatus === 4" @click="showProofModal = true" class="card__button card__button--primary">{{ $t('orderCard.complete') || 'Complete' }}</button>
       </div>
     </footer>
 

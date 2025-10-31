@@ -96,6 +96,7 @@ async def _serialize(session: AsyncSession, order: Order) -> OrderSummary:
     return OrderSummary(
         order_sn=order.order_sn,
         shipping_status=order.shipping_status,
+        shipping_type=order.shipping_type,
         order_status=order.order_status,
         driver_id=order.driver_id,
         driver_name=order.driver.name if order.driver else None,

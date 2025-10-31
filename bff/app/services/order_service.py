@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from typing import List, Optional
 
-from sqlalchemy import or_, select, update
+from sqlalchemy import or_, select, update, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -14,8 +14,10 @@ from app.schemas.order import DeliveryProofInfo, OrderDetail, OrderItem as Order
 SHIPPING_STATUS_LABELS = {
     0: "Not Shipped",
     1: "Shipped",
-    2: "Partially Shipped",
-    3: "Delivered"
+    2: "Driver Received",
+    3: "Arrived Warehouse",
+    4: "Warehouse Shipped",
+    5: "Delivered"
 }
 
 ORDER_STATUS_LABELS = {
@@ -183,25 +185,138 @@ async def update_order_shipping_status(
 async def pickup_order(
     session: AsyncSession,
     order_sn: str,
-    driver_id: int
+    driver_id: int,
+    shipping_type: int
 ) -> bool:
     """
-    Assign an unassigned order to a driver and set shipping_status to 0 (pending pickup).
+    Assign order to driver with shipping_type-aware status setting.
+
+    For warehouse delivery (shipping_type=1): sets shipping_status=2
+    For direct delivery (shipping_type=0): sets shipping_status=4
 
     Args:
         session: Database session
         order_sn: Order serial number
         driver_id: ID of the driver picking up the order
+        shipping_type: 0=Direct to user, 1=Via warehouse
 
     Returns:
         bool: True if order was successfully assigned, False if not found or already assigned
     """
+    # Determine shipping_status based on shipping_type
+    new_shipping_status = 2 if shipping_type == 1 else 4
+
     stmt = (
         update(Order)
         .where(Order.order_sn == order_sn)
         .where(Order.driver_id.is_(None))  # Only pickup unassigned orders
-        .values(driver_id=driver_id, shipping_status=0)
+        .values(
+            driver_id=driver_id,
+            order_status=2,  # Pending Receipt
+            shipping_status=new_shipping_status,
+            shipping_time=func.now(),
+            driver_receive_time=func.now()
+        )
     )
+    result = await session.execute(stmt)
+    await session.commit()
+    return result.rowcount > 0
+
+
+async def arrive_warehouse(
+    session: AsyncSession,
+    order_sn: str,
+    driver_id: int
+) -> bool:
+    """
+    Mark order as arrived at warehouse (shipping_status=3).
+    Only for warehouse delivery (shipping_type=1).
+
+    Args:
+        session: Database session
+        order_sn: Order serial number
+        driver_id: Driver ID (for verification)
+
+    Returns:
+        bool: True if order was successfully updated
+    """
+    stmt = (
+        update(Order)
+        .where(Order.order_sn == order_sn)
+        .where(Order.driver_id == driver_id)
+        .where(Order.shipping_status == 2)  # Must be from "Driver Received"
+        .where(Order.shipping_type == 1)    # Only warehouse delivery
+        .values(
+            shipping_status=3,
+            arrive_warehouse_time=func.now()
+        )
+    )
+    result = await session.execute(stmt)
+    await session.commit()
+    return result.rowcount > 0
+
+
+async def warehouse_ship(
+    session: AsyncSession,
+    order_sn: str
+) -> bool:
+    """
+    Mark order as shipped from warehouse (shipping_status=4).
+    Called by warehouse staff.
+
+    Args:
+        session: Database session
+        order_sn: Order serial number
+
+    Returns:
+        bool: True if order was successfully updated
+    """
+    stmt = (
+        update(Order)
+        .where(Order.order_sn == order_sn)
+        .where(Order.shipping_status == 3)  # Must be from "Arrived Warehouse"
+        .where(Order.shipping_type == 1)
+        .values(
+            shipping_status=4,
+            warehouse_shipping_time=func.now()
+        )
+    )
+    result = await session.execute(stmt)
+    await session.commit()
+    return result.rowcount > 0
+
+
+async def complete_delivery(
+    session: AsyncSession,
+    order_sn: str,
+    driver_id: int | None = None
+) -> bool:
+    """
+    Mark order as delivered (shipping_status=5, order_status=3).
+    Works for both delivery types.
+
+    Args:
+        session: Database session
+        order_sn: Order serial number
+        driver_id: Optional driver ID for verification
+
+    Returns:
+        bool: True if order was successfully updated
+    """
+    stmt = (
+        update(Order)
+        .where(Order.order_sn == order_sn)
+        .where(Order.shipping_status == 4)  # Must be from status 4
+        .values(
+            shipping_status=5,
+            order_status=3,  # Completed
+            finish_time=func.now()
+        )
+    )
+
+    if driver_id:
+        stmt = stmt.where(Order.driver_id == driver_id)
+
     result = await session.execute(stmt)
     await session.commit()
     return result.rowcount > 0

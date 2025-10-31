@@ -6,6 +6,8 @@ import {
   fetchRoutePlan,
   login,
   pickupOrder,
+  arriveWarehouse,
+  warehouseShip,
   updateShippingStatus,
   uploadDeliveryProof
 } from '@/api/orders';
@@ -46,7 +48,10 @@ export interface DeliveryProof {
 export interface DeliveryOrder {
   orderSn: string;
   shippingStatus: number;
+  shippingType: number; // 0=Direct to user, 1=Via warehouse
   orderStatus: number;
+  driverId?: number;
+  driverName?: string;
   receiverName: string;
   receiverPhone: string;
   receiverAddress: string;
@@ -55,8 +60,16 @@ export interface DeliveryOrder {
   receiverPostalCode: string;
   shippingStatusLabel: string;
   orderStatusLabel: string;
+  createTime: string;
+  // Timestamp fields for workflow tracking
+  driverReceiveTime?: string;
+  arriveWarehouseTime?: string;
+  warehouseShippingTime?: string;
+  shippingTime?: string;
+  finishTime?: string;
   deliveryProof?: DeliveryProof;
   pickupLocation?: {
+    id: number;
     name: string;
     address: string;
     latitude?: number;
@@ -87,8 +100,10 @@ export interface RoutePlan {
 const shippingLabels: Record<number, string> = {
   0: 'Not Shipped',
   1: 'Shipped',
-  2: 'Partially Shipped',
-  3: 'Delivered'
+  2: 'Driver Received',
+  3: 'Arrived Warehouse',
+  4: 'Warehouse Shipped',
+  5: 'Delivered'
 };
 
 const orderLabels: Record<number, string> = {
@@ -126,9 +141,14 @@ export const useOrdersStore = defineStore('orders', {
         case 'pending_pickup':
           return state.orders.filter(order => order.shippingStatus === 0);
         case 'in_transit':
-          return state.orders.filter(order => order.shippingStatus === 1 || order.shippingStatus === 2);
+          // Status 2 (Driver Received), 3 (Arrived Warehouse), 4 (Warehouse Shipped)
+          return state.orders.filter(order =>
+            order.shippingStatus === 2 ||
+            order.shippingStatus === 3 ||
+            order.shippingStatus === 4
+          );
         case 'completed':
-          return state.orders.filter(order => order.shippingStatus === 3);
+          return state.orders.filter(order => order.shippingStatus === 5);
         default:
           return state.orders;
       }
@@ -176,20 +196,31 @@ export const useOrdersStore = defineStore('orders', {
         this.isLoading = false;
       }
     },
-    async pickupOrder(orderSn: string) {
-      await pickupOrder(orderSn);
+    async pickupOrder(orderSn: string, photo: string, notes?: string) {
+      const result = await pickupOrder(orderSn, photo, notes);
       // Remove from available orders
       const index = this.availableOrders.findIndex(order => order.orderSn === orderSn);
       if (index >= 0) {
         const order = this.availableOrders[index];
         this.availableOrders.splice(index, 1);
-        // Add to assigned orders with pending_pickup status (shippingStatus = 0)
+        // Add to assigned orders with new shipping_status from response
         this.orders.push({
           ...order,
-          shippingStatus: 0,
-          shippingStatusLabel: shippingLabels[0]
+          shippingStatus: result.shippingStatus,
+          shippingStatusLabel: shippingLabels[result.shippingStatus]
         });
       }
+      return result;
+    },
+    async arriveWarehouse(orderSn: string, photo: string, notes?: string) {
+      const result = await arriveWarehouse(orderSn, photo, notes);
+      this.patchOrderStatus({ orderSn, shippingStatus: result.shippingStatus });
+      return result;
+    },
+    async warehouseShip(orderSn: string, photo: string, notes?: string) {
+      const result = await warehouseShip(orderSn, photo, notes);
+      this.patchOrderStatus({ orderSn, shippingStatus: result.shippingStatus });
+      return result;
     },
     async fetchOrderDetail(orderSn: string) {
       const detail = await fetchOrderBySn(orderSn);
@@ -218,8 +249,8 @@ export const useOrdersStore = defineStore('orders', {
     },
     async uploadDeliveryProof(orderSn: string, photo: string, notes?: string) {
       const result = await uploadDeliveryProof(orderSn, photo, notes);
-      // Order status is automatically updated to delivered (3) by the backend
-      this.patchOrderStatus({ orderSn, shippingStatus: 3 });
+      // Order status is automatically updated to delivered (5) by the backend
+      this.patchOrderStatus({ orderSn, shippingStatus: 5 });
       return result;
     },
     async fetchRoutePlan() {

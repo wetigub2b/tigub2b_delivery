@@ -1,0 +1,2 @@
+inkscape driver_logo_512.png --export-filename=driver_logo_512.svg
+onvert driver_logo_512.png -define icon:auto-resize=16,32,48,64,256 favicon.ico

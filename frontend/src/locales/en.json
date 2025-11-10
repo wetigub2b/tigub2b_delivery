@@ -176,6 +176,7 @@
     "orderDetails": "Order Details",
     "packageNumber": "Package Number",
     "totalOrders": "Total Orders",
+    "pickupPhotos": "Pickup Photos",
     "orderList": "Order List",
     "noOrders": "No orders in this package",
     "viewDetails": "View Details"

@@ -363,6 +363,7 @@
     "orderDetails": "订单详情",
     "packageNumber": "包裹编号",
     "totalOrders": "订单总数",
+    "pickupPhotos": "取货照片",
     "orderList": "订单列表",
     "noOrders": "此包裹中没有订单",
     "viewDetails": "查看详情"

@@ -75,13 +75,10 @@ const statuses = computed(() => [
   { key: 'completed', label: t('taskBoard.completed'), prepareStatus: 6 }
 ]);
 
-// TODO: Get actual driver ID from auth store
-const driverId = ref(1);
-
 onMounted(() => {
   // Fetch both available (unassigned) and driver's assigned packages
   prepareGoodsStore.fetchAvailablePackages();
-  prepareGoodsStore.fetchDriverPackages(driverId.value);
+  prepareGoodsStore.fetchMyDriverPackages();
 });
 
 // Filter packages by prepare_status based on active tab
@@ -114,10 +111,22 @@ function getPackageActionLabel(status: number | null): string {
 }
 
 async function handlePackageAction(pkg: any) {
-  // TODO: Implement package action handling
-  // For now, navigate to detail view
-  console.log('Package action:', pkg.prepareSn, 'Status:', pkg.prepareStatus);
-  alert(`Package: ${pkg.prepareSn}\nStatus: ${pkg.prepareStatusLabel}\n\nAction handling to be implemented.`);
+  try {
+    if (pkg.prepareStatus === null || pkg.prepareStatus === 0) {
+      // Available package - pickup action
+      if (confirm(`${t('taskBoard.confirmPickup')}\n\n${pkg.prepareSn}`)) {
+        await prepareGoodsStore.pickupPackage(pkg.prepareSn);
+        // Refresh available packages
+        await prepareGoodsStore.fetchAvailablePackages();
+      }
+    } else {
+      // For other statuses, show detail view (to be implemented)
+      console.log('Package action:', pkg.prepareSn, 'Status:', pkg.prepareStatus);
+      alert(`Package: ${pkg.prepareSn}\nStatus: ${pkg.prepareStatusLabel}\n\nDetail view to be implemented.`);
+    }
+  } catch (error: any) {
+    alert(`Error: ${error.response?.data?.detail || error.message}`);
+  }
 }
 </script>
 

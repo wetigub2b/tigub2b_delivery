@@ -51,7 +51,8 @@
     "deliverToWarehouse": "送货至仓库",
     "confirmWarehouseDelivery": "确认仓库收货",
     "noPackages": "暂无包裹",
-    "orders": "订单"
+    "orders": "订单",
+    "confirmPickup": "确认取货？"
   },
   "routePlanner": {
     "title": "路线规划",

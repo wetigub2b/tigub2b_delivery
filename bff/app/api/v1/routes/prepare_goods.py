@@ -10,9 +10,11 @@ Endpoints for merchant preparation workflow:
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api import deps
+from app.models.driver import Driver
 from app.schemas.prepare_goods import (
     AssignDriverRequest,
     CreatePreparePackageRequest,
@@ -134,6 +136,61 @@ async def list_available_packages(
                 prepare_status_label=PREPARE_STATUS_LABELS.get(pkg.prepare_status, "Unknown"),
                 warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
                 driver_name=None,  # Available packages have no driver assigned
+                create_time=pkg.create_time
+            )
+        )
+
+    return summaries
+
+
+@router.get("/driver/me", response_model=List[PrepareGoodsSummary], response_model_by_alias=True)
+async def list_my_driver_packages(
+    limit: int = Query(default=50, ge=1, le=100),
+    current_user=Depends(deps.get_current_user),
+    session: AsyncSession = Depends(deps.get_db_session)
+) -> List[PrepareGoodsSummary]:
+    """
+    Get prepare packages assigned to the current logged-in driver.
+
+    Only returns packages with delivery_type=1 (third-party delivery).
+
+    Args:
+        limit: Maximum number of records (default 50, max 100)
+        current_user: Authenticated user
+        session: Database session
+
+    Returns:
+        List of PrepareGoods packages assigned to current driver
+    """
+    # Look up driver by phone number
+    result = await session.execute(select(Driver).where(Driver.phone == current_user.phonenumber))
+    driver = result.scalars().first()
+    if not driver:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Driver not found"
+        )
+
+    packages = await prepare_goods_service.get_driver_assigned_packages(
+        session=session,
+        driver_id=driver.id,
+        limit=limit
+    )
+
+    # Build summary responses
+    summaries = []
+    for pkg in packages:
+        order_ids = parse_order_id_list(pkg.order_ids)
+        summaries.append(
+            PrepareGoodsSummary(
+                prepare_sn=pkg.prepare_sn,
+                order_count=len(order_ids),
+                delivery_type=pkg.delivery_type,
+                shipping_type=pkg.shipping_type,
+                prepare_status=pkg.prepare_status,
+                prepare_status_label=PREPARE_STATUS_LABELS.get(pkg.prepare_status, "Unknown"),
+                warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
+                driver_name=pkg.driver.name if pkg.driver else None,
                 create_time=pkg.create_time
             )
         )
@@ -372,3 +429,54 @@ async def assign_driver(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Prepare package not found: {prepare_sn}"
         )
+
+
+@router.post("/{prepare_sn}/pickup", status_code=status.HTTP_204_NO_CONTENT)
+async def pickup_package(
+    prepare_sn: str,
+    current_user=Depends(deps.get_current_user),
+    session: AsyncSession = Depends(deps.get_db_session)
+) -> None:
+    """
+    Driver picks up a package.
+
+    This action:
+    1. Assigns the driver to the package
+    2. Updates status to 1 (Driver pickup)
+
+    Args:
+        prepare_sn: Prepare goods serial number
+        current_user: Authenticated driver user
+        session: Database session
+
+    Raises:
+        HTTPException 404: Driver or package not found
+    """
+    # Look up driver by phone number
+    result = await session.execute(select(Driver).where(Driver.phone == current_user.phonenumber))
+    driver = result.scalars().first()
+    if not driver:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Driver not found"
+        )
+
+    # Assign driver to package
+    assigned = await prepare_goods_service.assign_driver_to_prepare(
+        session=session,
+        prepare_sn=prepare_sn,
+        driver_id=driver.id
+    )
+
+    if not assigned:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Prepare package not found: {prepare_sn}"
+        )
+
+    # Update status to 1 (Driver pickup)
+    await prepare_goods_service.update_prepare_status(
+        session=session,
+        prepare_sn=prepare_sn,
+        new_status=1
+    )

@@ -145,3 +145,21 @@ export async function listDriverPreparePackages(
   );
   return data;
 }
+
+/**
+ * List prepare packages assigned to the current logged-in driver
+ */
+export async function listMyDriverPreparePackages(limit: number = 50) {
+  const { data } = await client.get<PrepareGoodsSummaryDto[]>(
+    '/prepare-goods/driver/me',
+    { params: { limit } }
+  );
+  return data;
+}
+
+/**
+ * Driver picks up a package
+ */
+export async function pickupPackage(prepareSn: string) {
+  await client.post(`/prepare-goods/${prepareSn}/pickup`);
+}

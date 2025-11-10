@@ -51,7 +51,8 @@
     "deliverToWarehouse": "Deliver to Warehouse",
     "confirmWarehouseDelivery": "Confirm Warehouse Delivery",
     "noPackages": "No packages available",
-    "orders": "orders"
+    "orders": "orders",
+    "confirmPickup": "Confirm pickup of this package?"
   },
   "routePlanner": {
     "title": "Route Planner",

@@ -5,7 +5,9 @@ import {
   getPreparePackage,
   listAvailablePreparePackages,
   listDriverPreparePackages,
+  listMyDriverPreparePackages,
   listShopPreparePackages,
+  pickupPackage,
   updatePrepareStatus,
   type CreatePreparePackageRequest,
   type PrepareGoodsDetailDto,
@@ -233,12 +235,25 @@ export const usePrepareGoodsStore = defineStore('prepareGoods', {
     },
 
     /**
-     * Fetch driver's assigned packages
+     * Fetch driver's assigned packages (by driver ID)
      */
     async fetchDriverPackages(driverId: number) {
       this.isLoading = true;
       try {
         const packages = await listDriverPreparePackages(driverId);
+        this.driverPackages = packages.map(pkg => decorateSummary(pkg));
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    /**
+     * Fetch current logged-in driver's assigned packages
+     */
+    async fetchMyDriverPackages() {
+      this.isLoading = true;
+      try {
+        const packages = await listMyDriverPreparePackages();
         this.driverPackages = packages.map(pkg => decorateSummary(pkg));
       } finally {
         this.isLoading = false;
@@ -255,6 +270,26 @@ export const usePrepareGoodsStore = defineStore('prepareGoods', {
         this.availablePackages = packages.map(pkg => decorateSummary(pkg));
       } finally {
         this.isLoading = false;
+      }
+    },
+
+    /**
+     * Driver picks up a package
+     */
+    async pickupPackage(prepareSn: string) {
+      this.isUpdating = true;
+      try {
+        await pickupPackage(prepareSn);
+
+        // Remove from available packages
+        this.availablePackages = this.availablePackages.filter(
+          pkg => pkg.prepareSn !== prepareSn
+        );
+
+        // Refresh driver packages to show the newly picked up package
+        await this.fetchMyDriverPackages();
+      } finally {
+        this.isUpdating = false;
       }
     },
 

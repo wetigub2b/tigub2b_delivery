@@ -50,6 +50,7 @@
     "pickupPackage": "Pickup Package",
     "deliverToWarehouse": "Deliver to Warehouse",
     "confirmWarehouseDelivery": "Confirm Warehouse Delivery",
+    "waitingConfirmation": "Waiting Confirmation",
     "noPackages": "No packages available",
     "orders": "orders",
     "confirmPickup": "Confirm Package Pickup",

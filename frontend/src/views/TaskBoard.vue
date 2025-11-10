@@ -43,13 +43,18 @@
             <div class="package-info-row">
               <span>🏷️ {{ pkg.workflowLabel }}</span>
             </div>
-            <div v-if="pkg.warehouseName" class="package-info-row">
+            <div v-if="pkg.shippingType === 0 && pkg.warehouseName" class="package-info-row">
               <span>🏭 {{ pkg.warehouseName }}</span>
             </div>
           </div>
           <div class="package-footer">
-            <button class="package-action-button" @click="handlePackageAction(pkg)">
-              {{ getPackageActionLabel(pkg.prepareStatus) }} →
+            <button 
+              class="package-action-button" 
+              :class="{ 'package-action-button--disabled': pkg.prepareStatus === 2 }"
+              :disabled="pkg.prepareStatus === 2"
+              @click="handlePackageAction(pkg)"
+            >
+              {{ getPackageActionLabel(pkg.prepareStatus) }} <span v-if="pkg.prepareStatus !== 2">→</span>
             </button>
           </div>
         </div>
@@ -163,7 +168,7 @@ const filteredPackages = computed(() => {
 function getPackageActionLabel(status: number | null): string {
   if (status === null || status === 0) return t('taskBoard.pickupPackage');
   if (status === 1) return t('taskBoard.confirmPickupButton');
-  if (status === 2) return t('taskBoard.confirmWarehouseDelivery');
+  if (status === 2) return t('taskBoard.waitingConfirmation');
   return t('taskBoard.viewDetails');
 }
 
@@ -426,5 +431,18 @@ function cancelPickupProof() {
 .package-action-button:hover {
   background: var(--color-primary-dark);
   border-color: var(--color-primary-dark);
+}
+
+.package-action-button--disabled {
+  background: var(--color-gray-light);
+  color: var(--color-text-secondary);
+  border-color: var(--color-gray-light);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.package-action-button--disabled:hover {
+  background: var(--color-gray-light);
+  border-color: var(--color-gray-light);
 }
 </style>

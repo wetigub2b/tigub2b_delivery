@@ -50,6 +50,7 @@
     "pickupPackage": "取货",
     "deliverToWarehouse": "送货至仓库",
     "confirmWarehouseDelivery": "确认仓库收货",
+    "waitingConfirmation": "等待确认",
     "noPackages": "暂无包裹",
     "orders": "订单",
     "confirmPickup": "确认取货包裹",

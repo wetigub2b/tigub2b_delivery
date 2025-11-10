@@ -30,8 +30,10 @@ from app.utils import parse_order_id_list
 
 router = APIRouter()
 
-# Prepare status labels
-PREPARE_STATUS_LABELS = {
+# Prepare status labels for different shipping types
+# shipping_type=0: To warehouse
+# shipping_type=1: Direct to user
+PREPARE_STATUS_LABELS_TO_WAREHOUSE = {
     None: "待备货",        # Pending Prepare
     0: "已备货",           # Prepared
     1: "司机收货中",        # Driver Pickup
@@ -41,6 +43,24 @@ PREPARE_STATUS_LABELS = {
     5: "已送达",           # Delivered
     6: "完成",             # Complete
 }
+
+PREPARE_STATUS_LABELS_TO_USER = {
+    None: "待备货",        # Pending Prepare
+    0: "已备货",           # Prepared
+    1: "司机收货中",        # Driver Pickup
+    2: "司机配送用户",      # Driver to User
+    3: "已送达",           # Delivered
+    4: "已送达",           # Delivered
+    5: "已送达",           # Delivered
+    6: "完成",             # Complete
+}
+
+def get_prepare_status_label(status: Optional[int], shipping_type: int) -> str:
+    """Get status label based on shipping type."""
+    if shipping_type == 0:
+        return PREPARE_STATUS_LABELS_TO_WAREHOUSE.get(status, "Unknown")
+    else:
+        return PREPARE_STATUS_LABELS_TO_USER.get(status, "Unknown")
 
 
 @router.post("", response_model=PrepareGoodsResponse, response_model_by_alias=True, status_code=status.HTTP_201_CREATED)
@@ -135,7 +155,7 @@ async def list_available_packages(
                 delivery_type=pkg.delivery_type,
                 shipping_type=pkg.shipping_type,
                 prepare_status=pkg.prepare_status,
-                prepare_status_label=PREPARE_STATUS_LABELS.get(pkg.prepare_status, "Unknown"),
+                prepare_status_label=get_prepare_status_label(pkg.prepare_status, pkg.shipping_type),
                 warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
                 driver_name=None,  # Available packages have no driver assigned
                 create_time=pkg.create_time
@@ -190,7 +210,7 @@ async def list_my_driver_packages(
                 delivery_type=pkg.delivery_type,
                 shipping_type=pkg.shipping_type,
                 prepare_status=pkg.prepare_status,
-                prepare_status_label=PREPARE_STATUS_LABELS.get(pkg.prepare_status, "Unknown"),
+                prepare_status_label=get_prepare_status_label(pkg.prepare_status, pkg.shipping_type),
                 warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
                 driver_name=pkg.driver.name if pkg.driver else None,
                 create_time=pkg.create_time
@@ -238,7 +258,7 @@ async def list_driver_packages(
                 delivery_type=pkg.delivery_type,
                 shipping_type=pkg.shipping_type,
                 prepare_status=pkg.prepare_status,
-                prepare_status_label=PREPARE_STATUS_LABELS.get(pkg.prepare_status, "Unknown"),
+                prepare_status_label=get_prepare_status_label(pkg.prepare_status, pkg.shipping_type),
                 warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
                 driver_name=pkg.driver.name if pkg.driver else None,
                 create_time=pkg.create_time
@@ -287,7 +307,7 @@ async def list_shop_prepare_packages(
                 delivery_type=pkg.delivery_type,
                 shipping_type=pkg.shipping_type,
                 prepare_status=pkg.prepare_status,
-                prepare_status_label=PREPARE_STATUS_LABELS.get(pkg.prepare_status, "Unknown"),
+                prepare_status_label=get_prepare_status_label(pkg.prepare_status, pkg.shipping_type),
                 warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
                 driver_name=pkg.driver.name if pkg.driver else None,
                 create_time=pkg.create_time

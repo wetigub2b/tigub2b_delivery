@@ -66,6 +66,21 @@
       :order-count="selectedPackage.orderCount"
       @close="closeOrdersModal"
     />
+
+    <!-- Confirm Pickup Modal -->
+    <ConfirmPackagePickupModal
+      v-if="packageToPickup"
+      :show="showPickupModal"
+      :package-data="{
+        prepareSn: packageToPickup.prepareSn,
+        orderCount: packageToPickup.orderCount,
+        workflowLabel: packageToPickup.workflowLabel,
+        warehouseName: packageToPickup.warehouseName
+      }"
+      :is-processing="isPickingUp"
+      @confirm="confirmPickup"
+      @cancel="cancelPickup"
+    />
   </section>
 </template>
 
@@ -76,6 +91,7 @@ import { useI18n } from 'vue-i18n';
 import { usePrepareGoodsStore } from '@/store/prepareGoods';
 import EmptyState from '@/components/EmptyState.vue';
 import PackageOrdersModal from '@/components/PackageOrdersModal.vue';
+import ConfirmPackagePickupModal from '@/components/ConfirmPackagePickupModal.vue';
 
 const { t } = useI18n();
 const prepareGoodsStore = usePrepareGoodsStore();
@@ -84,6 +100,11 @@ const activeStatus = ref('available');
 // Modal state
 const showOrdersModal = ref(false);
 const selectedPackage = ref<{ prepareSn: string; orderCount: number } | null>(null);
+
+// Pickup confirmation modal state
+const showPickupModal = ref(false);
+const packageToPickup = ref<any>(null);
+const isPickingUp = ref(false);
 
 const statuses = computed(() => [
   { key: 'available', label: t('taskBoard.available'), prepareStatus: 0 },
@@ -127,23 +148,39 @@ function getPackageActionLabel(status: number | null): string {
   return t('taskBoard.viewDetails');
 }
 
-async function handlePackageAction(pkg: any) {
+function handlePackageAction(pkg: any) {
+  if (pkg.prepareStatus === null || pkg.prepareStatus === 0) {
+    // Available package - show pickup confirmation modal
+    packageToPickup.value = pkg;
+    showPickupModal.value = true;
+  } else {
+    // For other statuses, show detail view (to be implemented)
+    console.log('Package action:', pkg.prepareSn, 'Status:', pkg.prepareStatus);
+    alert(`Package: ${pkg.prepareSn}\nStatus: ${pkg.prepareStatusLabel}\n\nDetail view to be implemented.`);
+  }
+}
+
+async function confirmPickup() {
+  if (!packageToPickup.value) return;
+
+  isPickingUp.value = true;
   try {
-    if (pkg.prepareStatus === null || pkg.prepareStatus === 0) {
-      // Available package - pickup action
-      if (confirm(`${t('taskBoard.confirmPickup')}\n\n${pkg.prepareSn}`)) {
-        await prepareGoodsStore.pickupPackage(pkg.prepareSn);
-        // Refresh available packages
-        await prepareGoodsStore.fetchAvailablePackages();
-      }
-    } else {
-      // For other statuses, show detail view (to be implemented)
-      console.log('Package action:', pkg.prepareSn, 'Status:', pkg.prepareStatus);
-      alert(`Package: ${pkg.prepareSn}\nStatus: ${pkg.prepareStatusLabel}\n\nDetail view to be implemented.`);
-    }
+    await prepareGoodsStore.pickupPackage(packageToPickup.value.prepareSn);
+    // Refresh available packages
+    await prepareGoodsStore.fetchAvailablePackages();
+    // Close modal
+    showPickupModal.value = false;
+    packageToPickup.value = null;
   } catch (error: any) {
     alert(`Error: ${error.response?.data?.detail || error.message}`);
+  } finally {
+    isPickingUp.value = false;
   }
+}
+
+function cancelPickup() {
+  showPickupModal.value = false;
+  packageToPickup.value = null;
 }
 
 function openOrdersModal(pkg: any) {

@@ -52,7 +52,11 @@
     "confirmWarehouseDelivery": "确认仓库收货",
     "noPackages": "暂无包裹",
     "orders": "订单",
-    "confirmPickup": "确认取货？"
+    "confirmPickup": "确认取货包裹",
+    "confirmPickupMessage": "确认要取货此包裹吗？",
+    "confirmPickupButton": "确认取货",
+    "workflow": "工作流",
+    "warehouse": "仓库"
   },
   "routePlanner": {
     "title": "路线规划",

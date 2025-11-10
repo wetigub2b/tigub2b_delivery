@@ -86,12 +86,9 @@ async function fetchOrderSerialNumbers() {
   isLoading.value = true;
   try {
     const detail = await prepareGoodsStore.fetchPackageDetail(props.packageSn);
-    console.log('Package detail response:', detail);
-    console.log('Order serial numbers:', detail?.orderSerialNumbers);
     if (detail && detail.orderSerialNumbers) {
       orderSerialNumbers.value = detail.orderSerialNumbers;
     } else {
-      console.warn('No orderSerialNumbers in response');
       orderSerialNumbers.value = [];
     }
   } catch (error) {

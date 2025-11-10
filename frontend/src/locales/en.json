@@ -52,7 +52,11 @@
     "confirmWarehouseDelivery": "Confirm Warehouse Delivery",
     "noPackages": "No packages available",
     "orders": "orders",
-    "confirmPickup": "Confirm pickup of this package?"
+    "confirmPickup": "Confirm Package Pickup",
+    "confirmPickupMessage": "Are you sure you want to pickup this package?",
+    "confirmPickupButton": "Confirm Pickup",
+    "workflow": "Workflow",
+    "warehouse": "Warehouse"
   },
   "routePlanner": {
     "title": "Route Planner",

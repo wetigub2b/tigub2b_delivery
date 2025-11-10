@@ -341,14 +341,11 @@ async def get_prepare_package(
     # Fetch order serial numbers
     order_ids = parse_order_id_list(prepare_goods.order_ids)
     order_serial_numbers = []
-    print(f"DEBUG: prepare_goods.order_ids = {prepare_goods.order_ids}")
-    print(f"DEBUG: parsed order_ids = {order_ids}")
     if order_ids:
         result = await session.execute(
             select(Order.order_sn).where(Order.id.in_(order_ids))
         )
         order_serial_numbers = [row[0] for row in result.fetchall()]
-        print(f"DEBUG: order_serial_numbers = {order_serial_numbers}")
 
     return PrepareGoodsDetailResponse(
         id=prepare_goods.id,

@@ -86,6 +86,7 @@ class PrepareGoodsDetailResponse(PrepareGoodsResponse):
     items: List[PrepareGoodsItemSchema] = Field(default_factory=list)
     warehouse_name: Optional[str] = Field(default=None, alias="warehouseName")
     driver_name: Optional[str] = Field(default=None, alias="driverName")
+    order_serial_numbers: List[str] = Field(default_factory=list, alias="orderSerialNumbers", description="List of order serial numbers")
 
 
 class PrepareGoodsSummary(BaseModel):

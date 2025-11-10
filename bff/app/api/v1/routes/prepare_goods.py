@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api import deps
 from app.models.driver import Driver
+from app.models.order import Order
 from app.schemas.prepare_goods import (
     AssignDriverRequest,
     CreatePreparePackageRequest,
@@ -337,6 +338,18 @@ async def get_prepare_package(
         for item in prepare_goods.items
     ]
 
+    # Fetch order serial numbers
+    order_ids = parse_order_id_list(prepare_goods.order_ids)
+    order_serial_numbers = []
+    print(f"DEBUG: prepare_goods.order_ids = {prepare_goods.order_ids}")
+    print(f"DEBUG: parsed order_ids = {order_ids}")
+    if order_ids:
+        result = await session.execute(
+            select(Order.order_sn).where(Order.id.in_(order_ids))
+        )
+        order_serial_numbers = [row[0] for row in result.fetchall()]
+        print(f"DEBUG: order_serial_numbers = {order_serial_numbers}")
+
     return PrepareGoodsDetailResponse(
         id=prepare_goods.id,
         prepare_sn=prepare_goods.prepare_sn,
@@ -351,7 +364,8 @@ async def get_prepare_package(
         update_time=prepare_goods.update_time,
         items=items,
         warehouse_name=prepare_goods.warehouse.name if prepare_goods.warehouse else None,
-        driver_name=prepare_goods.driver.name if prepare_goods.driver else None
+        driver_name=prepare_goods.driver.name if prepare_goods.driver else None,
+        order_serial_numbers=order_serial_numbers
     )
 
 

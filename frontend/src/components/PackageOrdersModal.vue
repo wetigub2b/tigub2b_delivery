@@ -1,0 +1,308 @@
+<template>
+  <Teleport to="body">
+    <Transition name="modal">
+      <div v-if="show" class="modal-overlay" @click="handleClose">
+        <div class="modal-container" @click.stop>
+          <div class="modal-header">
+            <h3>{{ $t('packageModal.orderDetails') }}</h3>
+            <button class="modal-close" @click="handleClose" aria-label="Close">
+              ✕
+            </button>
+          </div>
+
+          <div class="modal-body">
+            <div class="package-summary">
+              <div class="summary-row">
+                <span class="summary-label">{{ $t('packageModal.packageNumber') }}:</span>
+                <span class="summary-value">{{ packageSn }}</span>
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">{{ $t('packageModal.totalOrders') }}:</span>
+                <span class="summary-value">{{ orderCount }}</span>
+              </div>
+            </div>
+
+            <div class="orders-section">
+              <h4>{{ $t('packageModal.orderList') }}</h4>
+              <div v-if="isLoading" class="loading-state">
+                {{ $t('common.loading') }}
+              </div>
+              <div v-else-if="orderSerialNumbers.length > 0" class="orders-list">
+                <div
+                  v-for="(orderSn, index) in orderSerialNumbers"
+                  :key="orderSn"
+                  class="order-item"
+                >
+                  <span class="order-index">{{ index + 1 }}.</span>
+                  <span class="order-id">{{ orderSn }}</span>
+                </div>
+              </div>
+              <div v-else class="empty-state">
+                {{ $t('packageModal.noOrders') }}
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="modal-button modal-button--primary" @click="handleClose">
+              {{ $t('common.confirm') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
+</template>
+
+<script setup lang="ts">
+import { ref, watch } from 'vue';
+import { usePrepareGoodsStore } from '@/store/prepareGoods';
+
+const props = defineProps<{
+  show: boolean;
+  packageSn: string;
+  orderCount: number;
+}>();
+
+const emit = defineEmits<{
+  close: [];
+}>();
+
+const prepareGoodsStore = usePrepareGoodsStore();
+const orderSerialNumbers = ref<string[]>([]);
+const isLoading = ref(false);
+
+// Fetch package details when modal opens
+watch(() => props.show, async (newValue) => {
+  if (newValue && props.packageSn) {
+    await fetchOrderSerialNumbers();
+  } else {
+    // Clear data when modal closes
+    orderSerialNumbers.value = [];
+  }
+}, { immediate: true });
+
+async function fetchOrderSerialNumbers() {
+  isLoading.value = true;
+  try {
+    const detail = await prepareGoodsStore.fetchPackageDetail(props.packageSn);
+    console.log('Package detail response:', detail);
+    console.log('Order serial numbers:', detail?.orderSerialNumbers);
+    if (detail && detail.orderSerialNumbers) {
+      orderSerialNumbers.value = detail.orderSerialNumbers;
+    } else {
+      console.warn('No orderSerialNumbers in response');
+      orderSerialNumbers.value = [];
+    }
+  } catch (error) {
+    console.error('Failed to fetch package details:', error);
+    orderSerialNumbers.value = [];
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+function handleClose() {
+  emit('close');
+}
+</script>
+
+<style scoped>
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--spacing-lg);
+}
+
+.modal-container {
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  max-width: 500px;
+  width: 100%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-gray-light);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  line-height: 1;
+  transition: color var(--transition-base);
+}
+
+.modal-close:hover {
+  color: var(--color-text-primary);
+}
+
+.modal-body {
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+  flex: 1;
+}
+
+.package-summary {
+  background: var(--color-gray-lighter);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-xs) 0;
+}
+
+.summary-label {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.summary-value {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+}
+
+.orders-section h4 {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: 1rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.order-item {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-md);
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-light);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-base);
+}
+
+.order-item:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.order-index {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  margin-right: var(--spacing-sm);
+  min-width: 2rem;
+}
+
+.order-id {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  font-family: monospace;
+  font-size: 0.875rem;
+}
+
+.loading-state,
+.empty-state {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  border-top: 1px solid var(--color-gray-light);
+}
+
+.modal-button {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-md);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  border: 1px solid transparent;
+  font-size: 0.875rem;
+}
+
+.modal-button--primary {
+  background: var(--color-primary);
+  color: var(--color-white);
+  border-color: var(--color-primary);
+}
+
+.modal-button--primary:hover {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+}
+
+/* Modal transitions */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity var(--transition-base);
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-active .modal-container,
+.modal-leave-active .modal-container {
+  transition: transform var(--transition-base);
+}
+
+.modal-enter-from .modal-container,
+.modal-leave-to .modal-container {
+  transform: scale(0.95);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: var(--spacing-md);
+  }
+
+  .modal-container {
+    max-height: 90vh;
+  }
+}
+</style>

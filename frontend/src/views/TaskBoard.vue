@@ -34,8 +34,11 @@
             </span>
           </div>
           <div class="package-body">
-            <div class="package-info-row">
+            <div class="package-info-row package-info-row--with-action">
               <span>📦 {{ pkg.orderCount }} {{ t('taskBoard.orders') }}</span>
+              <button class="detail-button" @click="openOrdersModal(pkg)">
+                {{ $t('packageModal.viewDetails') }}
+              </button>
             </div>
             <div class="package-info-row">
               <span>🏷️ {{ pkg.workflowLabel }}</span>
@@ -54,6 +57,15 @@
     </section>
 
     <EmptyState v-else :message="t('taskBoard.noPackages')" />
+
+    <!-- Package Orders Modal -->
+    <PackageOrdersModal
+      v-if="selectedPackage"
+      :show="showOrdersModal"
+      :package-sn="selectedPackage.prepareSn"
+      :order-count="selectedPackage.orderCount"
+      @close="closeOrdersModal"
+    />
   </section>
 </template>
 
@@ -63,10 +75,15 @@ import { RouterLink } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { usePrepareGoodsStore } from '@/store/prepareGoods';
 import EmptyState from '@/components/EmptyState.vue';
+import PackageOrdersModal from '@/components/PackageOrdersModal.vue';
 
 const { t } = useI18n();
 const prepareGoodsStore = usePrepareGoodsStore();
 const activeStatus = ref('available');
+
+// Modal state
+const showOrdersModal = ref(false);
+const selectedPackage = ref<{ prepareSn: string; orderCount: number } | null>(null);
 
 const statuses = computed(() => [
   { key: 'available', label: t('taskBoard.available'), prepareStatus: 0 },
@@ -127,6 +144,19 @@ async function handlePackageAction(pkg: any) {
   } catch (error: any) {
     alert(`Error: ${error.response?.data?.detail || error.message}`);
   }
+}
+
+function openOrdersModal(pkg: any) {
+  selectedPackage.value = {
+    prepareSn: pkg.prepareSn,
+    orderCount: pkg.orderCount
+  };
+  showOrdersModal.value = true;
+}
+
+function closeOrdersModal() {
+  showOrdersModal.value = false;
+  selectedPackage.value = null;
 }
 </script>
 
@@ -264,6 +294,31 @@ async function handlePackageAction(pkg: any) {
   padding: var(--spacing-xs) 0;
   font-size: 0.875rem;
   color: var(--color-text-secondary);
+}
+
+.package-info-row--with-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.detail-button {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--color-white);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  white-space: nowrap;
+}
+
+.detail-button:hover {
+  background: var(--color-primary);
+  color: var(--color-white);
 }
 
 .package-footer {

@@ -26,6 +26,7 @@ export interface PrepareGoodsDetailDto extends PrepareGoodsDto {
   items: PrepareGoodsItemDto[];
   warehouseName: string | null;
   driverName: string | null;
+  orderSerialNumbers: string[];
 }
 
 export interface PrepareGoodsSummaryDto {

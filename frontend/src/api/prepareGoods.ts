@@ -22,11 +22,22 @@ export interface PrepareGoodsDto {
   updateTime: string | null;
 }
 
+export interface UploadedFileDto {
+  id: number;
+  fileName: string;
+  fileUrl: string;
+  fileType: string;
+  fileSize: number;
+  uploaderName: string | null;
+  createTime: string;
+}
+
 export interface PrepareGoodsDetailDto extends PrepareGoodsDto {
   items: PrepareGoodsItemDto[];
   warehouseName: string | null;
   driverName: string | null;
   orderSerialNumbers: string[];
+  pickupPhotos: UploadedFileDto[];
 }
 
 export interface PrepareGoodsSummaryDto {

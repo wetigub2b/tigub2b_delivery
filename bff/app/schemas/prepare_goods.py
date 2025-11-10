@@ -89,12 +89,26 @@ class PrepareGoodsResponse(BaseModel):
     update_time: Optional[datetime] = Field(default=None, alias="updateTime")
 
 
+class UploadedFileSchema(BaseModel):
+    """Uploaded file information"""
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: int
+    file_name: str = Field(alias="fileName")
+    file_url: str = Field(alias="fileUrl")
+    file_type: str = Field(alias="fileType")
+    file_size: int = Field(alias="fileSize")
+    uploader_name: Optional[str] = Field(default=None, alias="uploaderName")
+    create_time: datetime = Field(alias="createTime")
+
+
 class PrepareGoodsDetailResponse(PrepareGoodsResponse):
     """PrepareGoods package with items"""
     items: List[PrepareGoodsItemSchema] = Field(default_factory=list)
     warehouse_name: Optional[str] = Field(default=None, alias="warehouseName")
     driver_name: Optional[str] = Field(default=None, alias="driverName")
     order_serial_numbers: List[str] = Field(default_factory=list, alias="orderSerialNumbers", description="List of order serial numbers")
+    pickup_photos: List[UploadedFileSchema] = Field(default_factory=list, alias="pickupPhotos", description="Pickup proof photos")
 
 
 class PrepareGoodsSummary(BaseModel):

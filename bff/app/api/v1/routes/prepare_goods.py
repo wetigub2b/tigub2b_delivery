@@ -326,7 +326,8 @@ async def get_prepare_package(
         )
 
     # Build response with items
-    from app.schemas.prepare_goods import PrepareGoodsItemSchema
+    from app.schemas.prepare_goods import PrepareGoodsItemSchema, UploadedFileSchema
+    from app.models.order import UploadedFile
 
     items = [
         PrepareGoodsItemSchema(
@@ -348,6 +349,26 @@ async def get_prepare_package(
         )
         order_serial_numbers = [row[0] for row in result.fetchall()]
 
+    # Fetch pickup photos
+    photos_result = await session.execute(
+        select(UploadedFile)
+        .where(UploadedFile.biz_type == "prepare_good")
+        .where(UploadedFile.biz_id == prepare_goods.id)
+        .order_by(UploadedFile.create_time.desc())
+    )
+    pickup_photos = [
+        UploadedFileSchema(
+            id=photo.id,
+            file_name=photo.file_name,
+            file_url=photo.file_url,
+            file_type=photo.file_type,
+            file_size=photo.file_size,
+            uploader_name=photo.uploader_name,
+            create_time=photo.create_time
+        )
+        for photo in photos_result.scalars().all()
+    ]
+
     return PrepareGoodsDetailResponse(
         id=prepare_goods.id,
         prepare_sn=prepare_goods.prepare_sn,
@@ -363,7 +384,8 @@ async def get_prepare_package(
         items=items,
         warehouse_name=prepare_goods.warehouse.name if prepare_goods.warehouse else None,
         driver_name=prepare_goods.driver.name if prepare_goods.driver else None,
-        order_serial_numbers=order_serial_numbers
+        order_serial_numbers=order_serial_numbers,
+        pickup_photos=pickup_photos
     )
 
 

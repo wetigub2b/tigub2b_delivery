@@ -22,6 +22,27 @@
               </div>
             </div>
 
+            <!-- Pickup Photos Section -->
+            <div v-if="pickupPhotos.length > 0" class="photos-section">
+              <h4>{{ $t('packageModal.pickupPhotos') }}</h4>
+              <div class="photos-grid">
+                <div
+                  v-for="photo in pickupPhotos"
+                  :key="photo.id"
+                  class="photo-card"
+                >
+                  <img :src="photo.fileUrl" :alt="photo.fileName" class="photo-image" />
+                  <div class="photo-info">
+                    <div class="photo-meta">
+                      <span class="photo-uploader">📷 {{ photo.uploaderName || 'Unknown' }}</span>
+                      <span class="photo-size">{{ formatFileSize(photo.fileSize) }}</span>
+                    </div>
+                    <div class="photo-time">{{ formatDateTime(photo.createTime) }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div class="orders-section">
               <h4>{{ $t('packageModal.orderList') }}</h4>
               <div v-if="isLoading" class="loading-state">
@@ -68,8 +89,11 @@ const emit = defineEmits<{
   close: [];
 }>();
 
+import type { UploadedFileDto } from '@/api/prepareGoods';
+
 const prepareGoodsStore = usePrepareGoodsStore();
 const orderSerialNumbers = ref<string[]>([]);
+const pickupPhotos = ref<UploadedFileDto[]>([]);
 const isLoading = ref(false);
 
 // Fetch package details when modal opens
@@ -79,6 +103,7 @@ watch(() => props.show, async (newValue) => {
   } else {
     // Clear data when modal closes
     orderSerialNumbers.value = [];
+    pickupPhotos.value = [];
   }
 }, { immediate: true });
 
@@ -86,17 +111,31 @@ async function fetchOrderSerialNumbers() {
   isLoading.value = true;
   try {
     const detail = await prepareGoodsStore.fetchPackageDetail(props.packageSn);
-    if (detail && detail.orderSerialNumbers) {
-      orderSerialNumbers.value = detail.orderSerialNumbers;
+    if (detail) {
+      orderSerialNumbers.value = detail.orderSerialNumbers || [];
+      pickupPhotos.value = detail.pickupPhotos || [];
     } else {
       orderSerialNumbers.value = [];
+      pickupPhotos.value = [];
     }
   } catch (error) {
     console.error('Failed to fetch package details:', error);
     orderSerialNumbers.value = [];
+    pickupPhotos.value = [];
   } finally {
     isLoading.value = false;
   }
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function formatDateTime(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleString();
 }
 
 function handleClose() {
@@ -190,6 +229,70 @@ function handleClose() {
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   font-size: 0.875rem;
+}
+
+.photos-section {
+  margin-bottom: var(--spacing-lg);
+}
+
+.photos-section h4 {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: 1rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.photos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.photo-card {
+  border: 1px solid var(--color-gray-light);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: all var(--transition-base);
+}
+
+.photo-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.photo-image {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  display: block;
+  cursor: pointer;
+}
+
+.photo-info {
+  padding: var(--spacing-sm);
+  background: var(--color-gray-lightest);
+}
+
+.photo-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xs);
+  font-size: 0.75rem;
+}
+
+.photo-uploader {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.photo-size {
+  color: var(--color-text-secondary);
+}
+
+.photo-time {
+  font-size: 0.7rem;
+  color: var(--color-text-secondary);
 }
 
 .orders-section h4 {

@@ -322,6 +322,42 @@ async def get_driver_assigned_packages(
     return list(result.scalars().unique().all())
 
 
+async def get_available_packages(
+    session: AsyncSession,
+    limit: int = 50
+) -> List[PrepareGoods]:
+    """
+    Get available packages that are ready for driver pickup.
+
+    Returns packages that are:
+    - prepare_status = 0 (prepared, ready for pickup)
+    - driver_id IS NULL (not assigned to any driver yet)
+    - delivery_type = 1 (third-party driver delivery)
+
+    Args:
+        session: Database session
+        limit: Maximum number of records
+
+    Returns:
+        List of PrepareGoods instances available for pickup
+    """
+    stmt = (
+        select(PrepareGoods)
+        .options(
+            selectinload(PrepareGoods.items),
+            selectinload(PrepareGoods.warehouse)
+        )
+        .where(PrepareGoods.driver_id.is_(None))  # Not assigned
+        .where(PrepareGoods.prepare_status == 0)  # Prepared
+        .where(PrepareGoods.delivery_type == 1)  # Third-party only
+        .order_by(PrepareGoods.create_time.desc())
+        .limit(limit)
+    )
+
+    result = await session.execute(stmt)
+    return list(result.scalars().unique().all())
+
+
 async def get_order_delivery_type(
     session: AsyncSession,
     order_id: int

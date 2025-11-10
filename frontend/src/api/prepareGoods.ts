@@ -121,6 +121,18 @@ export async function assignDriver(prepareSn: string, driverId: number) {
 }
 
 /**
+ * List available packages ready for driver pickup
+ * (unassigned packages with prepare_status = 0)
+ */
+export async function listAvailablePreparePackages(limit: number = 50) {
+  const { data } = await client.get<PrepareGoodsSummaryDto[]>(
+    '/prepare-goods/available',
+    { params: { limit } }
+  );
+  return data;
+}
+
+/**
  * List prepare packages assigned to a driver
  */
 export async function listDriverPreparePackages(

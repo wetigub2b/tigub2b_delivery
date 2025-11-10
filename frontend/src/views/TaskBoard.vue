@@ -79,6 +79,8 @@ const statuses = computed(() => [
 const driverId = ref(1);
 
 onMounted(() => {
+  // Fetch both available (unassigned) and driver's assigned packages
+  prepareGoodsStore.fetchAvailablePackages();
   prepareGoodsStore.fetchDriverPackages(driverId.value);
 });
 
@@ -87,7 +89,12 @@ const filteredPackages = computed(() => {
   const currentTab = statuses.value.find(s => s.key === activeStatus.value);
   if (!currentTab) return [];
 
-  const allPackages = prepareGoodsStore.driverPackages;
+  // For "Available" tab, use availablePackages (unassigned)
+  // For other tabs, use driverPackages (assigned to this driver)
+  const allPackages = currentTab.key === 'available'
+    ? prepareGoodsStore.availablePackages
+    : prepareGoodsStore.driverPackages;
+
   const targetStatus = currentTab.prepareStatus;
 
   if (Array.isArray(targetStatus)) {
@@ -189,85 +196,87 @@ async function handlePackageAction(pkg: any) {
 .prepare-packages-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1rem;
+  gap: var(--spacing-lg);
 }
 
 .prepare-package-card {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  transition: all 0.2s;
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-light);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-sm);
 }
 
 .prepare-package-card:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
   transform: translateY(-2px);
-  border-color: #3b82f6;
+  border-color: var(--color-primary);
 }
 
 .package-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-gray-light);
 }
 
 .package-sn {
-  font-weight: 600;
-  color: #1f2937;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
   font-size: 0.875rem;
 }
 
 .package-status {
-  padding: 0.25rem 0.75rem;
-  border-radius: 0.25rem;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .status-0 {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--color-warning);
+  color: var(--color-white);
 }
 
 .status-1,
 .status-2 {
-  background: #dbeafe;
-  color: #1e40af;
+  background: var(--color-info);
+  color: var(--color-white);
 }
 
 .package-body {
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-md);
 }
 
 .package-info-row {
-  padding: 0.5rem 0;
+  padding: var(--spacing-xs) 0;
   font-size: 0.875rem;
-  color: #374151;
+  color: var(--color-text-secondary);
 }
 
 .package-footer {
-  padding-top: 1rem;
-  border-top: 1px solid #e5e7eb;
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-gray-light);
 }
 
 .package-action-button {
   width: 100%;
   padding: 0.5rem;
-  background: #eff6ff;
-  color: #2563eb;
-  border: 1px solid #dbeafe;
-  border-radius: 0.375rem;
-  font-weight: 500;
+  background: var(--color-primary);
+  color: var(--color-white);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-base);
   font-size: 0.875rem;
 }
 
 .package-action-button:hover {
-  background: #dbeafe;
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
 }
 </style>

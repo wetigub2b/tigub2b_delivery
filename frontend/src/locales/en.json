@@ -46,7 +46,12 @@
     "viewDetails": "View Details",
     "noTasks": "No tasks available",
     "noAvailableOrders": "No available orders to pick up",
-    "refreshTasks": "Refresh Tasks"
+    "refreshTasks": "Refresh Tasks",
+    "pickupPackage": "Pickup Package",
+    "deliverToWarehouse": "Deliver to Warehouse",
+    "confirmWarehouseDelivery": "Confirm Warehouse Delivery",
+    "noPackages": "No packages available",
+    "orders": "orders"
   },
   "routePlanner": {
     "title": "Route Planner",

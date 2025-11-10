@@ -3,6 +3,7 @@ import {
   assignDriver,
   createPreparePackage,
   getPreparePackage,
+  listAvailablePreparePackages,
   listDriverPreparePackages,
   listShopPreparePackages,
   updatePrepareStatus,
@@ -88,6 +89,9 @@ export const usePrepareGoodsStore = defineStore('prepareGoods', {
 
     // Driver's assigned packages
     driverPackages: [] as PrepareGoodsPackage[],
+
+    // Available packages (unassigned, ready for pickup)
+    availablePackages: [] as PrepareGoodsPackage[],
 
     // Currently viewed package detail
     currentPackage: null as PrepareGoodsDetail | null,
@@ -236,6 +240,19 @@ export const usePrepareGoodsStore = defineStore('prepareGoods', {
       try {
         const packages = await listDriverPreparePackages(driverId);
         this.driverPackages = packages.map(pkg => decorateSummary(pkg));
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    /**
+     * Fetch available packages (unassigned, ready for pickup)
+     */
+    async fetchAvailablePackages() {
+      this.isLoading = true;
+      try {
+        const packages = await listAvailablePreparePackages();
+        this.availablePackages = packages.map(pkg => decorateSummary(pkg));
       } finally {
         this.isLoading = false;
       }

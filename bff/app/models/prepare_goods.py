@@ -100,6 +100,49 @@ class PrepareGoods(Base):
         comment="商家ID"
     )
 
+    # Receiver information
+    receiver_name: Mapped[str | None] = mapped_column(
+        String(64),
+        nullable=True,
+        comment="收货人姓名"
+    )
+
+    receiver_phone: Mapped[str | None] = mapped_column(
+        String(32),
+        nullable=True,
+        comment="收货人电话"
+    )
+
+    receiver_province: Mapped[str | None] = mapped_column(
+        String(64),
+        nullable=True,
+        comment="收货人省份"
+    )
+
+    receiver_city: Mapped[str | None] = mapped_column(
+        String(64),
+        nullable=True,
+        comment="收货人城市"
+    )
+
+    receiver_district: Mapped[str | None] = mapped_column(
+        String(64),
+        nullable=True,
+        comment="收货人区县"
+    )
+
+    receiver_address: Mapped[str | None] = mapped_column(
+        String(256),
+        nullable=True,
+        comment="收货人详细地址"
+    )
+
+    receiver_postal_code: Mapped[str | None] = mapped_column(
+        String(16),
+        nullable=True,
+        comment="收货人邮编"
+    )
+
     # Warehouse (if applicable - shipping_type=0)
     warehouse_id: Mapped[int | None] = mapped_column(
         BIGINT(unsigned=True),

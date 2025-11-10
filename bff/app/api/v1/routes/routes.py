@@ -5,12 +5,9 @@ from sqlalchemy.orm import selectinload
 
 from app.api import deps
 from app.models.driver import Driver
-from app.models.order import Order
 from app.models.prepare_goods import PrepareGoods
-from app.schemas.route import LocationUpdate, RoutePlan
-from app.services import order_service, route_service
+from app.schemas.route import LocationUpdate, RoutePlan, RouteStop
 from app.services.cache import store_driver_location
-from app.utils import parse_order_id_list
 
 router = APIRouter()
 
@@ -23,11 +20,12 @@ async def optimize_route(
     """
     Build optimized route for driver based on assigned prepare goods packages.
 
-    New workflow:
-    1. Get all PrepareGoods packages assigned to driver
-    2. Extract order IDs from packages
-    3. Filter for active orders (not completed)
-    4. Build optimized route
+    Uses receiver addresses from tigu_prepare_goods table for in-transit packages.
+    
+    Workflow:
+    1. Get all in-transit PrepareGoods packages assigned to driver
+    2. Use receiver address from prepare_goods table
+    3. Build optimized route
     """
     # Look up driver by phone number to get driver_id
     result = await session.execute(select(Driver).where(Driver.phone == current_user.phonenumber))
@@ -36,42 +34,40 @@ async def optimize_route(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Driver not found")
 
     # Get all prepare goods packages assigned to this driver
-    # Exclude completed packages (prepare_status = 6)
+    # Only show in-transit packages (prepare_status 2-5)
     packages_result = await session.execute(
         select(PrepareGoods)
         .where(PrepareGoods.driver_id == driver.id)
+        .where(PrepareGoods.prepare_status >= 2)  # In-transit
         .where(PrepareGoods.prepare_status < 6)  # Not completed
     )
     packages = packages_result.scalars().all()
 
-    # Extract all order IDs from packages
-    all_order_ids = []
-    for pkg in packages:
-        order_ids = parse_order_id_list(pkg.order_ids)
-        all_order_ids.extend(order_ids)
-
-    # Remove duplicates
-    unique_order_ids = list(set(all_order_ids))
-
-    if not unique_order_ids:
-        # No orders to route
+    if not packages:
+        # No packages to route
         return RoutePlan(id="empty", stops=[])
 
-    # Fetch orders with items for route planning
-    orders_result = await session.execute(
-        select(Order)
-        .where(Order.id.in_(unique_order_ids))
-        .where(Order.shipping_status < 7)  # Not completed
-        .options(selectinload(Order.items))
-    )
-    orders = orders_result.scalars().all()
+    # Build route stops from prepare goods packages
+    stops = []
+    for idx, pkg in enumerate(packages, start=1):
+        # Use receiver address from prepare_goods table
+        if pkg.receiver_address:
+            stops.append(
+                RouteStop(
+                    order_sn=pkg.prepare_sn,  # Use prepare_sn as identifier
+                    sequence=idx,
+                    address=pkg.receiver_address,
+                    receiver_name=pkg.receiver_name or "Unknown",
+                    eta=None,  # ETA provided by Google Maps
+                    latitude=None,
+                    longitude=None
+                )
+            )
 
-    # Build order summaries for route planner
-    order_summaries = []
-    for order in orders:
-        order_summaries.append(await order_service._serialize(session, order))
-
-    return await route_service.build_route_plan(order_summaries)
+    # Generate unique plan ID based on package sequence
+    import hashlib
+    plan_id = hashlib.md5("".join(stop.order_sn for stop in stops).encode()).hexdigest()
+    return RoutePlan(id=plan_id, stops=stops)
 
 
 @router.patch("/{plan_id}/location")

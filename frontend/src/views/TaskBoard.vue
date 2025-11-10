@@ -143,7 +143,7 @@ const filteredPackages = computed(() => {
 
 function getPackageActionLabel(status: number | null): string {
   if (status === null || status === 0) return t('taskBoard.pickupPackage');
-  if (status === 1) return t('taskBoard.deliverToWarehouse');
+  if (status === 1) return t('taskBoard.confirmPickupButton');
   if (status === 2) return t('taskBoard.confirmWarehouseDelivery');
   return t('taskBoard.viewDetails');
 }

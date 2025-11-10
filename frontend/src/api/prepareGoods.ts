@@ -164,3 +164,17 @@ export async function listMyDriverPreparePackages(limit: number = 50) {
 export async function pickupPackage(prepareSn: string) {
   await client.post(`/prepare-goods/${prepareSn}/pickup`);
 }
+
+/**
+ * Confirm pickup with photo proof
+ */
+export async function confirmPickup(
+  prepareSn: string,
+  photo: string,
+  notes?: string
+) {
+  await client.post(`/prepare-goods/${prepareSn}/confirm-pickup`, {
+    photo,
+    notes
+  });
+}

@@ -56,7 +56,11 @@
     "confirmPickupMessage": "确认要取货此包裹吗？",
     "confirmPickupButton": "确认取货",
     "workflow": "工作流",
-    "warehouse": "仓库"
+    "warehouse": "仓库",
+    "pickupProof": "取货凭证",
+    "pickupNotes": "取货备注（可选）",
+    "pickupNotesPlaceholder": "添加取货备注...",
+    "submitPickup": "提交取货"
   },
   "routePlanner": {
     "title": "路线规划",

@@ -64,6 +64,14 @@ class AssignDriverRequest(BaseModel):
     driver_id: int = Field(alias="driverId", description="Driver ID to assign")
 
 
+class ConfirmPickupRequest(BaseModel):
+    """Request to confirm pickup with photo proof"""
+    model_config = ConfigDict(populate_by_name=True)
+
+    photo: str = Field(description="Base64 encoded photo or data URL")
+    notes: Optional[str] = Field(default=None, max_length=500, description="Optional pickup notes")
+
+
 class PrepareGoodsResponse(BaseModel):
     """PrepareGoods package response"""
     model_config = ConfigDict(populate_by_name=True)

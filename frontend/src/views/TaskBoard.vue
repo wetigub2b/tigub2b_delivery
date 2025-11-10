@@ -81,6 +81,20 @@
       @confirm="confirmPickup"
       @cancel="cancelPickup"
     />
+
+    <!-- Pickup Proof Modal -->
+    <PickupProofModal
+      v-if="packageForProof"
+      :show="showPickupProofModal"
+      :package-data="{
+        prepareSn: packageForProof.prepareSn,
+        orderCount: packageForProof.orderCount,
+        workflowLabel: packageForProof.workflowLabel,
+        warehouseName: packageForProof.warehouseName
+      }"
+      @submit="submitPickupProof"
+      @cancel="cancelPickupProof"
+    />
   </section>
 </template>
 
@@ -92,6 +106,7 @@ import { usePrepareGoodsStore } from '@/store/prepareGoods';
 import EmptyState from '@/components/EmptyState.vue';
 import PackageOrdersModal from '@/components/PackageOrdersModal.vue';
 import ConfirmPackagePickupModal from '@/components/ConfirmPackagePickupModal.vue';
+import PickupProofModal from '@/components/PickupProofModal.vue';
 
 const { t } = useI18n();
 const prepareGoodsStore = usePrepareGoodsStore();
@@ -105,6 +120,10 @@ const selectedPackage = ref<{ prepareSn: string; orderCount: number } | null>(nu
 const showPickupModal = ref(false);
 const packageToPickup = ref<any>(null);
 const isPickingUp = ref(false);
+
+// Pickup proof modal state
+const showPickupProofModal = ref(false);
+const packageForProof = ref<any>(null);
 
 const statuses = computed(() => [
   { key: 'available', label: t('taskBoard.available'), prepareStatus: 0 },
@@ -153,6 +172,10 @@ function handlePackageAction(pkg: any) {
     // Available package - show pickup confirmation modal
     packageToPickup.value = pkg;
     showPickupModal.value = true;
+  } else if (pkg.prepareStatus === 1) {
+    // Pending pickup - show pickup proof modal
+    packageForProof.value = pkg;
+    showPickupProofModal.value = true;
   } else {
     // For other statuses, show detail view (to be implemented)
     console.log('Package action:', pkg.prepareSn, 'Status:', pkg.prepareStatus);
@@ -194,6 +217,30 @@ function openOrdersModal(pkg: any) {
 function closeOrdersModal() {
   showOrdersModal.value = false;
   selectedPackage.value = null;
+}
+
+async function submitPickupProof(photo: string, notes: string) {
+  if (!packageForProof.value) return;
+
+  try {
+    await prepareGoodsStore.confirmPickupWithProof(
+      packageForProof.value.prepareSn,
+      photo,
+      notes
+    );
+    // Close modal
+    showPickupProofModal.value = false;
+    packageForProof.value = null;
+    // Refresh driver packages to show updated status
+    await prepareGoodsStore.fetchMyDriverPackages();
+  } catch (error: any) {
+    alert(`Error: ${error.response?.data?.detail || error.message}`);
+  }
+}
+
+function cancelPickupProof() {
+  showPickupProofModal.value = false;
+  packageForProof.value = null;
 }
 </script>
 

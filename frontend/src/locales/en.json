@@ -56,7 +56,11 @@
     "confirmPickupMessage": "Are you sure you want to pickup this package?",
     "confirmPickupButton": "Confirm Pickup",
     "workflow": "Workflow",
-    "warehouse": "Warehouse"
+    "warehouse": "Warehouse",
+    "pickupProof": "Pickup Proof",
+    "pickupNotes": "Pickup Notes (Optional)",
+    "pickupNotesPlaceholder": "Add pickup notes...",
+    "submitPickup": "Submit Pickup"
   },
   "routePlanner": {
     "title": "Route Planner",

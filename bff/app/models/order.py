@@ -25,6 +25,7 @@ class UploadedFile(Base):
     Business Entity Types (biz_type):
     - "order_action": Links to tigu_order_action.id (workflow photo evidence)
     - "product_sku": Links to product SKU images
+    - "prepare_good": Links to tigu_prepare_goods.id (pickup/delivery photos)
     - Other business entity types as needed
 
     File Linking Pattern:
@@ -40,23 +41,89 @@ class UploadedFile(Base):
         comment="文件ID (雪花算法)"
     )
 
+    file_name: Mapped[str] = mapped_column(
+        String(255),
+        comment="原始文件名"
+    )
+
     file_url: Mapped[str] = mapped_column(
         String(500),
-        comment="文件URL或路径"
+        comment="文件存储路径/URL"
+    )
+
+    file_type: Mapped[str] = mapped_column(
+        String(200),
+        comment="文件类型（如image/png、application/pdf等）"
+    )
+
+    file_size: Mapped[int] = mapped_column(
+        BIGINT(unsigned=True),
+        comment="文件大小（字节）"
     )
 
     # Business entity linking
     biz_type: Mapped[str | None] = mapped_column(
         String(200),
         nullable=True,
-        comment="业务类型: order_action, product_sku等"
+        comment="业务类型（如user、product、order、prepare_good等）"
     )
 
     biz_id: Mapped[int | None] = mapped_column(
         BIGINT(unsigned=True),
         nullable=True,
-        index=True,  # INDEX for efficient lookups
-        comment="业务ID (关联到对应业务表的主键)"
+        index=True,
+        comment="业务表主键ID"
+    )
+
+    uploader_id: Mapped[int | None] = mapped_column(
+        BIGINT(unsigned=True),
+        nullable=True,
+        comment="上传人ID"
+    )
+
+    uploader_name: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="上传人姓名"
+    )
+
+    extra_info: Mapped[dict | None] = mapped_column(
+        JSON,
+        nullable=True,
+        comment="扩展信息（如缩略图、MD5等）"
+    )
+
+    create_by: Mapped[str | None] = mapped_column(
+        String(64),
+        nullable=True,
+        default='',
+        comment="创建者"
+    )
+
+    create_time: Mapped[datetime | None] = mapped_column(
+        DateTime(),
+        nullable=True,
+        comment="创建时间"
+    )
+
+    update_by: Mapped[str | None] = mapped_column(
+        String(64),
+        nullable=True,
+        default='',
+        comment="更新者"
+    )
+
+    update_time: Mapped[datetime | None] = mapped_column(
+        DateTime(),
+        nullable=True,
+        comment="更新时间"
+    )
+
+    remark: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+        default='',
+        comment="备注"
     )
 
     is_main: Mapped[int | None] = mapped_column(

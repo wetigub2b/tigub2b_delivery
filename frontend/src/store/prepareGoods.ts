@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import {
   assignDriver,
+  confirmPickup,
   createPreparePackage,
   getPreparePackage,
   listAvailablePreparePackages,
@@ -287,6 +288,28 @@ export const usePrepareGoodsStore = defineStore('prepareGoods', {
         );
 
         // Refresh driver packages to show the newly picked up package
+        await this.fetchMyDriverPackages();
+      } finally {
+        this.isUpdating = false;
+      }
+    },
+
+    /**
+     * Confirm pickup with photo proof
+     */
+    async confirmPickupWithProof(prepareSn: string, photo: string, notes?: string) {
+      this.isUpdating = true;
+      try {
+        await confirmPickup(prepareSn, photo, notes);
+
+        // Update local state - package moves from status 1 to status 2
+        const pkg = this.driverPackages.find(pkg => pkg.prepareSn === prepareSn);
+        if (pkg) {
+          pkg.prepareStatus = 2;
+          pkg.prepareStatusLabel = prepareStatusLabels[2] || 'Unknown';
+        }
+
+        // Refresh driver packages to get updated state
         await this.fetchMyDriverPackages();
       } finally {
         this.isUpdating = false;

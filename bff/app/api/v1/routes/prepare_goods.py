@@ -18,6 +18,7 @@ from app.models.driver import Driver
 from app.models.order import Order
 from app.schemas.prepare_goods import (
     AssignDriverRequest,
+    ConfirmPickupRequest,
     CreatePreparePackageRequest,
     PrepareGoodsDetailResponse,
     PrepareGoodsResponse,
@@ -491,3 +492,159 @@ async def pickup_package(
         prepare_sn=prepare_sn,
         new_status=1
     )
+
+
+@router.post("/{prepare_sn}/confirm-pickup", status_code=status.HTTP_204_NO_CONTENT)
+async def confirm_pickup(
+    prepare_sn: str,
+    payload: ConfirmPickupRequest,
+    current_user=Depends(deps.get_current_user),
+    session: AsyncSession = Depends(deps.get_db_session)
+) -> None:
+    """
+    Confirm driver picked up package with photo proof.
+
+    This action:
+    1. Saves photo to tigu_uploaded_files (biz_type='prepare_good', biz_id=package.id)
+    2. Creates OrderAction records for each order (action_type=1 - Driver Pickup)
+    3. Updates package status to 2 (Driver to warehouse)
+
+    Args:
+        prepare_sn: Prepare goods serial number
+        payload: Confirmation request with photo and notes
+        current_user: Authenticated driver user
+        session: Database session
+
+    Raises:
+        HTTPException 404: Driver or package not found
+        HTTPException 400: Invalid photo or package status
+    """
+    import base64
+    import os
+    from datetime import datetime
+    from pathlib import Path
+    from app.models.order import UploadedFile
+    from app.models.order_action import OrderAction
+    from app.models.prepare_goods import PrepareGoods
+    from app.utils import generate_snowflake_id
+
+    # Look up driver
+    result = await session.execute(select(Driver).where(Driver.phone == current_user.phonenumber))
+    driver = result.scalars().first()
+    if not driver:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Driver not found"
+        )
+
+    # Get package
+    result = await session.execute(
+        select(PrepareGoods).where(PrepareGoods.prepare_sn == prepare_sn)
+    )
+    package = result.scalars().first()
+    if not package:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Package not found: {prepare_sn}"
+        )
+
+    # Verify package is in correct status (should be 1 - Driver pickup in progress)
+    if package.prepare_status != 1:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Package status must be 1 (Driver pickup), current: {package.prepare_status}"
+        )
+
+    # Decode and save photo
+    try:
+        if payload.photo.startswith('data:'):
+            header, encoded = payload.photo.split(',', 1)
+            mime_type = header.split(':')[1].split(';')[0]
+        else:
+            encoded = payload.photo
+            mime_type = 'image/jpeg'
+
+        image_bytes = base64.b64decode(encoded)
+
+        # Validate file size (4MB limit)
+        if len(image_bytes) > 4 * 1024 * 1024:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail="Photo size exceeds 4MB limit"
+            )
+
+        # Create upload directory
+        upload_dir = Path("/var/www/deliveries/photos/pickups")
+        upload_dir.mkdir(parents=True, exist_ok=True)
+
+        # Generate filename
+        timestamp = int(datetime.now().timestamp())
+        extension = mime_type.split('/')[-1]
+        if extension == 'jpg':
+            extension = 'jpeg'
+        filename = f"{prepare_sn}_{timestamp}.{extension}"
+        file_path = upload_dir / filename
+
+        # Save file
+        with open(file_path, 'wb') as f:
+            f.write(image_bytes)
+        os.chmod(file_path, 0o644)
+
+        photo_url = f"/deliveries/photos/pickups/{filename}"
+
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to save photo: {str(e)}"
+        )
+
+    # Create UploadedFile record
+    uploaded_file = UploadedFile(
+        id=generate_snowflake_id(),
+        file_name=filename,
+        file_url=photo_url,
+        file_type=mime_type,
+        file_size=len(image_bytes),
+        biz_type="prepare_good",
+        biz_id=package.id,
+        uploader_id=driver.id,
+        uploader_name=driver.name,
+        create_by=driver.name,
+        create_time=datetime.now()
+    )
+    session.add(uploaded_file)
+
+    # Parse order IDs from package
+    order_ids = parse_order_id_list(package.order_ids)
+
+    # Get orders to fetch their current status
+    orders_result = await session.execute(
+        select(Order).where(Order.id.in_(order_ids))
+    )
+    orders = orders_result.scalars().all()
+
+    # Create OrderAction record for each order
+    for order in orders:
+        order_action = OrderAction(
+            id=generate_snowflake_id(),
+            order_id=order.id,
+            action_type=1,  # 司机收货 - Driver Pickup
+            logistics_voucher_file=photo_url,
+            create_by=driver.name,
+            create_time=datetime.now(),
+            order_status=order.order_status,
+            shipping_status=order.shipping_status,
+            shipping_type=order.shipping_type
+        )
+        session.add(order_action)
+
+    # Update package status to 2 (Driver to warehouse)
+    await prepare_goods_service.update_prepare_status(
+        session=session,
+        prepare_sn=prepare_sn,
+        new_status=2
+    )
+
+    await session.commit()

@@ -58,6 +58,10 @@ class OrderDetail(OrderSummary):
     shipping_time: Optional[datetime] = Field(alias='shippingTime')
     finish_time: Optional[datetime] = Field(alias='finishTime')
     delivery_proof: Optional[DeliveryProofInfo] = Field(default=None, alias='deliveryProof')
+    delivery_type: Optional[int] = Field(default=None, alias='deliveryType')
+    driver_receive_time: Optional[datetime] = Field(default=None, alias='driverReceiveTime')
+    arrive_warehouse_time: Optional[datetime] = Field(default=None, alias='arriveWarehouseTime')
+    warehouse_shipping_time: Optional[datetime] = Field(default=None, alias='warehouseShippingTime')
 
 
 class UpdateShippingStatus(BaseModel):
@@ -85,3 +89,62 @@ class ProofOfDeliveryResponse(BaseModel):
     photo_url: str = Field(alias='photoUrl')
     order_sn: str = Field(alias='orderSn')
     uploaded_at: datetime = Field(alias='uploadedAt')
+
+
+# New workflow transition request schemas
+
+class PickupOrderRequest(BaseModel):
+    """Request for driver pickup"""
+    model_config = ConfigDict(populate_by_name=True)
+
+    photo_ids: List[int] = Field(
+        alias='photoIds',
+        description="List of uploaded photo file IDs",
+        min_length=1
+    )
+
+
+class ArriveWarehouseRequest(BaseModel):
+    """Request for driver arriving at warehouse"""
+    model_config = ConfigDict(populate_by_name=True)
+
+    photo_ids: List[int] = Field(
+        alias='photoIds',
+        description="List of uploaded photo file IDs",
+        min_length=1
+    )
+
+
+class WarehouseReceiveRequest(BaseModel):
+    """Request for warehouse receiving goods"""
+    model_config = ConfigDict(populate_by_name=True)
+
+    warehouse_staff_id: int = Field(alias='warehouseStaffId')
+    photo_ids: Optional[List[int]] = Field(
+        default=None,
+        alias='photoIds',
+        description="Optional uploaded photo file IDs"
+    )
+
+
+class WarehouseShipRequest(BaseModel):
+    """Request for warehouse shipping to user"""
+    model_config = ConfigDict(populate_by_name=True)
+
+    warehouse_staff_id: int = Field(alias='warehouseStaffId')
+    photo_ids: Optional[List[int]] = Field(
+        default=None,
+        alias='photoIds',
+        description="Optional uploaded photo file IDs"
+    )
+
+
+class CompleteDeliveryRequest(BaseModel):
+    """Request for completing delivery"""
+    model_config = ConfigDict(populate_by_name=True)
+
+    photo_ids: List[int] = Field(
+        alias='photoIds',
+        description="List of uploaded delivery proof photo file IDs",
+        min_length=1
+    )

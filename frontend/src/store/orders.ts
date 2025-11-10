@@ -1,13 +1,8 @@
 import { defineStore } from 'pinia';
 import {
-  fetchAssignedOrders,
-  fetchAvailableOrders,
   fetchOrderBySn,
   fetchRoutePlan,
-  login,
-  pickupOrder,
-  updateShippingStatus,
-  uploadDeliveryProof
+  login
 } from '@/api/orders';
 
 // Helper function to decode JWT token
@@ -110,29 +105,14 @@ function decorate(order: DeliveryOrder): DeliveryOrder {
 
 export const useOrdersStore = defineStore('orders', {
   state: () => ({
-    orders: [] as DeliveryOrder[],
-    availableOrders: [] as DeliveryOrder[],
+    orderDetails: new Map<string, DeliveryOrder>(), // Cache for order details
     routePlan: null as RoutePlan | null,
     isLoading: false,
     userPhone: localStorage.getItem('user_phone') || getPhoneFromToken()
   }),
   getters: {
-    activeBySn: state => (orderSn: string) => state.orders.find(order => order.orderSn === orderSn),
-    currentUserPhone: state => state.userPhone || getPhoneFromToken(),
-    byWorkflowState: state => (workflowState: string) => {
-      switch (workflowState) {
-        case 'available':
-          return state.availableOrders.filter(order => order.orderStatus !== 4);
-        case 'pending_pickup':
-          return state.orders.filter(order => order.shippingStatus === 0);
-        case 'in_transit':
-          return state.orders.filter(order => order.shippingStatus === 1 || order.shippingStatus === 2);
-        case 'completed':
-          return state.orders.filter(order => order.shippingStatus === 3);
-        default:
-          return state.orders;
-      }
-    }
+    activeBySn: state => (orderSn: string) => state.orderDetails.get(orderSn),
+    currentUserPhone: state => state.userPhone || getPhoneFromToken()
   },
   actions: {
     async login(phone: string, code: string) {
@@ -145,51 +125,9 @@ export const useOrdersStore = defineStore('orders', {
     logout() {
       localStorage.removeItem('delivery_token');
       localStorage.removeItem('user_phone');
-      this.orders = [];
-      this.availableOrders = [];
+      this.orderDetails.clear();
       this.routePlan = null;
       this.userPhone = '';
-    },
-    async fetchAssignedOrders() {
-      this.isLoading = true;
-      try {
-        const orders = await fetchAssignedOrders();
-        this.orders = orders.map(order => decorate({
-          ...order,
-          shippingStatusLabel: order.shippingStatusLabel || '',
-          orderStatusLabel: order.orderStatusLabel || ''
-        }));
-      } finally {
-        this.isLoading = false;
-      }
-    },
-    async fetchAvailableOrders() {
-      this.isLoading = true;
-      try {
-        const orders = await fetchAvailableOrders();
-        this.availableOrders = orders.map(order => decorate({
-          ...order,
-          shippingStatusLabel: order.shippingStatusLabel || '',
-          orderStatusLabel: order.orderStatusLabel || ''
-        }));
-      } finally {
-        this.isLoading = false;
-      }
-    },
-    async pickupOrder(orderSn: string) {
-      await pickupOrder(orderSn);
-      // Remove from available orders
-      const index = this.availableOrders.findIndex(order => order.orderSn === orderSn);
-      if (index >= 0) {
-        const order = this.availableOrders[index];
-        this.availableOrders.splice(index, 1);
-        // Add to assigned orders with pending_pickup status (shippingStatus = 0)
-        this.orders.push({
-          ...order,
-          shippingStatus: 0,
-          shippingStatusLabel: shippingLabels[0]
-        });
-      }
     },
     async fetchOrderDetail(orderSn: string) {
       const detail = await fetchOrderBySn(orderSn);
@@ -198,29 +136,7 @@ export const useOrdersStore = defineStore('orders', {
         shippingStatusLabel: detail.shippingStatusLabel || '',
         orderStatusLabel: detail.orderStatusLabel || ''
       });
-      const index = this.orders.findIndex(order => order.orderSn === orderSn);
-      if (index >= 0) {
-        this.orders.splice(index, 1, decorated);
-      } else {
-        this.orders.push(decorated);
-      }
-    },
-    async updateShippingStatus(orderSn: string, shippingStatus: number) {
-      await updateShippingStatus(orderSn, { shippingStatus });
-      this.patchOrderStatus({ orderSn, shippingStatus });
-    },
-    patchOrderStatus(payload: { orderSn: string; shippingStatus: number }) {
-      const order = this.orders.find(item => item.orderSn === payload.orderSn);
-      if (order) {
-        order.shippingStatus = payload.shippingStatus;
-        order.shippingStatusLabel = shippingLabels[payload.shippingStatus] || 'Unknown';
-      }
-    },
-    async uploadDeliveryProof(orderSn: string, photo: string, notes?: string) {
-      const result = await uploadDeliveryProof(orderSn, photo, notes);
-      // Order status is automatically updated to delivered (3) by the backend
-      this.patchOrderStatus({ orderSn, shippingStatus: 3 });
-      return result;
+      this.orderDetails.set(orderSn, decorated);
     },
     async fetchRoutePlan() {
       const data = await fetchRoutePlan();

@@ -35,6 +35,19 @@ const router = createRouter({
       component: () => import('@/views/RoutePlanner.vue'),
       meta: { requiresAuth: true }
     },
+    // Prepare Goods routes (for Merchants)
+    {
+      path: '/prepare-goods',
+      name: 'PrepareGoodsList',
+      component: () => import('@/views/PrepareGoodsList.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/prepare-goods/create',
+      name: 'PrepareGoodsCreate',
+      component: () => import('@/views/PrepareGoodsCreate.vue'),
+      meta: { requiresAuth: true }
+    },
     {
       path: '/login',
       name: 'login',

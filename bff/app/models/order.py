@@ -13,16 +13,58 @@ from app.db.base import Base
 if TYPE_CHECKING:
     from app.models.driver import Driver
     from app.models.delivery_proof import DeliveryProof
+    from app.models.order_action import OrderAction
 
 
 class UploadedFile(Base):
+    """
+    文件上传表 (tigu_uploaded_files)
+
+    Stores uploaded files with business entity linking via biz_id and biz_type.
+
+    Business Entity Types (biz_type):
+    - "order_action": Links to tigu_order_action.id (workflow photo evidence)
+    - "product_sku": Links to product SKU images
+    - Other business entity types as needed
+
+    File Linking Pattern:
+    1. Upload file → Get file_id
+    2. Create business entity (e.g., OrderAction) → Get entity_id
+    3. Update file: SET biz_id = entity_id, biz_type = 'order_action'
+    """
     __tablename__ = "tigu_uploaded_files"
 
-    id: Mapped[int] = mapped_column(BIGINT(unsigned=True), primary_key=True)
-    file_url: Mapped[str] = mapped_column(String(500))
-    biz_type: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    biz_id: Mapped[int | None] = mapped_column(BIGINT(unsigned=True), nullable=True)
-    is_main: Mapped[int | None] = mapped_column(Integer, nullable=True, default=0)
+    id: Mapped[int] = mapped_column(
+        BIGINT(unsigned=True),
+        primary_key=True,
+        comment="文件ID (雪花算法)"
+    )
+
+    file_url: Mapped[str] = mapped_column(
+        String(500),
+        comment="文件URL或路径"
+    )
+
+    # Business entity linking
+    biz_type: Mapped[str | None] = mapped_column(
+        String(200),
+        nullable=True,
+        comment="业务类型: order_action, product_sku等"
+    )
+
+    biz_id: Mapped[int | None] = mapped_column(
+        BIGINT(unsigned=True),
+        nullable=True,
+        index=True,  # INDEX for efficient lookups
+        comment="业务ID (关联到对应业务表的主键)"
+    )
+
+    is_main: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+        default=0,
+        comment="是否主图: 0=否, 1=是"
+    )
 
 
 class Order(Base):
@@ -32,8 +74,20 @@ class Order(Base):
     order_sn: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     user_id: Mapped[int] = mapped_column(BIGINT(unsigned=True), index=True)
     shop_id: Mapped[int] = mapped_column(BIGINT(unsigned=True))
+
+    # Delivery configuration
+    # NOTE: delivery_type is stored in tigu_prepare_goods (single source of truth)
+    # Access via: prepare_goods.delivery_type
+
+    shipping_type: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        index=True,
+        comment="发货类型: 0=发仓库, 1=发用户"
+    )
+
+    # Order status fields
     shipping_status: Mapped[int] = mapped_column(Integer, default=0)
-    shipping_type: Mapped[int] = mapped_column(Integer, default=0)
     order_status: Mapped[int] = mapped_column(Integer, default=0)
     pay_status: Mapped[int] = mapped_column(Integer, default=0)
     receiver_name: Mapped[str] = mapped_column(String(64))
@@ -46,8 +100,36 @@ class Order(Base):
     logistics_order_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
     warehouse_id: Mapped[int | None] = mapped_column(BIGINT, ForeignKey("tigu_warehouse.id"))
     driver_id: Mapped[int | None] = mapped_column(BIGINT(unsigned=True), ForeignKey("tigu_driver.id"), nullable=True)
-    shipping_time: Mapped[datetime | None] = mapped_column(DateTime())
-    finish_time: Mapped[datetime | None] = mapped_column(DateTime())
+
+    # Workflow timestamp fields
+    shipping_time: Mapped[datetime | None] = mapped_column(
+        DateTime(),
+        comment="发货时间 (when shipment starts)"
+    )
+
+    driver_receive_time: Mapped[datetime | None] = mapped_column(
+        DateTime(),
+        nullable=True,
+        comment="司机收货时间 (driver pickup timestamp)"
+    )
+
+    arrive_warehouse_time: Mapped[datetime | None] = mapped_column(
+        DateTime(),
+        nullable=True,
+        comment="到达仓库时间 (arrival at warehouse timestamp)"
+    )
+
+    warehouse_shipping_time: Mapped[datetime | None] = mapped_column(
+        DateTime(),
+        nullable=True,
+        comment="仓库发货时间 (warehouse ship timestamp)"
+    )
+
+    finish_time: Mapped[datetime | None] = mapped_column(
+        DateTime(),
+        comment="完成时间 (final delivery timestamp)"
+    )
+
     create_time: Mapped[datetime] = mapped_column(DateTime())
     update_time: Mapped[datetime | None] = mapped_column(DateTime(), nullable=True)
 
@@ -55,6 +137,14 @@ class Order(Base):
     warehouse: Mapped[Warehouse | None] = relationship("Warehouse", back_populates="orders", lazy="joined")
     driver: Mapped[Driver | None] = relationship("Driver", lazy="joined")
     delivery_proof: Mapped["DeliveryProof | None"] = relationship("DeliveryProof", back_populates="order", lazy="joined", uselist=False)
+
+    # NEW: Order action audit trail
+    actions: Mapped[list["OrderAction"]] = relationship(
+        "OrderAction",
+        back_populates="order",
+        lazy="selectin",
+        order_by="OrderAction.create_time.desc()"
+    )
 
 
 class OrderItem(Base):

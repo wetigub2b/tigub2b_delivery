@@ -1,15 +1,41 @@
 # 配送流程文档
+## table 
+**tigu_prepare_goods**:  
+
+prepared packages for driver to work on
+
+**tigu_prepare_goods_item**: 
+
+the items in the prepared packages  
+(can be used for display detail items of the package)
+
+** tigu_order_action **:
+
+   订单所有流程操作，凭证需要记录在tigu_order_action表，同时需要同步修改订单表中的状态以及备货表的状态。Tigu_order_action每次操作（备货完成，司机收货，送达仓库等）新增一条数据。
+	tigu_order_action必填字段：
+   id（雪花算法ID）,
+   create_by（创建人，当前操作人）,
+   create_time（创建时间）,
+   order_id（本次操作关联的订单ID）,
+action_type（操作类型(0备货，1司机收货，2仓库收货，3仓库发货，4完成，5用户申请退款，6商家允许退货 7商家不允许退货 8商家同意退款 9商家拒绝退款 10用户退货信息凭证11.司机送达仓库)）,
+logistics_voucher_file（文件ID列表，多个用,分割，tigu_uploaded_files表的id）
+
+** tigu_uploaded_files **
+
+字段：
+id（雪花算法ID），file_name（文件名称），file_url（文件完整路径），file_size（文件大小），biz_id（文件关联的相关ID，如商品图片，biz_type=product_sku，biz_id=商品SKU的id）
+
 
 ## 概述
 
 业务角色包括三种：**商家**、**司机**、**仓库**
 
-商城订单中，配送分为 4 种情况：
+商城订单中，配送分为 4 种情况(table tigu_prepare_goods)：
 
-1. 商家自行配送，货物配送到仓库
-2. 商家自行配送，货物配送到用户
-3. 第三方配送，货物配送到仓库
-4. 第三方配送，货物配送到用户
+1. 商家自行配送，货物配送到仓库 (delivery_type 0, shipping type 0)
+2. 商家自行配送，货物配送到用户 (delivery type 0, shippgin type 1)
+3. 第三方配送，货物配送到仓库 (delivery type 1, shipping type 0)
+4. 第三方配送，货物配送到用户 (delivery type 1, shipping type 1)
 
 用户成功下单后进入商家订单。商家操作第一步：备货。商家选择一个或者多个订单，提交备货完成，备货完成。选择本次备货为自行配送，或者第三方配送，以及发货到仓库或者发货到用户，并上传凭证，修改订单、备货状态。
 
@@ -252,14 +278,14 @@ graph TB
         D --> |到用户| H[流程4: 司机→用户]
     end
 
-    style A fill:#e1f5ff
-    style B fill:#fff9c4
-    style C fill:#fff9c4
-    style D fill:#fff9c4
-    style E fill:#c8e6c9
-    style F fill:#c8e6c9
-    style G fill:#ffccbc
-    style H fill:#ffccbc
+    style A fill:#e1f5ff,color:#1a1a1a
+    style B fill:#fff9c4,color:#1a1a1a
+    style C fill:#fff9c4,color:#1a1a1a
+    style D fill:#fff9c4,color:#1a1a1a
+    style E fill:#c8e6c9,color:#1a1a1a
+    style F fill:#c8e6c9,color:#1a1a1a
+    style G fill:#ffccbc,color:#1a1a1a
+    style H fill:#ffccbc,color:#1a1a1a
 ```
 
 ---
@@ -302,18 +328,14 @@ graph TB
 ---
 
 ## 订单状态说明
-
+tigu_prepare_goods: column ：prepare_status
 | 状态 | 说明 |
 |------|------|
-| 待备货 | 订单已生成，等待商家备货 |
-| 备货中 | 商家正在准备货物 |
-| 已备货 | 商家备货完成 |
-| 待司机接单 | 等待第三方司机接单 |
-| 司机已接单 | 司机已确认接单 |
-| 司机收货中 | 司机正在商家处收货 |
-| 司机配送中 | 司机正在配送途中 |
-| 配送中_仓库 | 货物正在送往仓库 |
-| 仓库已收货 | 仓库已确认收货 |
-| 配送中_用户 | 货物正在送往用户 |
-| 已送达 | 货物已送达最终用户 |
-| 订单完成 | 订单流程全部完成 |
+| 待备货 | 订单已生成，等待商家备货 （null）|
+| 已备货 | 商家备货完成(商家备货完成拍照) （0） |
+| 司机收货中 | 司机正在商家处收货(司机收货拍照) （1） |
+| 司机收货完成送货仓库 | 司机送货到仓库(司机送达拍照) （2）|
+| 仓库已收货 | 仓库已确认收货(仓库管理拍照) (3)|
+| 司机配送到用户 | 货物正在送往用户(司机收货拍照) (4) |
+| 已送达 | 货物已送达最终用户(司机拍照) (5)|
+| 订单完成 | 订单流程全部完成 (6)|

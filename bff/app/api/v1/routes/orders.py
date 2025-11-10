@@ -4,38 +4,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api import deps
 from app.models.driver import Driver
-from app.schemas.order import OrderDetail, OrderSummary, ProofOfDelivery, ProofOfDeliveryResponse, UpdateShippingStatus
+from app.schemas.order import (
+    ArriveWarehouseRequest,
+    CompleteDeliveryRequest,
+    OrderDetail,
+    WarehouseReceiveRequest,
+    WarehouseShipRequest,
+)
 from app.services import order_service
-from app.services import delivery_proof_service
 
 router = APIRouter()
-
-
-@router.get("/assigned", response_model=list[OrderSummary], response_model_by_alias=True)
-async def list_assigned_orders(
-    current_user=Depends(deps.get_current_user),
-    session: AsyncSession = Depends(deps.get_db_session)
-) -> list[OrderSummary]:
-    # Look up driver by phone number to get driver_id
-    result = await session.execute(select(Driver).where(Driver.phone == current_user.phonenumber))
-    driver = result.scalars().first()
-    if not driver:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Driver not found")
-
-    # Include completed orders for TaskBoard to show all three tabs
-    return await order_service.fetch_assigned_orders(session, driver.id, include_completed=True)
-
-
-@router.get("/available", response_model=list[OrderSummary], response_model_by_alias=True)
-async def list_available_orders(
-    current_user=Depends(deps.get_current_user),
-    session: AsyncSession = Depends(deps.get_db_session)
-) -> list[OrderSummary]:
-    """
-    List all unassigned orders available for pickup by any driver.
-    Returns orders where driver_id is NULL.
-    """
-    return await order_service.fetch_orders(session, unassigned=True, limit=100)
 
 
 @router.get("/{order_sn}", response_model=OrderDetail, response_model_by_alias=True)
@@ -44,21 +22,44 @@ async def get_order_detail(
     current_user=Depends(deps.get_current_user),
     session: AsyncSession = Depends(deps.get_db_session)
 ) -> OrderDetail:
+    """
+    Get order details by serial number.
+
+    Used by OrderDetail view for displaying order information.
+    """
     detail = await order_service.fetch_order_detail(session, order_sn, current_user.user_id)
     if not detail:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
     return detail
 
 
-@router.post("/{order_sn}/pickup", status_code=status.HTTP_204_NO_CONTENT)
-async def pickup_order(
+# New 4-Workflow Transition Endpoints
+
+@router.post("/{order_sn}/arrive-warehouse", status_code=status.HTTP_204_NO_CONTENT)
+async def arrive_warehouse(
     order_sn: str,
+    payload: ArriveWarehouseRequest,
     current_user=Depends(deps.get_current_user),
     session: AsyncSession = Depends(deps.get_db_session)
 ) -> None:
     """
-    Assign an unassigned order to the current driver.
-    Sets driver_id and shipping_status to 0 (pending pickup).
+    Driver arrives at warehouse (action_type=2).
+
+    Workflow: Merchant→Driver→Warehouse→User (Workflows 1 & 3)
+
+    This function:
+    1. Updates order shipping_status to 3 (司机送达仓库)
+    2. Sets arrive_warehouse_time timestamp
+    3. Creates OrderAction record with photo evidence
+
+    Args:
+        order_sn: Order serial number
+        payload: Arrival request with photo IDs
+        current_user: Authenticated user
+        session: Database session
+
+    Raises:
+        HTTPException 404: Driver not found or order not found
     """
     # Look up driver by phone number to get driver_id
     result = await session.execute(select(Driver).where(Driver.phone == current_user.phonenumber))
@@ -66,66 +67,142 @@ async def pickup_order(
     if not driver:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Driver not found")
 
-    picked_up = await order_service.pickup_order(session, order_sn, driver.id)
-    if not picked_up:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Order not found or already assigned to another driver"
-        )
-
-
-@router.post("/{order_sn}/status", status_code=status.HTTP_204_NO_CONTENT)
-async def update_shipping_status(
-    order_sn: str,
-    payload: UpdateShippingStatus,
-    current_user=Depends(deps.get_current_user),
-    session: AsyncSession = Depends(deps.get_db_session)
-) -> None:
-    updated = await order_service.update_order_shipping_status(
-        session, order_sn, payload.shipping_status, current_user.user_id
-    )
-    if not updated:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
-
-
-@router.post("/{order_sn}/proof", response_model=ProofOfDeliveryResponse, response_model_by_alias=True)
-async def upload_proof_of_delivery(
-    order_sn: str,
-    payload: ProofOfDelivery,
-    current_user=Depends(deps.get_current_user),
-    session: AsyncSession = Depends(deps.get_db_session)
-) -> ProofOfDeliveryResponse:
-    """
-    Upload delivery proof photo and notes.
-    Photo must be base64 encoded, max 4MB.
-    After successful upload, order status is automatically updated to delivered (3).
-    """
-    # Look up driver by phone number to get driver_id
-    result = await session.execute(select(Driver).where(Driver.phone == current_user.phonenumber))
-    driver = result.scalars().first()
-    if not driver:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Driver not found")
-
-    # Upload photo and create delivery proof record
-    proof = await delivery_proof_service.upload_delivery_proof(
+    arrived = await order_service.arrive_warehouse(
         session=session,
         order_sn=order_sn,
         driver_id=driver.id,
-        photo_data=payload.photo,
-        notes=payload.notes
+        photo_ids=payload.photo_ids
     )
 
-    # Update order status to delivered (3)
-    await order_service.update_order_shipping_status(
+    if not arrived:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order not found"
+        )
+
+
+@router.post("/{order_sn}/warehouse-receive", status_code=status.HTTP_204_NO_CONTENT)
+async def warehouse_receive(
+    order_sn: str,
+    payload: WarehouseReceiveRequest,
+    current_user=Depends(deps.get_current_user),
+    session: AsyncSession = Depends(deps.get_db_session)
+) -> None:
+    """
+    Warehouse receives goods from driver (action_type=3).
+
+    Workflow: Merchant→Driver→Warehouse→User (Workflows 1 & 3)
+
+    This function:
+    1. Updates order shipping_status to 4 (仓库已收货)
+    2. Creates OrderAction record
+
+    Args:
+        order_sn: Order serial number
+        payload: Warehouse receive request
+        current_user: Authenticated user
+        session: Database session
+
+    Raises:
+        HTTPException 404: Order not found
+    """
+    received = await order_service.warehouse_receive(
         session=session,
         order_sn=order_sn,
-        shipping_status=3,
-        driver_id=driver.id
+        warehouse_staff_id=payload.warehouse_staff_id,
+        photo_ids=payload.photo_ids
     )
 
-    return ProofOfDeliveryResponse(
-        status="uploaded",
-        photo_url=proof.photo_url,
+    if not received:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order not found"
+        )
+
+
+@router.post("/{order_sn}/warehouse-ship", status_code=status.HTTP_204_NO_CONTENT)
+async def warehouse_ship(
+    order_sn: str,
+    payload: WarehouseShipRequest,
+    current_user=Depends(deps.get_current_user),
+    session: AsyncSession = Depends(deps.get_db_session)
+) -> None:
+    """
+    Warehouse ships goods to end user (action_type=4).
+
+    Workflow: Merchant→Warehouse→User (Workflow 1 only)
+
+    This function:
+    1. Updates order shipping_status to 5 (司机配送用户)
+    2. Sets warehouse_shipping_time timestamp
+    3. Creates OrderAction record
+
+    Args:
+        order_sn: Order serial number
+        payload: Warehouse ship request
+        current_user: Authenticated user
+        session: Database session
+
+    Raises:
+        HTTPException 404: Order not found
+    """
+    shipped = await order_service.warehouse_ship(
+        session=session,
         order_sn=order_sn,
-        uploaded_at=proof.created_at
+        warehouse_staff_id=payload.warehouse_staff_id,
+        photo_ids=payload.photo_ids
     )
+
+    if not shipped:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order not found"
+        )
+
+
+@router.post("/{order_sn}/complete", status_code=status.HTTP_204_NO_CONTENT)
+async def complete_delivery(
+    order_sn: str,
+    payload: CompleteDeliveryRequest,
+    current_user=Depends(deps.get_current_user),
+    session: AsyncSession = Depends(deps.get_db_session)
+) -> None:
+    """
+    Complete delivery to end user (action_type=5).
+
+    Works for all 4 workflows - final delivery step.
+
+    This function:
+    1. Updates order shipping_status to 6 (已送达)
+    2. Sets finish_time timestamp
+    3. Creates OrderAction record with delivery proof
+
+    Args:
+        order_sn: Order serial number
+        payload: Complete delivery request with proof photos
+        current_user: Authenticated user
+        session: Database session
+
+    Raises:
+        HTTPException 404: Driver not found or order not found
+    """
+    # Look up driver by phone number to get driver_id (for driver deliveries)
+    # Or use current user ID for merchant deliveries
+    result = await session.execute(select(Driver).where(Driver.phone == current_user.phonenumber))
+    driver = result.scalars().first()
+
+    # Use driver ID if driver exists, otherwise use current user ID
+    completer_id = driver.id if driver else current_user.user_id
+
+    completed = await order_service.complete_delivery(
+        session=session,
+        order_sn=order_sn,
+        completer_id=completer_id,
+        photo_ids=payload.photo_ids
+    )
+
+    if not completed:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order not found"
+        )

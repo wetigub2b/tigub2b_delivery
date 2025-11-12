@@ -38,6 +38,7 @@
     "pendingPickup": "Pending Pickup",
     "inProgress": "In Progress",
     "inTransit": "In Transit",
+    "warehouse": "Warehouse",
     "completed": "Completed",
     "openRoutePlanner": "Open Route Planner",
     "pickupTime": "Pickup Time",
@@ -77,7 +78,9 @@
     "noStops": "No stops planned",
     "openFullRoute": "Open Full Route in Google Maps",
     "mapsHint": "Opens Google Maps with all stops for navigation",
-    "navigate": "Navigate"
+    "navigate": "Navigate",
+    "packageId": "Package ID",
+    "viewPackage": "View Package"
   },
   "orderDetail": {
     "title": "Order Details",

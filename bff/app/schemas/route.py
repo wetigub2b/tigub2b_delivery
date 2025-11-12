@@ -1,16 +1,18 @@
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class RouteStop(BaseModel):
-    order_sn: str
+    model_config = ConfigDict(populate_by_name=True)
+
+    order_sn: str = Field(alias='orderSn')
     sequence: int
     address: str
-    receiver_name: str
-    eta: Optional[str]
-    latitude: Optional[float]
-    longitude: Optional[float]
+    receiver_name: str = Field(alias='receiverName')
+    eta: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
 
 class RoutePlan(BaseModel):

@@ -133,7 +133,8 @@ const packageForProof = ref<any>(null);
 const statuses = computed(() => [
   { key: 'available', label: t('taskBoard.available'), prepareStatus: 0 },
   { key: 'pending_pickup', label: t('taskBoard.pendingPickup'), prepareStatus: 1 },
-  { key: 'in_transit', label: t('taskBoard.inTransit'), prepareStatus: [2, 3, 4, 5] },
+  { key: 'in_transit', label: t('taskBoard.inTransit'), prepareStatus: [2, 4, 5] },
+  { key: 'warehouse', label: t('taskBoard.warehouse'), prepareStatus: 3 },
   { key: 'completed', label: t('taskBoard.completed'), prepareStatus: 6 }
 ]);
 

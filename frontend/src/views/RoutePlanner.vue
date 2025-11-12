@@ -34,6 +34,10 @@
               <span class="planner__stop-number">{{ stop.sequence }}</span>
               <div class="planner__stop-info">
                 <strong class="planner__stop-name">{{ stop.receiverName }}</strong>
+                <p class="planner__stop-package-id">
+                  <span class="package-id-label">{{ $t('routePlanner.packageId') }}:</span>
+                  <span class="package-id-value">{{ stop.orderSn }}</span>
+                </p>
                 <p class="planner__stop-address">{{ stop.address }}</p>
                 <small v-if="stop.eta" class="planner__stop-eta"
                   >{{ $t('routePlanner.eta') }}: {{ stop.eta }}</small
@@ -41,6 +45,12 @@
               </div>
             </div>
             <div class="planner__stop-actions">
+              <button
+                class="planner__stop-btn planner__stop-btn--details"
+                @click="openPackageDetails(stop.orderSn)"
+              >
+                <span>📦</span> {{ $t('routePlanner.viewPackage') }}
+              </button>
               <button
                 class="planner__stop-btn planner__stop-btn--navigate"
                 @click="navigateToStop(stop)"
@@ -52,13 +62,23 @@
         </div>
       </div>
     </div>
+
+    <!-- Package Orders Modal -->
+    <PackageOrdersModal
+      v-if="selectedPackageSn"
+      :show="showPackageModal"
+      :package-sn="selectedPackageSn"
+      :order-count="0"
+      @close="closePackageModal"
+    />
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useOrdersStore } from '@/store/orders';
+import PackageOrdersModal from '@/components/PackageOrdersModal.vue';
 
 interface RouteStop {
   orderSn: string;
@@ -70,6 +90,10 @@ interface RouteStop {
 
 const router = useRouter();
 const ordersStore = useOrdersStore();
+
+// Modal state
+const showPackageModal = ref(false);
+const selectedPackageSn = ref<string | null>(null);
 
 onMounted(() => {
   fetchRoute();
@@ -125,6 +149,16 @@ function navigateToStop(stop: RouteStop) {
     `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`,
     '_blank'
   );
+}
+
+function openPackageDetails(packageSn: string) {
+  selectedPackageSn.value = packageSn;
+  showPackageModal.value = true;
+}
+
+function closePackageModal() {
+  showPackageModal.value = false;
+  selectedPackageSn.value = null;
 }
 </script>
 
@@ -299,6 +333,25 @@ function navigateToStop(stop: RouteStop) {
   margin-bottom: var(--spacing-xs);
 }
 
+.planner__stop-package-id {
+  margin: 0 0 var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.package-id-label {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.package-id-value {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+  font-family: monospace;
+}
+
 .planner__stop-address {
   margin: 0 0 var(--spacing-xs);
   color: var(--color-text-secondary);
@@ -329,6 +382,18 @@ function navigateToStop(stop: RouteStop) {
   align-items: center;
   justify-content: center;
   gap: var(--spacing-xs);
+}
+
+.planner__stop-btn--details {
+  background: var(--color-white);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+
+.planner__stop-btn--details:hover {
+  background: var(--color-primary);
+  color: var(--color-white);
+  transform: translateY(-1px);
 }
 
 .planner__stop-btn--navigate {

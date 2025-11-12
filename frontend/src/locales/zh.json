@@ -38,6 +38,7 @@
     "pendingPickup": "待取货",
     "inProgress": "进行中",
     "inTransit": "运输中",
+    "warehouse": "仓库",
     "completed": "已完成",
     "openRoutePlanner": "打开路线规划",
     "pickupTime": "取货时间",
@@ -77,7 +78,9 @@
     "noStops": "暂无规划站点",
     "openFullRoute": "在谷歌地图中打开完整路线",
     "mapsHint": "在谷歌地图中打开所有站点进行导航",
-    "navigate": "导航"
+    "navigate": "导航",
+    "packageId": "包裹编号",
+    "viewPackage": "查看包裹"
   },
   "orderDetail": {
     "title": "订单详情",

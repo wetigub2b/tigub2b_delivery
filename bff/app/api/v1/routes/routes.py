@@ -12,7 +12,7 @@ from app.services.cache import store_driver_location
 router = APIRouter()
 
 
-@router.post("/optimize", response_model=RoutePlan)
+@router.post("/optimize", response_model=RoutePlan, response_model_by_alias=True)
 async def optimize_route(
     current_user=Depends(deps.get_current_user),
     session: AsyncSession = Depends(deps.get_db_session)

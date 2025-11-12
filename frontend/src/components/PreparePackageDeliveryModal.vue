@@ -6,7 +6,7 @@
           <div class="modal-header">
             <h3>{{ $t('taskBoard.deliveryProof') }}</h3>
             <button class="modal-close" @click="handleCancel" aria-label="Close">
-              
+              âœ•
             </button>
           </div>
 
@@ -39,11 +39,11 @@
               </div>
               <div v-else class="photo-actions">
                 <button class="photo-button photo-button--camera" @click="takePhoto" :disabled="isProcessing">
-                  <span class="photo-icon">=÷</span>
+                  <span class="photo-icon">ðŸ“·</span>
                   {{ $t('orderCard.takePhoto') }}
                 </button>
                 <button class="photo-button photo-button--upload" @click="uploadPhoto" :disabled="isProcessing">
-                  <span class="photo-icon">=¼</span>
+                  <span class="photo-icon">ðŸ“¤</span>
                   {{ $t('orderCard.uploadPhoto') }}
                 </button>
               </div>

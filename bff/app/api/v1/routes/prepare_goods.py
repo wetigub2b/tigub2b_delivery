@@ -690,3 +690,175 @@ async def confirm_pickup(
     )
 
     await session.commit()
+
+
+@router.post("/{prepare_sn}/confirm-delivery", status_code=status.HTTP_204_NO_CONTENT)
+async def confirm_delivery(
+    prepare_sn: str,
+    payload: ConfirmPickupRequest,
+    current_user=Depends(deps.get_current_user),
+    session: AsyncSession = Depends(deps.get_db_session)
+) -> None:
+    """
+    Confirm driver delivered package with photo proof.
+
+    This action:
+    1. Saves photo to tigu_uploaded_files (biz_type='prepare_good', biz_id=package.id)
+    2. Creates OrderAction records for each order
+       - For warehouse delivery (shipping_type=0): action_type=11 - 司机送达仓库
+       - For user delivery (shipping_type=1): action_type=12 - 司机送达用户
+       - logistics_voucher_file contains the file ID from tigu_uploaded_files
+    3. Updates package status based on shipping type:
+       - shipping_type=0: prepare_status to 3 (司机收货完成送货仓库)
+       - shipping_type=1: prepare_status to 12 (已送达 - Delivered to user)
+
+    Args:
+        prepare_sn: Prepare goods serial number
+        payload: Confirmation request with photo and notes
+        current_user: Authenticated driver user
+        session: Database session
+
+    Raises:
+        HTTPException 404: Driver or package not found
+        HTTPException 400: Invalid photo or package status
+    """
+    import base64
+    import os
+    from datetime import datetime
+    from pathlib import Path
+    from app.models.order import UploadedFile
+    from app.models.order_action import OrderAction
+    from app.models.prepare_goods import PrepareGoods
+    from app.utils import generate_snowflake_id
+
+    # Look up driver
+    result = await session.execute(select(Driver).where(Driver.phone == current_user.phonenumber))
+    driver = result.scalars().first()
+    if not driver:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Driver not found"
+        )
+
+    # Get package
+    result = await session.execute(
+        select(PrepareGoods).where(PrepareGoods.prepare_sn == prepare_sn)
+    )
+    package = result.scalars().first()
+    if not package:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Package not found: {prepare_sn}"
+        )
+
+    # Verify package is in transit status (should be 2, 4, or 5)
+    if package.prepare_status not in [2, 4, 5]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Package status must be in transit (2, 4, or 5), current: {package.prepare_status}"
+        )
+
+    # Decode and save photo
+    try:
+        if payload.photo.startswith('data:'):
+            header, encoded = payload.photo.split(',', 1)
+            mime_type = header.split(':')[1].split(';')[0]
+        else:
+            encoded = payload.photo
+            mime_type = 'image/jpeg'
+
+        image_bytes = base64.b64decode(encoded)
+
+        # Validate file size (4MB limit)
+        if len(image_bytes) > 4 * 1024 * 1024:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail="Photo size exceeds 4MB limit"
+            )
+
+        # Create upload directory
+        upload_dir = Path("/var/www/deliveries/photos/deliveries")
+        upload_dir.mkdir(parents=True, exist_ok=True)
+
+        # Generate filename
+        timestamp = int(datetime.now().timestamp())
+        extension = mime_type.split('/')[-1]
+        if extension == 'jpg':
+            extension = 'jpeg'
+        filename = f"{prepare_sn}_{timestamp}.{extension}"
+        file_path = upload_dir / filename
+
+        # Save file
+        with open(file_path, 'wb') as f:
+            f.write(image_bytes)
+        os.chmod(file_path, 0o644)
+
+        photo_url = f"/deliveries/photos/deliveries/{filename}"
+
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to save photo: {str(e)}"
+        )
+
+    # Create UploadedFile record
+    uploaded_file = UploadedFile(
+        id=generate_snowflake_id(),
+        file_name=filename,
+        file_url=photo_url,
+        file_type=mime_type,
+        file_size=len(image_bytes),
+        biz_type="prepare_good",
+        biz_id=package.id,
+        uploader_id=driver.id,
+        uploader_name=driver.name,
+        create_by=driver.name,
+        create_time=datetime.now()
+    )
+    session.add(uploaded_file)
+
+    # Parse order IDs from package
+    order_ids = parse_order_id_list(package.order_ids)
+
+    # Get orders to fetch their current status
+    orders_result = await session.execute(
+        select(Order).where(Order.id.in_(order_ids))
+    )
+    orders = orders_result.scalars().all()
+
+    # Determine action type and new status based on shipping type
+    if package.shipping_type == 0:
+        # To warehouse workflow
+        action_type = 11  # 司机送达仓库 - Driver delivers to warehouse
+        new_status = 3  # 司机收货完成送货仓库
+    else:
+        # To user workflow
+        action_type = 12  # 司机送达用户 - Driver delivers to user
+        new_status = 12  # 已送达 - Delivered to user
+
+    # Create OrderAction record for each order
+    # Note: logistics_voucher_file should contain file ID from tigu_uploaded_files
+    for order in orders:
+        order_action = OrderAction(
+            id=generate_snowflake_id(),
+            order_id=order.id,
+            action_type=action_type,
+            logistics_voucher_file=str(uploaded_file.id),  # Use file ID, not URL
+            create_by=driver.name,
+            create_time=datetime.now(),
+            order_status=order.order_status,
+            shipping_status=order.shipping_status,
+            shipping_type=order.shipping_type
+        )
+        session.add(order_action)
+
+    # Update package status
+    await prepare_goods_service.update_prepare_status(
+        session=session,
+        prepare_sn=prepare_sn,
+        new_status=new_status
+    )
+
+    await session.commit()

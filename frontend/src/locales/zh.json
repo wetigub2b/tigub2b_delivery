@@ -62,7 +62,12 @@
     "pickupProof": "取货凭证",
     "pickupNotes": "取货备注（可选）",
     "pickupNotesPlaceholder": "添加取货备注...",
-    "submitPickup": "提交取货"
+    "submitPickup": "提交取货",
+    "confirmDeliveryButton": "确认送达",
+    "deliveryProof": "送达凭证",
+    "deliveryNotes": "送达备注（可选）",
+    "deliveryNotesPlaceholder": "添加送达备注...",
+    "submitDelivery": "提交送达"
   },
   "routePlanner": {
     "title": "路线规划",

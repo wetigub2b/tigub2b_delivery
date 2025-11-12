@@ -189,3 +189,17 @@ export async function confirmPickup(
     notes
   });
 }
+
+/**
+ * Confirm delivery with photo proof
+ */
+export async function confirmDelivery(
+  prepareSn: string,
+  photo: string,
+  notes?: string
+) {
+  await client.post(`/prepare-goods/${prepareSn}/confirm-delivery`, {
+    photo,
+    notes
+  });
+}

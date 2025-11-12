@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import {
   assignDriver,
+  confirmDelivery,
   confirmPickup,
   createPreparePackage,
   getPreparePackage,
@@ -24,7 +25,9 @@ const prepareStatusLabels: Record<number | string, string> = {
   3: 'Warehouse Received',
   4: 'Warehouse Shipped',
   5: 'Delivered',
-  6: 'Complete'
+  6: 'Complete',
+  12: 'Delivered to User',
+  13: 'Order Complete'
 };
 
 // Delivery type labels
@@ -307,6 +310,31 @@ export const usePrepareGoodsStore = defineStore('prepareGoods', {
         if (pkg) {
           pkg.prepareStatus = 2;
           pkg.prepareStatusLabel = prepareStatusLabels[2] || 'Unknown';
+        }
+
+        // Refresh driver packages to get updated state
+        await this.fetchMyDriverPackages();
+      } finally {
+        this.isUpdating = false;
+      }
+    },
+
+    /**
+     * Confirm delivery with photo proof
+     */
+    async confirmDeliveryWithProof(prepareSn: string, photo: string, notes?: string) {
+      this.isUpdating = true;
+      try {
+        await confirmDelivery(prepareSn, photo, notes);
+
+        // Update local state - package status changes based on shipping type
+        const pkg = this.driverPackages.find(pkg => pkg.prepareSn === prepareSn);
+        if (pkg) {
+          // shipping_type = 0: warehouse → status 3 (司机收货完成送货仓库)
+          // shipping_type = 1: user → status 12 (已送达)
+          const newStatus = pkg.shippingType === 0 ? 3 : 12;
+          pkg.prepareStatus = newStatus;
+          pkg.prepareStatusLabel = prepareStatusLabels[newStatus] || 'Unknown';
         }
 
         // Refresh driver packages to get updated state

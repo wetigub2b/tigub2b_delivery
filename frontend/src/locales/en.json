@@ -62,7 +62,12 @@
     "pickupProof": "Pickup Proof",
     "pickupNotes": "Pickup Notes (Optional)",
     "pickupNotesPlaceholder": "Add pickup notes...",
-    "submitPickup": "Submit Pickup"
+    "submitPickup": "Submit Pickup",
+    "confirmDeliveryButton": "Confirm Delivery",
+    "deliveryProof": "Delivery Proof",
+    "deliveryNotes": "Delivery Notes (Optional)",
+    "deliveryNotesPlaceholder": "Add delivery notes...",
+    "submitDelivery": "Submit Delivery"
   },
   "routePlanner": {
     "title": "Route Planner",

@@ -48,13 +48,13 @@
             </div>
           </div>
           <div class="package-footer">
-            <button 
-              class="package-action-button" 
-              :class="{ 'package-action-button--disabled': pkg.prepareStatus === 2 }"
-              :disabled="pkg.prepareStatus === 2"
+            <button
+              class="package-action-button"
+              :class="{ 'package-action-button--disabled': pkg.prepareStatus === 3 || pkg.prepareStatus === 6 || pkg.prepareStatus === 12 || pkg.prepareStatus === 13 }"
+              :disabled="pkg.prepareStatus === 3 || pkg.prepareStatus === 6 || pkg.prepareStatus === 12 || pkg.prepareStatus === 13"
               @click="handlePackageAction(pkg)"
             >
-              {{ getPackageActionLabel(pkg.prepareStatus) }} <span v-if="pkg.prepareStatus !== 2">→</span>
+              {{ getPackageActionLabel(pkg.prepareStatus) }} <span v-if="![3, 6, 12, 13].includes(pkg.prepareStatus)">→</span>
             </button>
           </div>
         </div>
@@ -100,6 +100,20 @@
       @submit="submitPickupProof"
       @cancel="cancelPickupProof"
     />
+
+    <!-- Delivery Proof Modal -->
+    <PreparePackageDeliveryModal
+      v-if="packageForDelivery"
+      :show="showDeliveryProofModal"
+      :package-data="{
+        prepareSn: packageForDelivery.prepareSn,
+        orderCount: packageForDelivery.orderCount,
+        workflowLabel: packageForDelivery.workflowLabel,
+        warehouseName: packageForDelivery.warehouseName
+      }"
+      @submit="submitDeliveryProof"
+      @cancel="cancelDeliveryProof"
+    />
   </section>
 </template>
 
@@ -112,6 +126,7 @@ import EmptyState from '@/components/EmptyState.vue';
 import PackageOrdersModal from '@/components/PackageOrdersModal.vue';
 import ConfirmPackagePickupModal from '@/components/ConfirmPackagePickupModal.vue';
 import PickupProofModal from '@/components/PickupProofModal.vue';
+import PreparePackageDeliveryModal from '@/components/PreparePackageDeliveryModal.vue';
 
 const { t } = useI18n();
 const prepareGoodsStore = usePrepareGoodsStore();
@@ -130,12 +145,16 @@ const isPickingUp = ref(false);
 const showPickupProofModal = ref(false);
 const packageForProof = ref<any>(null);
 
+// Delivery proof modal state
+const showDeliveryProofModal = ref(false);
+const packageForDelivery = ref<any>(null);
+
 const statuses = computed(() => [
   { key: 'available', label: t('taskBoard.available'), prepareStatus: 0 },
   { key: 'pending_pickup', label: t('taskBoard.pendingPickup'), prepareStatus: 1 },
   { key: 'in_transit', label: t('taskBoard.inTransit'), prepareStatus: [2, 4, 5] },
   { key: 'warehouse', label: t('taskBoard.warehouse'), prepareStatus: 3 },
-  { key: 'completed', label: t('taskBoard.completed'), prepareStatus: 6 }
+  { key: 'completed', label: t('taskBoard.completed'), prepareStatus: [6, 12, 13] }
 ]);
 
 onMounted(() => {
@@ -169,7 +188,7 @@ const filteredPackages = computed(() => {
 function getPackageActionLabel(status: number | null): string {
   if (status === null || status === 0) return t('taskBoard.pickupPackage');
   if (status === 1) return t('taskBoard.confirmPickupButton');
-  if (status === 2) return t('taskBoard.waitingConfirmation');
+  if (status === 2 || status === 4 || status === 5) return t('taskBoard.confirmDeliveryButton');
   return t('taskBoard.viewDetails');
 }
 
@@ -182,6 +201,10 @@ function handlePackageAction(pkg: any) {
     // Pending pickup - show pickup proof modal
     packageForProof.value = pkg;
     showPickupProofModal.value = true;
+  } else if (pkg.prepareStatus === 2 || pkg.prepareStatus === 4 || pkg.prepareStatus === 5) {
+    // In transit - show delivery proof modal
+    packageForDelivery.value = pkg;
+    showDeliveryProofModal.value = true;
   } else {
     // For other statuses, show detail view (to be implemented)
     console.log('Package action:', pkg.prepareSn, 'Status:', pkg.prepareStatus);
@@ -247,6 +270,30 @@ async function submitPickupProof(photo: string, notes: string) {
 function cancelPickupProof() {
   showPickupProofModal.value = false;
   packageForProof.value = null;
+}
+
+async function submitDeliveryProof(photo: string, notes: string) {
+  if (!packageForDelivery.value) return;
+
+  try {
+    await prepareGoodsStore.confirmDeliveryWithProof(
+      packageForDelivery.value.prepareSn,
+      photo,
+      notes
+    );
+    // Close modal
+    showDeliveryProofModal.value = false;
+    packageForDelivery.value = null;
+    // Refresh driver packages to show updated status
+    await prepareGoodsStore.fetchMyDriverPackages();
+  } catch (error: any) {
+    alert(`Error: ${error.response?.data?.detail || error.message}`);
+  }
+}
+
+function cancelDeliveryProof() {
+  showDeliveryProofModal.value = false;
+  packageForDelivery.value = null;
 }
 </script>
 

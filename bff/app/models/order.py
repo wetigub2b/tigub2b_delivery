@@ -199,6 +199,8 @@ class Order(Base):
 
     create_time: Mapped[datetime] = mapped_column(DateTime())
     update_time: Mapped[datetime | None] = mapped_column(DateTime(), nullable=True)
+    create_by: Mapped[str | None] = mapped_column(String(64), nullable=True, comment="创建者")
+    update_by: Mapped[str | None] = mapped_column(String(64), nullable=True, comment="更新者")
 
     items: Mapped[list[OrderItem]] = relationship("OrderItem", back_populates="order", lazy="selectin")
     warehouse: Mapped[Warehouse | None] = relationship("Warehouse", back_populates="orders", lazy="joined")

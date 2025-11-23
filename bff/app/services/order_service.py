@@ -269,9 +269,11 @@ async def pickup_order(
         )
     )
     result = await session.execute(stmt)
-    await session.commit()
-
-    # Create OrderAction record
+    
+    # Refresh order to get updated state before creating action
+    await session.refresh(order)
+    
+    # Create OrderAction record with updated state
     await order_action_service.record_driver_pickup(
         session=session,
         order_id=order.id,
@@ -367,9 +369,11 @@ async def arrive_warehouse(
         )
     )
     result = await session.execute(stmt)
-    await session.commit()
-
-    # Create OrderAction record
+    
+    # Refresh order to get updated state before creating action
+    await session.refresh(order)
+    
+    # Create OrderAction record with updated state
     await order_action_service.record_driver_arrive_warehouse(
         session=session,
         order_id=order.id,
@@ -419,9 +423,11 @@ async def warehouse_receive(
         .values(shipping_status=4)  # 仓库已收货
     )
     result = await session.execute(stmt)
-    await session.commit()
-
-    # Create OrderAction record
+    
+    # Refresh order to get updated state before creating action
+    await session.refresh(order)
+    
+    # Create OrderAction record with updated state
     await order_action_service.record_warehouse_receive(
         session=session,
         order_id=order.id,
@@ -475,9 +481,11 @@ async def warehouse_ship(
         )
     )
     result = await session.execute(stmt)
-    await session.commit()
-
-    # Create OrderAction record
+    
+    # Refresh order to get updated state before creating action
+    await session.refresh(order)
+    
+    # Create OrderAction record with updated state
     await order_action_service.record_warehouse_ship(
         session=session,
         order_id=order.id,
@@ -531,9 +539,11 @@ async def complete_delivery(
         )
     )
     result = await session.execute(stmt)
-    await session.commit()
-
-    # Create OrderAction record
+    
+    # Refresh order to get updated state before creating action
+    await session.refresh(order)
+    
+    # Create OrderAction record with updated state
     await order_action_service.record_delivery_complete(
         session=session,
         order_id=order.id,

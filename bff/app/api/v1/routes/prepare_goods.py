@@ -836,14 +836,16 @@ async def confirm_delivery(
     # Determine action type and new status based on shipping type
     if package.shipping_type == 0:
         # To warehouse workflow
-        action_type = 11  # 司机送达仓库 - Driver delivers to warehouse
+        action_type = 2  # 司机送达仓库 - Driver arrives at warehouse (action_type=2)
         new_status = 3  # 司机收货完成送货仓库
+        order_shipping_status = 3  # Update tigu_order.shipping_status to 3
     else:
         # To user workflow
-        action_type = 12  # 司机送达用户 - Driver delivers to user
+        action_type = 5  # 完成 - Delivery complete (action_type=5)
         new_status = 12  # 已送达 - Delivered to user
+        order_shipping_status = 6  # Update tigu_order.shipping_status to 6 (已送达)
 
-    # Create OrderAction record for each order
+    # Create OrderAction record for each order AND update tigu_order
     # Note: logistics_voucher_file should contain file ID from tigu_uploaded_files
     for order in orders:
         order_action = OrderAction(
@@ -858,6 +860,16 @@ async def confirm_delivery(
             shipping_type=order.shipping_type
         )
         session.add(order_action)
+        
+        # Update tigu_order based on shipping type
+        order.shipping_status = order_shipping_status
+        if package.shipping_type == 0:
+            # Driver arrived at warehouse
+            order.arrive_warehouse_time = datetime.now()
+        else:
+            # Delivery completed to user
+            order.finish_time = datetime.now()
+            order.order_status = 3  # Mark order as completed
 
     # Update package status
     await prepare_goods_service.update_prepare_status(

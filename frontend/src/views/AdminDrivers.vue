@@ -192,6 +192,15 @@
       @close="showDetailModal = false"
       @edit="editDriver"
     />
+
+    <!-- Success Notification Modal -->
+    <NotificationModal
+      v-if="showSuccessModal"
+      type="success"
+      :title="successTitle"
+      :message="successMessage"
+      @close="showSuccessModal = false"
+    />
   </div>
 </template>
 
@@ -202,6 +211,7 @@ import { useI18n } from '@/composables/useI18n';
 import AdminNavigation from '@/components/AdminNavigation.vue';
 import DriverModal from '@/components/DriverModal.vue';
 import DriverDetailModal from '@/components/DriverDetailModal.vue';
+import NotificationModal from '@/components/NotificationModal.vue';
 import type { Driver } from '@/api/admin';
 
 const { t } = useI18n();
@@ -215,6 +225,9 @@ const showCreateModal = ref(false);
 const showEditModal = ref(false);
 const showDetailModal = ref(false);
 const selectedDriver = ref<Driver | null>(null);
+const showSuccessModal = ref(false);
+const successTitle = ref('');
+const successMessage = ref('');
 
 // Computed
 const drivers = computed(() => adminStore.drivers);
@@ -348,6 +361,8 @@ const handleDriverSuccess = async (formData: any) => {
         vehicle_model: formData.vehicleModel,
         notes: formData.notes
       });
+      successTitle.value = t('admin.drivers.createSuccessTitle');
+      successMessage.value = t('admin.drivers.createSuccessMessage');
     } else if (showEditModal.value && selectedDriver.value) {
       // Updating existing driver - use driver.id from tigu_driver table
       await adminStore.updateDriver(selectedDriver.value.id, {
@@ -361,9 +376,12 @@ const handleDriverSuccess = async (formData: any) => {
         notes: formData.notes,
         status: formData.status === 'active' ? 1 : 0
       });
+      successTitle.value = t('admin.drivers.updateSuccessTitle');
+      successMessage.value = t('admin.drivers.updateSuccessMessage');
     }
     closeModals();
     await loadDrivers();
+    showSuccessModal.value = true;
   } catch (err) {
     console.error('Failed to save driver:', err);
   }

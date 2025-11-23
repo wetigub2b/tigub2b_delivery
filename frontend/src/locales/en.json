@@ -15,7 +15,11 @@
     "filter": "Filter",
     "sort": "Sort",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "ok": "OK",
+    "warning": "Warning",
+    "info": "Information",
+    "create": "Create"
   },
   "app": {
     "title": "Tigu Delivery Console",
@@ -128,7 +132,9 @@
     "register": "Register",
     "registrationNote": "Your account will be pending admin approval. You can login once an administrator activates your account.",
     "registrationFailed": "Registration failed. Please try again.",
-    "registrationSuccess": "Registration successful! Please wait for admin approval."
+    "registrationSuccess": "Registration successful! Please wait for admin approval.",
+    "registrationSuccessTitle": "Registration Successful",
+    "registrationSuccessMessage": "Your account has been created and is pending admin approval. You will be able to login once an administrator activates your account."
   },
   "pwa": {
     "installTitle": "Install Tigu Delivery",
@@ -297,7 +303,11 @@
       "driverDetails": "Driver Details",
       "totalDeliveries": "Total Deliveries",
       "rating": "Rating",
-      "joinedDate": "Joined Date"
+      "joinedDate": "Joined Date",
+      "createSuccessTitle": "Driver Created Successfully",
+      "createSuccessMessage": "The new driver account has been created and is now active. The driver can login using their phone number and password.",
+      "updateSuccessTitle": "Driver Updated Successfully",
+      "updateSuccessMessage": "The driver information has been updated successfully."
     },
     "orders": {
       "title": "Order Management",

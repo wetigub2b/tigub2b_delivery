@@ -25,6 +25,14 @@
       @close="showRegisterModal = false"
       @success="handleRegistrationSuccess"
     />
+
+    <NotificationModal
+      v-if="showSuccessModal"
+      type="success"
+      :title="$t('login.registrationSuccessTitle')"
+      :message="$t('login.registrationSuccessMessage')"
+      @close="showSuccessModal = false"
+    />
   </div>
 </template>
 
@@ -33,12 +41,14 @@ import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useOrdersStore } from '@/store/orders';
 import DriverRegisterModal from '@/components/DriverRegisterModal.vue';
+import NotificationModal from '@/components/NotificationModal.vue';
 
 const router = useRouter();
 const ordersStore = useOrdersStore();
 
 const form = reactive({ phone: '', code: '' });
 const showRegisterModal = ref(false);
+const showSuccessModal = ref(false);
 
 async function submit() {
   await ordersStore.login(form.phone, form.code);
@@ -47,7 +57,7 @@ async function submit() {
 
 function handleRegistrationSuccess() {
   showRegisterModal.value = false;
-  alert('Registration successful! Your account is pending admin approval. You will be able to login once an administrator activates your account.');
+  showSuccessModal.value = true;
 }
 </script>
 

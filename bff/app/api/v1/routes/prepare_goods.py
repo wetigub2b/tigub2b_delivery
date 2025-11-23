@@ -667,7 +667,7 @@ async def confirm_pickup(
     )
     orders = orders_result.scalars().all()
 
-    # Create OrderAction record for each order
+    # Create OrderAction record for each order AND update tigu_order
     for order in orders:
         order_action = OrderAction(
             id=generate_snowflake_id(),
@@ -681,6 +681,11 @@ async def confirm_pickup(
             shipping_type=order.shipping_type
         )
         session.add(order_action)
+        
+        # Update tigu_order: set shipping_status=2 (司机收货中), driver_receive_time, and driver_id
+        order.shipping_status = 2
+        order.driver_receive_time = datetime.now()
+        order.driver_id = driver.id
 
     # Update package status to 2 (Driver to warehouse)
     await prepare_goods_service.update_prepare_status(

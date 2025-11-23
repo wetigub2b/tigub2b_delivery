@@ -11,23 +11,43 @@
         <input v-model="form.code" placeholder="123456" required />
       </label>
       <button type="submit">{{ $t('login.signIn') }}</button>
+      
+      <div class="create-account-section">
+        <span class="separator">{{ $t('login.or') }}</span>
+        <button type="button" @click="showRegisterModal = true" class="create-account-button">
+          {{ $t('login.createAccount') }}
+        </button>
+      </div>
     </form>
+
+    <DriverRegisterModal
+      v-if="showRegisterModal"
+      @close="showRegisterModal = false"
+      @success="handleRegistrationSuccess"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue';
+import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useOrdersStore } from '@/store/orders';
+import DriverRegisterModal from '@/components/DriverRegisterModal.vue';
 
 const router = useRouter();
 const ordersStore = useOrdersStore();
 
 const form = reactive({ phone: '', code: '' });
+const showRegisterModal = ref(false);
 
 async function submit() {
   await ordersStore.login(form.phone, form.code);
   router.push('/');
+}
+
+function handleRegistrationSuccess() {
+  showRegisterModal.value = false;
+  alert('Registration successful! Your account is pending admin approval. You will be able to login once an administrator activates your account.');
 }
 </script>
 
@@ -110,6 +130,61 @@ async function submit() {
 
 .login__form input::placeholder {
   color: var(--color-text-light);
+}
+
+.create-account-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+}
+
+.separator {
+  text-align: center;
+  color: var(--color-text-light);
+  font-size: var(--font-size-sm);
+  position: relative;
+  padding: 0 var(--spacing-md);
+}
+
+.separator::before,
+.separator::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background: var(--color-gray-light);
+}
+
+.separator::before {
+  left: 0;
+}
+
+.separator::after {
+  right: 0;
+}
+
+.create-account-button {
+  background: var(--color-white);
+  border: 2px solid var(--color-primary);
+  color: var(--color-primary);
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  font-family: var(--font-family-base);
+  transition: all var(--transition-base);
+}
+
+.create-account-button:hover {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+.create-account-button:active {
+  transform: translateY(1px);
 }
 
 @media (max-width: 480px) {

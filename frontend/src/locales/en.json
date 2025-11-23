@@ -122,7 +122,13 @@
     "forgotPassword": "Forgot Password?",
     "rememberMe": "Remember Me",
     "invalidCredentials": "Invalid username or password",
-    "loginRequired": "Please log in to continue"
+    "loginRequired": "Please log in to continue",
+    "or": "OR",
+    "createAccount": "Create Account",
+    "register": "Register",
+    "registrationNote": "Your account will be pending admin approval. You can login once an administrator activates your account.",
+    "registrationFailed": "Registration failed. Please try again.",
+    "registrationSuccess": "Registration successful! Please wait for admin approval."
   },
   "pwa": {
     "installTitle": "Install Tigu Delivery",
@@ -272,6 +278,7 @@
       "passwordHint": "This password will be used for driver login",
       "namePlaceholder": "Enter driver name",
       "phonePlaceholder": "Enter phone number",
+      "email": "Email",
       "emailPlaceholder": "Enter email address",
       "vehicleType": "Vehicle Type",
       "selectVehicle": "Select vehicle type",
@@ -284,7 +291,7 @@
       "vehicleModel": "Vehicle Model",
       "vehicleModelPlaceholder": "Enter vehicle model (optional)",
       "licenseNumber": "Driver License Number",
-      "licenseNumberPlaceholder": "Enter driver license number (optional)",
+      "licenseNumberPlaceholder": "Enter driver license number",
       "suspended": "Suspended",
       "editDriver": "Edit Driver",
       "driverDetails": "Driver Details",

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db_session
@@ -88,3 +88,107 @@ async def refresh(payload: RefreshRequest, session: AsyncSession = Depends(get_d
     settings = get_settings()
     await store_refresh_token(int(subject), refresh_token, settings.refresh_token_expire_minutes * 60)
     return TokenResponse(accessToken=access_token, refreshToken=refresh_token)
+
+
+@router.post("/register-driver")
+async def register_driver(
+    payload: dict,
+    session: AsyncSession = Depends(get_db_session)
+) -> dict:
+    """Self-registration endpoint for new drivers - creates inactive account pending admin approval"""
+    from datetime import datetime
+    from decimal import Decimal
+    from app.models.driver import Driver
+    
+    # Validate required fields
+    if not payload.get("name") or not payload.get("phone") or not payload.get("password") or not payload.get("license_number"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Name, phone, password, and driver license number are required"
+        )
+    
+    phone = _normalize_phone(payload["phone"])
+    
+    # Check if phone already exists in tigu_driver
+    existing_driver = await session.execute(
+        select(Driver).where(Driver.phone == phone)
+    )
+    if existing_driver.scalars().first():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Phone number already registered"
+        )
+    
+    # Check if phone already exists in sys_user
+    existing_user = await session.execute(
+        select(User).where(User.phonenumber == phone)
+    )
+    if existing_user.scalars().first():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Phone number already registered"
+        )
+    
+    # Generate username from phone
+    username = f"driver_{phone}"
+    
+    # Check if username exists
+    existing_username = await session.execute(
+        select(User).where(User.user_name == username)
+    )
+    if existing_username.scalars().first():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username already exists"
+        )
+    
+    # Hash password
+    hashed_password = get_password_hash(payload["password"])
+    
+    # Generate new user_id
+    max_user_id_result = await session.execute(select(func.max(User.user_id)))
+    max_user_id = max_user_id_result.scalar()
+    new_user_id = (max_user_id or 0) + 1
+    
+    # Create sys_user record (INACTIVE by default - status "1")
+    new_user = User(
+        user_id=new_user_id,
+        user_name=username,
+        nick_name=payload["name"],
+        phonenumber=phone,
+        email=payload.get("email"),
+        password=hashed_password,
+        status="1",  # 1 = INACTIVE - requires admin approval
+        del_flag="0",
+        user_type="00",
+        create_time=datetime.now(),
+        update_time=datetime.now(),
+        remark="Self-registered driver - pending admin approval"
+    )
+    
+    session.add(new_user)
+    await session.flush()
+    
+    # Create tigu_driver record (INACTIVE by default - status 0)
+    new_driver = Driver(
+        name=payload["name"],
+        phone=phone,
+        email=payload.get("email"),
+        license_number=payload.get("license_number"),
+        vehicle_type=payload.get("vehicle_type"),
+        vehicle_plate=payload.get("vehicle_plate"),
+        vehicle_model=payload.get("vehicle_model"),
+        notes="Self-registered - pending admin approval",
+        status=0,  # 0 = INACTIVE in tigu_driver
+        rating=Decimal("5.00"),
+        total_deliveries=0
+    )
+    
+    session.add(new_driver)
+    await session.commit()
+    
+    return {
+        "message": "Registration successful. Your account is pending admin approval.",
+        "phone": phone,
+        "name": payload["name"]
+    }

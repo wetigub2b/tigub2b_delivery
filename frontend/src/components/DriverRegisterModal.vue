@@ -2,13 +2,13 @@
   <div class="modal-overlay" @click.self="$emit('close')">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>{{ isEdit ? $t('admin.drivers.editDriver') : $t('admin.drivers.createDriver') }}</h2>
+        <h2>{{ $t('login.createAccount') }}</h2>
         <button class="close-button" @click="$emit('close')">✕</button>
       </div>
 
       <form @submit.prevent="handleSubmit" class="modal-form">
         <div class="form-group">
-          <label>{{ $t('admin.drivers.name') }}</label>
+          <label>{{ $t('admin.drivers.name') }} *</label>
           <input
             v-model="form.name"
             type="text"
@@ -18,7 +18,7 @@
         </div>
 
         <div class="form-group">
-          <label>{{ $t('admin.drivers.phone') }}</label>
+          <label>{{ $t('admin.drivers.phone') }} *</label>
           <input
             v-model="form.phone"
             type="tel"
@@ -33,13 +33,11 @@
             v-model="form.email"
             type="email"
             :placeholder="$t('admin.drivers.emailPlaceholder')"
-            required
           />
         </div>
 
-        <!-- Password field - only for creating new drivers -->
-        <div v-if="!isEdit" class="form-group">
-          <label>{{ $t('admin.drivers.password') }}</label>
+        <div class="form-group">
+          <label>{{ $t('admin.drivers.password') }} *</label>
           <input
             v-model="form.password"
             type="password"
@@ -52,7 +50,7 @@
 
         <div class="form-group">
           <label>{{ $t('admin.drivers.vehicleType') }}</label>
-          <select v-model="form.vehicleType" required>
+          <select v-model="form.vehicleType">
             <option value="">{{ $t('admin.drivers.selectVehicle') }}</option>
             <option value="van">{{ $t('admin.drivers.van') }}</option>
             <option value="truck">{{ $t('admin.drivers.truck') }}</option>
@@ -67,7 +65,6 @@
             v-model="form.licensePlate"
             type="text"
             :placeholder="$t('admin.drivers.licensePlatePlaceholder')"
-            required
           />
         </div>
 
@@ -90,21 +87,21 @@
           />
         </div>
 
-        <div class="form-group">
-          <label>{{ $t('admin.drivers.status') }}</label>
-          <select v-model="form.status" required>
-            <option value="active">{{ $t('admin.drivers.active') }}</option>
-            <option value="inactive">{{ $t('admin.drivers.inactive') }}</option>
-            <option value="suspended">{{ $t('admin.drivers.suspended') }}</option>
-          </select>
+        <div class="info-message">
+          <span class="info-icon">ℹ️</span>
+          {{ $t('login.registrationNote') }}
+        </div>
+
+        <div v-if="errorMessage" class="error-message">
+          {{ errorMessage }}
         </div>
 
         <div class="modal-actions">
           <button type="button" @click="$emit('close')" class="btn-secondary">
             {{ $t('common.cancel') }}
           </button>
-          <button type="submit" class="btn-primary">
-            {{ isEdit ? $t('common.save') : $t('common.create') }}
+          <button type="submit" class="btn-primary" :disabled="isSubmitting">
+            {{ isSubmitting ? $t('common.loading') : $t('login.register') }}
           </button>
         </div>
       </form>
@@ -113,17 +110,14 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, watch } from 'vue';
-import type { Driver } from '@/api/admin';
+import { reactive, ref } from 'vue';
+import { useI18n } from '@/composables/useI18n';
 
-const props = defineProps<{
-  driver?: Driver | null;
-  isEdit?: boolean;
-}>();
+const { t } = useI18n();
 
 const emit = defineEmits<{
   close: [];
-  success: [driver: any];
+  success: [];
 }>();
 
 const form = reactive({
@@ -134,30 +128,46 @@ const form = reactive({
   vehicleType: '',
   licensePlate: '',
   vehicleModel: '',
-  licenseNumber: '',
-  status: 'active'
+  licenseNumber: ''
 });
 
-// Populate form if editing
-watch(
-  () => props.driver,
-  (driver) => {
-    if (driver && props.isEdit) {
-      form.name = driver.name || '';
-      form.phone = driver.phone || '';
-      form.email = driver.email || '';
-      form.vehicleType = driver.vehicleType || '';
-      form.licensePlate = driver.licensePlate || '';
-      form.vehicleModel = driver.vehicleModel || driver.vehicle_model || '';
-      form.licenseNumber = driver.licenseNumber || driver.license_number || '';
-      form.status = driver.status || 'active';
-    }
-  },
-  { immediate: true }
-);
+const isSubmitting = ref(false);
+const errorMessage = ref('');
 
-const handleSubmit = () => {
-  emit('success', { ...form });
+const handleSubmit = async () => {
+  isSubmitting.value = true;
+  errorMessage.value = '';
+
+  try {
+    // Always use /api path - Vite proxy (dev) or nginx (prod) will route it correctly
+    const response = await fetch('/api/auth/register-driver', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: form.name,
+        phone: form.phone,
+        email: form.email || undefined,
+        password: form.password,
+        license_number: form.licenseNumber || undefined,
+        vehicle_type: form.vehicleType || undefined,
+        vehicle_plate: form.licensePlate || undefined,
+        vehicle_model: form.vehicleModel || undefined
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Registration failed');
+    }
+
+    emit('success');
+  } catch (error: any) {
+    errorMessage.value = error.message || t('login.registrationFailed');
+  } finally {
+    isSubmitting.value = false;
+  }
 };
 </script>
 
@@ -172,7 +182,7 @@ const handleSubmit = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: var(--z-modal);
+  z-index: 1000;
   padding: var(--spacing-lg);
 }
 
@@ -259,6 +269,30 @@ const handleSubmit = () => {
   margin-top: var(--spacing-xs);
 }
 
+.info-message {
+  display: flex;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--color-info-light, #e3f2fd);
+  border-left: 3px solid var(--color-info, #2196f3);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.info-icon {
+  font-size: var(--font-size-lg);
+}
+
+.error-message {
+  padding: var(--spacing-md);
+  background: var(--color-error-light, #fee);
+  border-left: 3px solid var(--color-error, #d32f2f);
+  border-radius: var(--radius-sm);
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+}
+
 .modal-actions {
   display: flex;
   gap: var(--spacing-md);
@@ -284,9 +318,14 @@ const handleSubmit = () => {
   border-color: var(--color-primary);
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
   background: var(--color-primary-dark);
   border-color: var(--color-primary-dark);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .btn-secondary {

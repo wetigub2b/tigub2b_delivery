@@ -194,6 +194,7 @@
       "passwordHint": "此密码将用于司机登录",
       "namePlaceholder": "请输入司机姓名",
       "phonePlaceholder": "请输入手机号码",
+      "email": "邮箱",
       "emailPlaceholder": "请输入邮箱地址",
       "vehicleType": "车辆类型",
       "selectVehicle": "请选择车辆类型",
@@ -206,7 +207,7 @@
       "vehicleModel": "车型",
       "vehicleModelPlaceholder": "请输入车型（可选）",
       "licenseNumber": "驾驶证号",
-      "licenseNumberPlaceholder": "请输入驾驶证号（可选）",
+      "licenseNumberPlaceholder": "请输入驾驶证号",
       "suspended": "已暂停",
       "editDriver": "编辑司机",
       "driverDetails": "司机详情",
@@ -315,7 +316,13 @@
     "forgotPassword": "忘记密码？",
     "rememberMe": "记住我",
     "invalidCredentials": "用户名或密码错误",
-    "loginRequired": "请登录后继续"
+    "loginRequired": "请登录后继续",
+    "or": "或",
+    "createAccount": "创建账户",
+    "register": "注册",
+    "registrationNote": "您的账户需要管理员审核。管理员激活您的账户后才能登录。",
+    "registrationFailed": "注册失败，请重试。",
+    "registrationSuccess": "注册成功！请等待管理员审核。"
   },
   "pwa": {
     "installTitle": "安装梯谷配送",

@@ -15,7 +15,7 @@ class DriverBase(BaseModel):
     name: str
     phone: str
     email: Optional[str] = None
-    license_number: Optional[str] = None
+    license_number: Optional[str] = None  # Keep optional for existing drivers, but UI enforces it for new ones
     vehicle_type: Optional[str] = None
     vehicle_plate: Optional[str] = None
     vehicle_model: Optional[str] = None

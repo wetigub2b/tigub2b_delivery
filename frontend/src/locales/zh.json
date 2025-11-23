@@ -205,8 +205,14 @@
       "licensePlatePlaceholder": "请输入车牌号",
       "vehicleModel": "车型",
       "vehicleModelPlaceholder": "请输入车型（可选）",
+      "licenseNumber": "驾驶证号",
+      "licenseNumberPlaceholder": "请输入驾驶证号（可选）",
       "suspended": "已暂停",
-      "editDriver": "编辑司机"
+      "editDriver": "编辑司机",
+      "driverDetails": "司机详情",
+      "totalDeliveries": "总配送数",
+      "rating": "评分",
+      "joinedDate": "加入日期"
     },
     "orders": {
       "title": "订单管理",

@@ -7,18 +7,27 @@ export interface AdminLoginRequest {
 }
 
 export interface Driver {
+  id: number;
   user_id: number;
   user_name: string;
   nick_name: string;
+  name?: string;
+  phone?: string;
   phonenumber?: string;
   email?: string;
+  license_number?: string;
   vehicle_type?: string;
+  vehicle_plate?: string;
+  vehicle_model?: string;
   license_plate?: string;
   notes?: string;
   role: string;
   status: string;
-  del_flag: string;
+  del_flag?: string;
+  rating?: number;
+  total_deliveries?: number;
   created_at: string;
+  updated_at?: string;
   last_login?: string;
   is_active: boolean;
   is_admin: boolean;
@@ -37,14 +46,15 @@ export interface DriverCreate {
 }
 
 export interface DriverUpdate {
-  nick_name?: string;
-  phonenumber?: string;
+  name?: string;
+  phone?: string;
   email?: string;
+  license_number?: string;
   vehicle_type?: string;
-  license_plate?: string;
+  vehicle_plate?: string;
+  vehicle_model?: string;
   notes?: string;
-  status?: string;
-  role?: string;
+  status?: number;
 }
 
 export interface DashboardStats {
@@ -83,8 +93,10 @@ export interface DispatchDriver {
   name: string;
   nick_name: string;
   phone: string;
+  license_number?: string;
   vehicle_type?: string;
   vehicle_plate?: string;
+  vehicle_model?: string;
   status: number;
   rating: number;
   total_deliveries: number;

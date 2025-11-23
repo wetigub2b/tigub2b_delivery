@@ -24,13 +24,23 @@
           </div>
 
           <div class="detail-row">
+            <span class="detail-label">{{ $t('admin.drivers.licenseNumber') }}</span>
+            <span class="detail-value">{{ driver.licenseNumber || driver.license_number || '-' }}</span>
+          </div>
+
+          <div class="detail-row">
             <span class="detail-label">{{ $t('admin.drivers.vehicleType') }}</span>
-            <span class="detail-value">{{ formatVehicleType(driver.vehicleType) }}</span>
+            <span class="detail-value">{{ formatVehicleType(driver.vehicleType || driver.vehicle_type) }}</span>
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">{{ $t('admin.drivers.vehicleModel') }}</span>
+            <span class="detail-value">{{ driver.vehicleModel || driver.vehicle_model || '-' }}</span>
           </div>
 
           <div class="detail-row">
             <span class="detail-label">{{ $t('admin.drivers.licensePlate') }}</span>
-            <span class="detail-value">{{ driver.licensePlate }}</span>
+            <span class="detail-value">{{ driver.licensePlate || driver.license_plate || '-' }}</span>
           </div>
 
           <div class="detail-row">

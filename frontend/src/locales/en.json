@@ -283,8 +283,14 @@
       "licensePlatePlaceholder": "Enter license plate number",
       "vehicleModel": "Vehicle Model",
       "vehicleModelPlaceholder": "Enter vehicle model (optional)",
+      "licenseNumber": "Driver License Number",
+      "licenseNumberPlaceholder": "Enter driver license number (optional)",
       "suspended": "Suspended",
-      "editDriver": "Edit Driver"
+      "editDriver": "Edit Driver",
+      "driverDetails": "Driver Details",
+      "totalDeliveries": "Total Deliveries",
+      "rating": "Rating",
+      "joinedDate": "Joined Date"
     },
     "orders": {
       "title": "Order Management",

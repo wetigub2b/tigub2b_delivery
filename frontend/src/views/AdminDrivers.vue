@@ -82,6 +82,7 @@
               </th>
               <th>{{ $t('admin.drivers.name') }}</th>
               <th>{{ $t('admin.drivers.phone') }}</th>
+              <th>{{ $t('admin.drivers.licenseNumber') }}</th>
               <th>{{ $t('admin.drivers.vehicle') }}</th>
               <th>{{ $t('admin.drivers.role') }}</th>
               <th>{{ $t('admin.drivers.status') }}</th>
@@ -90,12 +91,12 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="driver in drivers" :key="driver.user_id" class="driver-row">
+            <tr v-for="driver in drivers" :key="driver.id" class="driver-row">
               <td>
                 <input
                   type="checkbox"
-                  :checked="selectedDrivers.includes(driver.user_id)"
-                  @change="toggleDriverSelection(driver.user_id)"
+                  :checked="selectedDrivers.includes(driver.id)"
+                  @change="toggleDriverSelection(driver.id)"
                 />
               </td>
               <td>
@@ -105,9 +106,11 @@
                 </div>
               </td>
               <td>{{ driver.phonenumber || '-' }}</td>
+              <td>{{ driver.license_number || '-' }}</td>
               <td>
-                <div v-if="driver.vehicle_type || driver.license_plate" class="vehicle-info">
+                <div v-if="driver.vehicle_type || driver.license_plate || driver.vehicle_model" class="vehicle-info">
                   <div>{{ driver.vehicle_type || '-' }}</div>
+                  <small>{{ driver.vehicle_model || '-' }}</small>
                   <small>{{ driver.license_plate || '-' }}</small>
                 </div>
                 <span v-else>-</span>
@@ -135,7 +138,7 @@
                   </button>
                   <button
                     v-if="driver.status === '1'"
-                    @click="activateDriver(driver.user_id)"
+                    @click="activateDriver(driver.id)"
                     class="action-btn success"
                     :title="$t('admin.drivers.activate')"
                   >
@@ -143,13 +146,13 @@
                   </button>
                   <button
                     v-else
-                    @click="deactivateDriver(driver.user_id)"
+                    @click="deactivateDriver(driver.id)"
                     class="action-btn warning"
                     :title="$t('admin.drivers.deactivate')"
                   >
                     ⏸️
                   </button>
-                  <button @click="deleteDriver(driver.user_id)" class="action-btn danger" :title="$t('admin.drivers.delete')">
+                  <button @click="deleteDriver(driver.id)" class="action-btn danger" :title="$t('admin.drivers.delete')">
                     🗑️
                   </button>
                 </div>
@@ -297,6 +300,7 @@ const editDriver = (driver: Driver) => {
 const activateDriver = async (driverId: number) => {
   try {
     await adminStore.activateDriver(driverId);
+    await loadDrivers(); // Refresh the list to show updated status
   } catch (err) {
     console.error('Failed to activate driver:', err);
   }
@@ -307,6 +311,7 @@ const deactivateDriver = async (driverId: number) => {
 
   try {
     await adminStore.deactivateDriver(driverId);
+    await loadDrivers(); // Refresh the list to show updated status
   } catch (err) {
     console.error('Failed to deactivate driver:', err);
   }
@@ -337,21 +342,24 @@ const handleDriverSuccess = async (formData: any) => {
         phone: formData.phone,
         email: formData.email,
         password: formData.password,
+        license_number: formData.licenseNumber,
         vehicle_type: formData.vehicleType,
         vehicle_plate: formData.licensePlate,
         vehicle_model: formData.vehicleModel,
         notes: formData.notes
       });
     } else if (showEditModal.value && selectedDriver.value) {
-      // Updating existing driver
-      await adminStore.updateDriver(selectedDriver.value.user_id, {
-        nick_name: formData.name,
-        phonenumber: formData.phone,
+      // Updating existing driver - use driver.id from tigu_driver table
+      await adminStore.updateDriver(selectedDriver.value.id, {
+        name: formData.name,
+        phone: formData.phone,
         email: formData.email,
+        license_number: formData.licenseNumber,
         vehicle_type: formData.vehicleType,
-        license_plate: formData.licensePlate,
+        vehicle_plate: formData.licensePlate,
+        vehicle_model: formData.vehicleModel,
         notes: formData.notes,
-        status: formData.status
+        status: formData.status === 'active' ? 1 : 0
       });
     }
     closeModals();

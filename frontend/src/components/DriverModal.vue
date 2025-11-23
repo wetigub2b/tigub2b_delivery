@@ -81,6 +81,15 @@
         </div>
 
         <div class="form-group">
+          <label>{{ $t('admin.drivers.licenseNumber') }}</label>
+          <input
+            v-model="form.licenseNumber"
+            type="text"
+            :placeholder="$t('admin.drivers.licenseNumberPlaceholder')"
+          />
+        </div>
+
+        <div class="form-group">
           <label>{{ $t('admin.drivers.status') }}</label>
           <select v-model="form.status" required>
             <option value="active">{{ $t('admin.drivers.active') }}</option>
@@ -124,6 +133,7 @@ const form = reactive({
   vehicleType: '',
   licensePlate: '',
   vehicleModel: '',
+  licenseNumber: '',
   status: 'active'
 });
 
@@ -137,6 +147,8 @@ watch(
       form.email = driver.email || '';
       form.vehicleType = driver.vehicleType || '';
       form.licensePlate = driver.licensePlate || '';
+      form.vehicleModel = driver.vehicleModel || driver.vehicle_model || '';
+      form.licenseNumber = driver.licenseNumber || driver.license_number || '';
       form.status = driver.status || 'active';
     }
   },

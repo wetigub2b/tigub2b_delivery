@@ -170,7 +170,7 @@ export const useAdminStore = defineStore('admin', {
       this.isLoading = true;
       try {
         const updatedDriver = await updateDriver(driverId, driverData);
-        const index = this.drivers.findIndex(d => d.user_id === driverId);
+        const index = this.drivers.findIndex(d => d.id === driverId);
         if (index >= 0) {
           this.drivers.splice(index, 1, updatedDriver);
         }
@@ -187,7 +187,7 @@ export const useAdminStore = defineStore('admin', {
       this.isLoading = true;
       try {
         await deleteDriver(driverId);
-        this.drivers = this.drivers.filter(d => d.user_id !== driverId);
+        this.drivers = this.drivers.filter(d => d.id !== driverId);
         this.selectedDrivers = this.selectedDrivers.filter(id => id !== driverId);
       } catch (error: any) {
         this.error = error.response?.data?.detail || 'Failed to delete driver';
@@ -200,7 +200,7 @@ export const useAdminStore = defineStore('admin', {
     async activateDriver(driverId: number) {
       try {
         await activateDriver(driverId);
-        const driver = this.drivers.find(d => d.user_id === driverId);
+        const driver = this.drivers.find(d => d.id === driverId);
         if (driver) {
           driver.status = '0';
         }
@@ -213,7 +213,7 @@ export const useAdminStore = defineStore('admin', {
     async deactivateDriver(driverId: number) {
       try {
         await deactivateDriver(driverId);
-        const driver = this.drivers.find(d => d.user_id === driverId);
+        const driver = this.drivers.find(d => d.id === driverId);
         if (driver) {
           driver.status = '1';
         }
@@ -243,21 +243,21 @@ export const useAdminStore = defineStore('admin', {
         // Update local state based on action
         if (actionData.action === 'activate') {
           this.drivers.forEach(driver => {
-            if (actionData.driver_ids.includes(driver.user_id)) {
+            if (actionData.driver_ids.includes(driver.id)) {
               driver.status = '0';
             }
           });
         } else if (actionData.action === 'deactivate') {
           this.drivers.forEach(driver => {
-            if (actionData.driver_ids.includes(driver.user_id)) {
+            if (actionData.driver_ids.includes(driver.id)) {
               driver.status = '1';
             }
           });
         } else if (actionData.action === 'delete') {
-          this.drivers = this.drivers.filter(d => !actionData.driver_ids.includes(d.user_id));
+          this.drivers = this.drivers.filter(d => !actionData.driver_ids.includes(d.id));
         } else if (actionData.action === 'assign_role' && actionData.value) {
           this.drivers.forEach(driver => {
-            if (actionData.driver_ids.includes(driver.user_id)) {
+            if (actionData.driver_ids.includes(driver.id)) {
               driver.role = actionData.value!;
             }
           });
@@ -313,7 +313,7 @@ export const useAdminStore = defineStore('admin', {
     },
 
     selectAllDrivers() {
-      this.selectedDrivers = this.drivers.map(d => d.user_id);
+      this.selectedDrivers = this.drivers.map(d => d.id);
     },
 
     clearSelection() {

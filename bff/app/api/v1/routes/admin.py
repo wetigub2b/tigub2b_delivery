@@ -387,6 +387,12 @@ async def delete_driver(
 
     # Hard delete (tigu_driver doesn't have soft delete)
     await session.delete(driver)
+    
+    # Also soft delete associated sys_user account (set del_flag and deactivate)
+    await session.execute(
+        update(User).where(User.phonenumber == driver.phone).values(del_flag="1", status="1")
+    )
+    
     await session.commit()
 
     return {"message": "Driver deleted successfully"}
@@ -400,9 +406,25 @@ async def activate_driver(
 ) -> dict:
     """Activate a driver"""
 
+    # Get driver to find associated user account
+    driver_result = await session.execute(
+        select(Driver).where(Driver.id == driver_id)
+    )
+    driver = driver_result.scalars().first()
+    
+    if not driver:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Driver not found")
+
+    # Update tigu_driver status (1 = active)
     await session.execute(
         update(Driver).where(Driver.id == driver_id).values(status=1)
     )
+    
+    # Also update sys_user status if user account exists (0 = active in sys_user)
+    await session.execute(
+        update(User).where(User.phonenumber == driver.phone).values(status="0")
+    )
+    
     await session.commit()
 
     return {"message": "Driver activated successfully"}
@@ -416,9 +438,25 @@ async def deactivate_driver(
 ) -> dict:
     """Deactivate a driver"""
 
+    # Get driver to find associated user account
+    driver_result = await session.execute(
+        select(Driver).where(Driver.id == driver_id)
+    )
+    driver = driver_result.scalars().first()
+    
+    if not driver:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Driver not found")
+
+    # Update tigu_driver status (0 = inactive)
     await session.execute(
         update(Driver).where(Driver.id == driver_id).values(status=0)
     )
+    
+    # Also update sys_user status if user account exists (1 = inactive in sys_user)
+    await session.execute(
+        update(User).where(User.phonenumber == driver.phone).values(status="1")
+    )
+    
     await session.commit()
 
     return {"message": "Driver deactivated successfully"}
@@ -476,18 +514,43 @@ async def bulk_driver_action(
     """Perform bulk actions on multiple drivers"""
 
     if action_data.action == "activate":
+        # Get phone numbers for the drivers
+        drivers_result = await session.execute(
+            select(Driver.phone).where(Driver.id.in_(action_data.driver_ids))
+        )
+        phone_numbers = [row[0] for row in drivers_result.all()]
+        
+        # Update tigu_driver status (1 = active)
         await session.execute(
             update(Driver).where(Driver.id.in_(action_data.driver_ids)).values(status=1)
         )
+        
+        # Update sys_user status (0 = active in sys_user)
+        if phone_numbers:
+            await session.execute(
+                update(User).where(User.phonenumber.in_(phone_numbers)).values(status="0")
+            )
+            
     elif action_data.action == "deactivate":
+        # Get phone numbers for the drivers
+        drivers_result = await session.execute(
+            select(Driver.phone).where(Driver.id.in_(action_data.driver_ids))
+        )
+        phone_numbers = [row[0] for row in drivers_result.all()]
+        
+        # Update tigu_driver status (0 = inactive)
         await session.execute(
             update(Driver).where(Driver.id.in_(action_data.driver_ids)).values(status=0)
         )
+        
+        # Update sys_user status (1 = inactive in sys_user)
+        if phone_numbers:
+            await session.execute(
+                update(User).where(User.phonenumber.in_(phone_numbers)).values(status="1")
+            )
+            
     elif action_data.action == "delete":
         # Hard delete for tigu_driver
-        await session.execute(
-            select(Driver).where(Driver.id.in_(action_data.driver_ids))
-        )
         for driver_id in action_data.driver_ids:
             result = await session.execute(
                 select(Driver).where(Driver.id == driver_id)
@@ -495,6 +558,10 @@ async def bulk_driver_action(
             driver = result.scalars().first()
             if driver:
                 await session.delete(driver)
+                # Also delete/deactivate associated sys_user account
+                await session.execute(
+                    update(User).where(User.phonenumber == driver.phone).values(del_flag="1", status="1")
+                )
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

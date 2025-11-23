@@ -46,8 +46,7 @@ SELECT
     pg.create_time,
     pg.update_by,
     pg.update_time,
-    pg.remark,
-    pg.vouchers_json
+    pg.remark
 FROM 
     tigu_prepare_goods pg
     LEFT JOIN tigu_lookup l_delivery 

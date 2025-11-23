@@ -332,6 +332,8 @@ function cancelDeliveryProof() {
 .board__filters {
   display: flex;
   gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  overflow-x: auto;
 }
 
 .board__filter {

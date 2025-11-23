@@ -3,6 +3,11 @@
 **tigu_prepare_goods**:  
 
 prepared packages for driver to work on
+Delivery_type: 0 商家自行配送, 1  第三方配送
+
+shipping_type: 0  货物配送到仓库, 1 货物配送到用户
+
+type: 0 商家, 1 仓库
 
 **tigu_prepare_goods_item**: 
 
@@ -25,6 +30,9 @@ logistics_voucher_file（文件ID列表，多个用,分割，tigu_uploaded_files
 字段：
 id（雪花算法ID），file_name（文件名称），file_url（文件完整路径），file_size（文件大小），biz_id（文件关联的相关ID，如商品图片，biz_type=product_sku，biz_id=商品SKU的id）
 
+**tigu_order**
+
+表修改数据：shipping_status=2， 3，4。。。 ，warehouse_shipping_time=当前时间
 
 ## 概述
 

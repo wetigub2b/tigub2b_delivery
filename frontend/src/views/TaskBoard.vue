@@ -47,14 +47,12 @@
               <span>🏭 {{ pkg.warehouseName }}</span>
             </div>
           </div>
-          <div class="package-footer">
+          <div v-if="![2, 3].includes(pkg.prepareStatus)" class="package-footer">
             <button
               class="package-action-button"
-              :class="{ 'package-action-button--disabled': pkg.prepareStatus === 2 || pkg.prepareStatus === 3 }"
-              :disabled="pkg.prepareStatus === 2 || pkg.prepareStatus === 3"
               @click="handlePackageAction(pkg)"
             >
-              {{ getPackageActionLabel(pkg.prepareStatus) }} <span v-if="![2, 3].includes(pkg.prepareStatus)">→</span>
+              {{ getPackageActionLabel(pkg.prepareStatus) }} →
             </button>
           </div>
         </div>

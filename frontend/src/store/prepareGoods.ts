@@ -305,11 +305,11 @@ export const usePrepareGoodsStore = defineStore('prepareGoods', {
       try {
         await confirmPickup(prepareSn, photo, notes);
 
-        // Update local state - package moves from status 6 to status 2
+        // Update local state - package moves from status 6 to status 1
         const pkg = this.driverPackages.find(pkg => pkg.prepareSn === prepareSn);
         if (pkg) {
-          pkg.prepareStatus = 2;
-          pkg.prepareStatusLabel = prepareStatusLabels[2] || 'Unknown';
+          pkg.prepareStatus = 1;
+          pkg.prepareStatusLabel = prepareStatusLabels[1] || 'Unknown';
         }
 
         // Refresh driver packages to get updated state

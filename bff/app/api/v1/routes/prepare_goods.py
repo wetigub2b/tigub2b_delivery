@@ -549,7 +549,7 @@ async def confirm_pickup(
     This action:
     1. Saves photo to tigu_uploaded_files (biz_type='prepare_good', biz_id=package.id)
     2. Creates OrderAction records for each order (action_type=1 - Driver Pickup)
-    3. Updates package status to 2 (Driver to warehouse)
+    3. Updates package status to 1 (Driver pickup in progress)
 
     Args:
         prepare_sn: Prepare goods serial number
@@ -687,11 +687,11 @@ async def confirm_pickup(
         order.driver_receive_time = datetime.now()
         order.driver_id = driver.id
 
-    # Update package status to 2 (Driver to warehouse)
+    # Update package status to 1 (Driver pickup in progress)
     await prepare_goods_service.update_prepare_status(
         session=session,
         prepare_sn=prepare_sn,
-        new_status=2
+        new_status=1
     )
 
     await session.commit()
@@ -756,11 +756,11 @@ async def confirm_delivery(
             detail=f"Package not found: {prepare_sn}"
         )
 
-    # Verify package is in transit status (should be 2, 4, or 5)
-    if package.prepare_status not in [2, 4, 5]:
+    # Verify package is in transit status (should be 1, 2, 4, or 5)
+    if package.prepare_status not in [1, 2, 4, 5]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Package status must be in transit (2, 4, or 5), current: {package.prepare_status}"
+            detail=f"Package status must be in transit (1, 2, 4, or 5), current: {package.prepare_status}"
         )
 
     # Decode and save photo

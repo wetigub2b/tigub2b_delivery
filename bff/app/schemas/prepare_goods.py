@@ -99,7 +99,7 @@ class UploadedFileSchema(BaseModel):
     file_type: str = Field(alias="fileType")
     file_size: int = Field(alias="fileSize")
     uploader_name: Optional[str] = Field(default=None, alias="uploaderName")
-    create_time: datetime = Field(alias="createTime")
+    create_time: Optional[datetime] = Field(default=None, alias="createTime")
 
 
 class PrepareGoodsDetailResponse(PrepareGoodsResponse):

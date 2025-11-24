@@ -369,7 +369,7 @@ async def get_prepare_package(
         )
         order_serial_numbers = [row[0] for row in result.fetchall()]
 
-    # Fetch pickup photos
+    # Fetch pickup photos from prepare_good
     photos_result = await session.execute(
         select(UploadedFile)
         .where(UploadedFile.biz_type == "prepare_good")
@@ -388,6 +388,47 @@ async def get_prepare_package(
         )
         for photo in photos_result.scalars().all()
     ]
+    
+    # Fetch photos from order_action (action_type 0 and 5) for orders in this package
+    if order_ids:
+        from app.models.order_action import OrderAction
+        
+        # Get order actions for action_type 0 (goods prepared) and 5 (delivery complete)
+        action_result = await session.execute(
+            select(OrderAction)
+            .where(OrderAction.order_id.in_(order_ids))
+            .where(OrderAction.action_type.in_([0, 5]))
+            .order_by(OrderAction.create_time.desc())
+        )
+        actions = action_result.scalars().all()
+        
+        # Extract file IDs from logistics_voucher_file and fetch those photos
+        action_file_ids = []
+        for action in actions:
+            if action.logistics_voucher_file:
+                # logistics_voucher_file contains comma-separated file IDs
+                file_ids = [int(fid.strip()) for fid in action.logistics_voucher_file.split(',') if fid.strip().isdigit()]
+                action_file_ids.extend(file_ids)
+        
+        if action_file_ids:
+            action_photos_result = await session.execute(
+                select(UploadedFile)
+                .where(UploadedFile.id.in_(action_file_ids))
+            )
+            action_photos = [
+                UploadedFileSchema(
+                    id=photo.id,
+                    file_name=photo.file_name,
+                    file_url=photo.file_url,
+                    file_type=photo.file_type,
+                    file_size=photo.file_size,
+                    uploader_name=photo.uploader_name,
+                    create_time=photo.create_time
+                )
+                for photo in action_photos_result.scalars().all()
+            ]
+            # Combine photos: prepare_good photos first, then action photos
+            pickup_photos.extend(action_photos)
 
     return PrepareGoodsDetailResponse(
         id=prepare_goods.id,

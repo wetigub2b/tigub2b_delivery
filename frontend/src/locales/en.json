@@ -60,7 +60,7 @@
     "orders": "orders",
     "confirmPickup": "Confirm Package Pickup",
     "confirmPickupMessage": "Are you sure you want to pickup this package?",
-    "confirmPickupButton": "Confirm Pickup",
+    "confirmPickupButton": "Confirm Claim",
     "workflow": "Workflow",
     "warehouse": "Warehouse",
     "pickupProof": "Pickup Proof",

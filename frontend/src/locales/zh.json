@@ -60,7 +60,7 @@
     "orders": "订单",
     "confirmPickup": "确认取货包裹",
     "confirmPickupMessage": "确认要取货此包裹吗？",
-    "confirmPickupButton": "确认取货",
+    "confirmPickupButton": "确认认领",
     "workflow": "工作流",
     "warehouse": "仓库",
     "pickupProof": "取货凭证",

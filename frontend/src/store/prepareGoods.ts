@@ -25,7 +25,7 @@ const prepareStatusLabels: Record<number | string, string> = {
   3: 'Warehouse Received',
   4: 'Warehouse Shipped',
   5: 'Delivered',
-  6: 'Complete',
+  6: 'Driver Claimed',
   12: 'Delivered to User',
   13: 'Order Complete'
 };
@@ -305,7 +305,7 @@ export const usePrepareGoodsStore = defineStore('prepareGoods', {
       try {
         await confirmPickup(prepareSn, photo, notes);
 
-        // Update local state - package moves from status 1 to status 2
+        // Update local state - package moves from status 6 to status 2
         const pkg = this.driverPackages.find(pkg => pkg.prepareSn === prepareSn);
         if (pkg) {
           pkg.prepareStatus = 2;

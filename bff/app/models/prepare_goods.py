@@ -46,7 +46,7 @@ class PrepareGoods(Base):
     - 3: 仓库已收货 (Warehouse received)
     - 4: 司机配送用户 (Driver delivering to user)
     - 5: 已送达 (Delivered to user)
-    - 6: 完成 (Complete)
+    - 6: 司机已认领 (Driver claimed, pending pickup)
     """
     __tablename__ = "tigu_prepare_goods"
 
@@ -90,7 +90,7 @@ class PrepareGoods(Base):
         nullable=True,
         default=None,
         index=True,
-        comment="备货状态: NULL=待备货, 0=已备货, 1=司机收货中, 2=司机送达仓库, 3=仓库已收货, 4=司机配送用户, 5=已送达, 6=完成"
+        comment="备货状态: NULL=待备货, 0=已备货, 1=司机收货中, 2=司机送达仓库, 3=仓库已收货, 4=司机配送用户, 5=已送达, 6=司机已认领"
     )
 
     # Merchant info

@@ -136,7 +136,7 @@ async def update_prepare_status(
     - 3: 仓库已收货 (Warehouse received)
     - 4: 司机配送用户 (Driver delivering to user)
     - 5: 已送达 (Delivered to user)
-    - 6: 完成 (Complete)
+    - 6: 司机已认领 (Driver claimed, pending pickup)
 
     Args:
         session: Database session
@@ -349,6 +349,44 @@ async def get_available_packages(
         )
         .where(PrepareGoods.driver_id.is_(None))  # Not assigned
         .where(PrepareGoods.prepare_status == 0)  # Prepared
+        .where(PrepareGoods.delivery_type == 1)  # Third-party only
+        .order_by(PrepareGoods.create_time.desc())
+        .limit(limit)
+    )
+
+    result = await session.execute(stmt)
+    return list(result.scalars().unique().all())
+
+
+async def get_pending_pickup_packages(
+    session: AsyncSession,
+    driver_id: int,
+    limit: int = 50
+) -> List[PrepareGoods]:
+    """
+    Get packages claimed by driver but not yet picked up.
+
+    Returns packages that are:
+    - prepare_status = 6 (driver claimed, pending pickup)
+    - driver_id matches the specified driver
+    - delivery_type = 1 (third-party driver delivery)
+
+    Args:
+        session: Database session
+        driver_id: Driver ID
+        limit: Maximum number of records
+
+    Returns:
+        List of PrepareGoods instances pending pickup
+    """
+    stmt = (
+        select(PrepareGoods)
+        .options(
+            selectinload(PrepareGoods.items),
+            selectinload(PrepareGoods.warehouse)
+        )
+        .where(PrepareGoods.driver_id == driver_id)
+        .where(PrepareGoods.prepare_status == 6)  # Driver claimed
         .where(PrepareGoods.delivery_type == 1)  # Third-party only
         .order_by(PrepareGoods.create_time.desc())
         .limit(limit)

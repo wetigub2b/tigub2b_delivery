@@ -5,8 +5,8 @@ Complete workflow test for:
 - delivery_type=1 (Third-party driver delivery)
 - shipping_type=0 (To warehouse)
 
-Status flow: NULL → 0 → 1 → 2 → 3 → 4 → 5 → 6
-Actions: Prepare → Driver Pickup → Driver to Warehouse → Warehouse Receive → Warehouse Ship → Complete
+Status flow: NULL → 0 → 6 → 1 → 2 → 3 → 4 → 5
+Actions: Prepare → Driver Claims → Driver Pickup → Driver to Warehouse → Warehouse Receive → Warehouse Ship → Complete
 
 This is the most complex workflow with the most steps.
 """
@@ -105,11 +105,12 @@ async def test_workflow_3_complete_flow(
     Steps:
     1. Merchant creates prepare package (delivery_type=1, shipping_type=0)
     2. Merchant marks prepare complete (prepare_status: NULL → 0)
-    3. Driver picks up from merchant (prepare_status: 0 → 1)
-    4. Driver delivers to warehouse (prepare_status: 1 → 2)
-    5. Warehouse receives (prepare_status: 2 → 3)
-    6. Warehouse ships to user (prepare_status: 3 → 4)
-    7. Final delivery (prepare_status: 4 → 5 → 6)
+    3. Driver claims package (prepare_status: 0 → 6)
+    4. Driver confirms pickup from merchant (prepare_status: 6 → 1)
+    5. Driver delivers to warehouse (prepare_status: 1 → 2)
+    6. Warehouse receives (prepare_status: 2 → 3)
+    7. Warehouse ships to user (prepare_status: 3 → 4)
+    8. Final delivery (prepare_status: 4 → 5)
     """
 
     # Step 1: Merchant creates prepare package
@@ -155,14 +156,19 @@ async def test_workflow_3_complete_flow(
 
     assert action_1.action_type == 0
 
-    # Assign driver to prepare package
+    # Step 3: Driver claims package (assign driver + update status to 6)
     await prepare_goods_service.assign_driver_to_prepare(
         session=async_session,
         prepare_sn=prepare_package.prepare_sn,
         driver_id=workflow_3_driver.id
     )
+    await prepare_goods_service.update_prepare_status(
+        session=async_session,
+        prepare_sn=prepare_package.prepare_sn,
+        new_status=6
+    )
 
-    # Step 3: Driver picks up from merchant
+    # Step 4: Driver confirms pickup from merchant with photo
     photo_2 = UploadedFile(
         id=30008,
         file_url="/uploads/driver_pickup_wf3.jpg",
@@ -193,7 +199,7 @@ async def test_workflow_3_complete_flow(
         new_status=1
     )
 
-    # Step 4: Driver delivers to warehouse
+    # Step 5: Driver delivers to warehouse
     photo_3 = UploadedFile(
         id=30009,
         file_url="/uploads/driver_warehouse_wf3.jpg",

@@ -41,7 +41,7 @@ PREPARE_STATUS_LABELS_TO_WAREHOUSE = {
     3: "仓库已收货",        # Warehouse Received
     4: "司机配送用户",      # Driver to User
     5: "已送达",           # Delivered
-    6: "完成",             # Complete
+    6: "司机已认领",        # Driver Claimed
 }
 
 PREPARE_STATUS_LABELS_TO_USER = {
@@ -52,7 +52,7 @@ PREPARE_STATUS_LABELS_TO_USER = {
     3: "已送达",           # Delivered
     4: "已送达",           # Delivered
     5: "已送达",           # Delivered
-    6: "完成",             # Complete
+    6: "司机已认领",        # Driver Claimed
 }
 
 def get_prepare_status_label(status: Optional[int], shipping_type: int) -> str:
@@ -422,12 +422,12 @@ async def update_prepare_status(
     Status Flow:
     - NULL: 待备货 (Pending prepare)
     - 0: 已备货 (Prepared)
-    - 1: 司机收货中 (Driver pickup)
+    - 1: 司机收货中 (Driver pickup with proof)
     - 2: 司机送达仓库 (Driver to warehouse)
     - 3: 仓库已收货 (Warehouse received)
     - 4: 司机配送用户 (Driver to user)
     - 5: 已送达 (Delivered)
-    - 6: 完成 (Complete)
+    - 6: 司机已认领 (Driver claimed, pending pickup)
 
     Args:
         prepare_sn: Prepare goods serial number
@@ -496,7 +496,7 @@ async def pickup_package(
 
     This action:
     1. Assigns the driver to the package
-    2. Updates status to 1 (Driver pickup)
+    2. Updates status to 6 (Driver claimed)
 
     Args:
         prepare_sn: Prepare goods serial number
@@ -528,11 +528,11 @@ async def pickup_package(
             detail=f"Prepare package not found: {prepare_sn}"
         )
 
-    # Update status to 1 (Driver pickup)
+    # Update status to 6 (Driver claimed)
     await prepare_goods_service.update_prepare_status(
         session=session,
         prepare_sn=prepare_sn,
-        new_status=1
+        new_status=6
     )
 
 
@@ -590,11 +590,11 @@ async def confirm_pickup(
             detail=f"Package not found: {prepare_sn}"
         )
 
-    # Verify package is in correct status (should be 1 - Driver pickup in progress)
-    if package.prepare_status != 1:
+    # Verify package is in correct status (should be 6 - Driver claimed)
+    if package.prepare_status != 6:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Package status must be 1 (Driver pickup), current: {package.prepare_status}"
+            detail=f"Package status must be 6 (Driver claimed), current: {package.prepare_status}"
         )
 
     # Decode and save photo

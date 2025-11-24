@@ -50,11 +50,11 @@
           <div class="package-footer">
             <button
               class="package-action-button"
-              :class="{ 'package-action-button--disabled': pkg.prepareStatus === 3 || pkg.prepareStatus === 12 || pkg.prepareStatus === 13 }"
-              :disabled="pkg.prepareStatus === 3 || pkg.prepareStatus === 12 || pkg.prepareStatus === 13"
+              :class="{ 'package-action-button--disabled': pkg.prepareStatus === 2 || pkg.prepareStatus === 3 }"
+              :disabled="pkg.prepareStatus === 2 || pkg.prepareStatus === 3"
               @click="handlePackageAction(pkg)"
             >
-              {{ getPackageActionLabel(pkg.prepareStatus) }} <span v-if="![3, 12, 13].includes(pkg.prepareStatus)">→</span>
+              {{ getPackageActionLabel(pkg.prepareStatus) }} <span v-if="![2, 3].includes(pkg.prepareStatus)">→</span>
             </button>
           </div>
         </div>
@@ -152,9 +152,9 @@ const packageForDelivery = ref<any>(null);
 const statuses = computed(() => [
   { key: 'available', label: t('taskBoard.available'), prepareStatus: 0 },
   { key: 'pending_pickup', label: t('taskBoard.pendingPickup'), prepareStatus: 6 },
-  { key: 'in_transit', label: t('taskBoard.inTransit'), prepareStatus: [1, 2, 4, 5] },
-  { key: 'warehouse', label: t('taskBoard.warehouse'), prepareStatus: 3 },
-  { key: 'completed', label: t('taskBoard.completed'), prepareStatus: [12, 13] }
+  { key: 'in_transit', label: t('taskBoard.inTransit'), prepareStatus: 1 },
+  { key: 'warehouse', label: t('taskBoard.warehouse'), prepareStatus: 2 },
+  { key: 'completed', label: t('taskBoard.completed'), prepareStatus: 3 }
 ]);
 
 onMounted(() => {
@@ -188,7 +188,7 @@ const filteredPackages = computed(() => {
 function getPackageActionLabel(status: number | null): string {
   if (status === null || status === 0) return t('taskBoard.pickupPackage');
   if (status === 6) return t('taskBoard.confirmPickupButton');
-  if (status === 1 || status === 2 || status === 4 || status === 5) return t('taskBoard.confirmDeliveryButton');
+  if (status === 1) return t('taskBoard.confirmDeliveryButton');
   return t('taskBoard.viewDetails');
 }
 
@@ -201,7 +201,7 @@ function handlePackageAction(pkg: any) {
     // Driver claimed - show pickup proof modal
     packageForProof.value = pkg;
     showPickupProofModal.value = true;
-  } else if (pkg.prepareStatus === 1 || pkg.prepareStatus === 2 || pkg.prepareStatus === 4 || pkg.prepareStatus === 5) {
+  } else if (pkg.prepareStatus === 1) {
     // In transit - show delivery proof modal
     packageForDelivery.value = pkg;
     showDeliveryProofModal.value = true;

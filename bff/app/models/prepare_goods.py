@@ -41,12 +41,12 @@ class PrepareGoods(Base):
     Status Flow (prepare_status):
     - NULL: 待备货 (Pending prepare)
     - 0: 已备货 (Prepared - merchant uploaded photo)
-    - 1: 司机收货中 (Driver pickup - driver uploaded photo)
-    - 2: 司机送达仓库 (Driver delivered to warehouse)
-    - 3: 仓库已收货 (Warehouse received)
-    - 4: 司机配送用户 (Driver delivering to user)
-    - 5: 已送达 (Delivered to user)
-    - 6: 司机已认领 (Driver claimed, pending pickup)
+    - 1: 司机收货中 (Driver pickup in progress - driver has goods)
+    - 2: 司机送达仓库 (Driver delivered to warehouse - Workflow 3)
+    - 3: 已送达/仓库已收货 (Delivered complete - Workflow 4, or Warehouse received - Workflow 3 future use)
+    - 4: 司机配送用户 (Driver delivering to user - legacy/future)
+    - 5: 已送达 (Delivered to user - legacy/future)
+    - 6: 司机已认领 (Driver claimed, pending pickup confirmation)
     """
     __tablename__ = "tigu_prepare_goods"
 

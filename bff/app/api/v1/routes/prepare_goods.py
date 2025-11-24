@@ -710,12 +710,12 @@ async def confirm_delivery(
     This action:
     1. Saves photo to tigu_uploaded_files (biz_type='prepare_good', biz_id=package.id)
     2. Creates OrderAction records for each order
-       - For warehouse delivery (shipping_type=0): action_type=11 - 司机送达仓库
-       - For user delivery (shipping_type=1): action_type=12 - 司机送达用户
+       - For warehouse delivery (shipping_type=0): action_type=2 - 司机送达仓库
+       - For user delivery (shipping_type=1): action_type=5 - 完成
        - logistics_voucher_file contains the file ID from tigu_uploaded_files
     3. Updates package status based on shipping type:
-       - shipping_type=0: prepare_status to 3 (司机收货完成送货仓库)
-       - shipping_type=1: prepare_status to 12 (已送达 - Delivered to user)
+       - shipping_type=0 (Workflow 3): prepare_status to 2 (司机送达仓库 - Driver delivered to warehouse)
+       - shipping_type=1 (Workflow 4): prepare_status to 3 (已送达 - Delivered to user, complete)
 
     Args:
         prepare_sn: Prepare goods serial number
@@ -835,14 +835,14 @@ async def confirm_delivery(
 
     # Determine action type and new status based on shipping type
     if package.shipping_type == 0:
-        # To warehouse workflow
+        # To warehouse workflow (Workflow 3)
         action_type = 2  # 司机送达仓库 - Driver arrives at warehouse (action_type=2)
-        new_status = 3  # 司机收货完成送货仓库
+        new_status = 2  # 司机送达仓库 (Driver delivered to warehouse)
         order_shipping_status = 3  # Update tigu_order.shipping_status to 3
     else:
-        # To user workflow
+        # To user workflow (Workflow 4)
         action_type = 5  # 完成 - Delivery complete (action_type=5)
-        new_status = 12  # 已送达 - Delivered to user
+        new_status = 3  # 已送达 - Delivered to user (Workflow 4 complete)
         order_shipping_status = 6  # Update tigu_order.shipping_status to 6 (已送达)
 
     # Create OrderAction record for each order AND update tigu_order

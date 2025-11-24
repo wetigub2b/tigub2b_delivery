@@ -52,7 +52,7 @@
     "noTasks": "No tasks available",
     "noAvailableOrders": "No available orders to pick up",
     "refreshTasks": "Refresh Tasks",
-    "pickupPackage": "Pickup Package",
+    "pickupPackage": "Claim Pickup",
     "deliverToWarehouse": "Deliver to Warehouse",
     "confirmWarehouseDelivery": "Confirm Warehouse Delivery",
     "waitingConfirmation": "Waiting Confirmation",

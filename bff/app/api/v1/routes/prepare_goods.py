@@ -673,7 +673,7 @@ async def confirm_pickup(
             id=generate_snowflake_id(),
             order_id=order.id,
             action_type=1,  # 司机收货 - Driver Pickup
-            logistics_voucher_file=photo_url,
+            logistics_voucher_file=str(uploaded_file.id),  # Use file ID, not URL
             create_by=driver.name,
             create_time=datetime.now(),
             order_status=order.order_status,

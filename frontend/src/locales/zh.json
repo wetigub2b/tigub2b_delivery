@@ -52,7 +52,7 @@
     "noTasks": "暂无任务",
     "noAvailableOrders": "暂无可接订单",
     "refreshTasks": "刷新任务",
-    "pickupPackage": "取货",
+    "pickupPackage": "认领取货",
     "deliverToWarehouse": "送货至仓库",
     "confirmWarehouseDelivery": "确认仓库收货",
     "waitingConfirmation": "等待确认",

@@ -31,7 +31,8 @@
     "routePlanner": "Route Planner",
     "orders": "Orders",
     "login": "Login",
-    "logout": "Logout"
+    "logout": "Logout",
+    "reload": "Reload"
   },
   "taskBoard": {
     "title": "Task Board",

@@ -29,6 +29,13 @@
         >
           🗺️ {{ $t('navigation.routePlanner') }}
         </router-link>
+        <button
+          class="nav__reload"
+          @click="handleReload"
+          :title="$t('navigation.reload')"
+        >
+          🔄 {{ $t('navigation.reload') }}
+        </button>
         <LanguageSwitcher />
         <button
           class="nav__logout"
@@ -74,6 +81,12 @@
         🗺️ {{ $t('navigation.routePlanner') }}
       </router-link>
       <button
+        class="nav__mobile-link nav__mobile-reload"
+        @click="handleReload"
+      >
+        🔄 {{ $t('navigation.reload') }}
+      </button>
+      <button
         class="nav__mobile-link nav__mobile-logout"
         @click="handleLogout"
       >
@@ -102,6 +115,10 @@ const toggleMobileMenu = () => {
 
 const closeMobileMenu = () => {
   showMobileMenu.value = false;
+};
+
+const handleReload = () => {
+  window.location.reload();
 };
 
 const handleLogout = () => {
@@ -244,6 +261,30 @@ router.afterEach(() => {
   background: transparent;
 }
 
+.nav__reload {
+  background: transparent;
+  border: 1px solid var(--color-gray-light);
+  text-decoration: none;
+  color: var(--color-black);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-full);
+  transition: all var(--transition-base);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+  font-family: var(--font-family-base);
+}
+
+.nav__reload:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  background: transparent;
+}
+
 /* Mobile Menu Toggle */
 .nav__mobile-toggle {
   display: none;
@@ -317,6 +358,21 @@ router.afterEach(() => {
 }
 
 .nav__mobile-logout:hover {
+  color: var(--color-primary);
+}
+
+.nav__mobile-reload {
+  background: transparent;
+  border: none;
+  text-align: left;
+  font-size: var(--font-size-md);
+  font-family: var(--font-family-base);
+  cursor: pointer;
+  width: 100%;
+  border-bottom: 1px solid var(--color-gray-lighter);
+}
+
+.nav__mobile-reload:hover {
   color: var(--color-primary);
 }
 

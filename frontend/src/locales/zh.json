@@ -31,7 +31,8 @@
     "routePlanner": "路线规划",
     "orders": "订单",
     "login": "登录",
-    "logout": "退出"
+    "logout": "退出",
+    "reload": "刷新"
   },
   "taskBoard": {
     "title": "任务看板",

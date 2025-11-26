@@ -15,6 +15,8 @@ import {
   type PrepareGoodsDetailDto,
   type PrepareGoodsSummaryDto
 } from '@/api/prepareGoods';
+import { parseI18nJson } from '@/utils/i18n';
+import { getCurrentLocale } from '@/i18n';
 
 // Prepare status labels
 const prepareStatusLabels: Record<number | string, string> = {
@@ -65,24 +67,28 @@ export interface PrepareGoodsDetail extends PrepareGoodsDetailDto {
 }
 
 function decorateSummary(pkg: PrepareGoodsSummaryDto): PrepareGoodsPackage {
+  const currentLocale = getCurrentLocale();
   return {
     ...pkg,
     prepareStatusLabel:
-      pkg.prepareStatusLabel ||
-      prepareStatusLabels[pkg.prepareStatus as any] ||
-      'Unknown',
+      pkg.prepareStatusLabel || prepareStatusLabels[pkg.prepareStatus as any] || 'Unknown',
     deliveryTypeLabel: deliveryTypeLabels[pkg.deliveryType] || 'Unknown',
     shippingTypeLabel: shippingTypeLabels[pkg.shippingType] || 'Unknown',
-    workflowLabel: getWorkflowLabel(pkg.deliveryType, pkg.shippingType)
+    workflowLabel: getWorkflowLabel(pkg.deliveryType, pkg.shippingType),
+    warehouseName: parseI18nJson(pkg.warehouseName, currentLocale),
+    driverName: parseI18nJson(pkg.driverName, currentLocale)
   };
 }
 
 function decorateDetail(detail: PrepareGoodsDetailDto): PrepareGoodsDetail {
+  const currentLocale = getCurrentLocale();
   return {
     ...detail,
     deliveryTypeLabel: deliveryTypeLabels[detail.deliveryType] || 'Unknown',
     shippingTypeLabel: shippingTypeLabels[detail.shippingType] || 'Unknown',
-    workflowLabel: getWorkflowLabel(detail.deliveryType, detail.shippingType)
+    workflowLabel: getWorkflowLabel(detail.deliveryType, detail.shippingType),
+    warehouseName: parseI18nJson(detail.warehouseName, currentLocale),
+    driverName: parseI18nJson(detail.driverName, currentLocale)
   };
 }
 
@@ -107,22 +113,22 @@ export const usePrepareGoodsStore = defineStore('prepareGoods', {
   }),
 
   getters: {
-    packageBySn: state => (prepareSn: string) =>
-      state.shopPackages.find(pkg => pkg.prepareSn === prepareSn) ||
-      state.driverPackages.find(pkg => pkg.prepareSn === prepareSn),
+    packageBySn: (state) => (prepareSn: string) =>
+      state.shopPackages.find((pkg) => pkg.prepareSn === prepareSn) ||
+      state.driverPackages.find((pkg) => pkg.prepareSn === prepareSn),
 
-    packagesByStatus: state => (status: number | null) => {
+    packagesByStatus: (state) => (status: number | null) => {
       const packages = [...state.shopPackages, ...state.driverPackages];
       if (status === null) {
-        return packages.filter(pkg => pkg.prepareStatus === null);
+        return packages.filter((pkg) => pkg.prepareStatus === null);
       }
-      return packages.filter(pkg => pkg.prepareStatus === status);
+      return packages.filter((pkg) => pkg.prepareStatus === status);
     },
 
-    packagesByWorkflow: state => (deliveryType: number, shippingType: number) => {
+    packagesByWorkflow: (state) => (deliveryType: number, shippingType: number) => {
       const packages = [...state.shopPackages, ...state.driverPackages];
       return packages.filter(
-        pkg => pkg.deliveryType === deliveryType && pkg.shippingType === shippingType
+        (pkg) => pkg.deliveryType === deliveryType && pkg.shippingType === shippingType
       );
     }
   },
@@ -180,13 +186,13 @@ export const usePrepareGoodsStore = defineStore('prepareGoods', {
         await updatePrepareStatus(prepareSn, newStatus);
 
         // Update local state
-        const shopPkg = this.shopPackages.find(pkg => pkg.prepareSn === prepareSn);
+        const shopPkg = this.shopPackages.find((pkg) => pkg.prepareSn === prepareSn);
         if (shopPkg) {
           shopPkg.prepareStatus = newStatus;
           shopPkg.prepareStatusLabel = prepareStatusLabels[newStatus] || 'Unknown';
         }
 
-        const driverPkg = this.driverPackages.find(pkg => pkg.prepareSn === prepareSn);
+        const driverPkg = this.driverPackages.find((pkg) => pkg.prepareSn === prepareSn);
         if (driverPkg) {
           driverPkg.prepareStatus = newStatus;
           driverPkg.prepareStatusLabel = prepareStatusLabels[newStatus] || 'Unknown';
@@ -207,7 +213,7 @@ export const usePrepareGoodsStore = defineStore('prepareGoods', {
       this.isLoading = true;
       try {
         const packages = await listShopPreparePackages(shopId, status);
-        this.shopPackages = packages.map(pkg => decorateSummary(pkg));
+        this.shopPackages = packages.map((pkg) => decorateSummary(pkg));
       } finally {
         this.isLoading = false;
       }
@@ -222,7 +228,7 @@ export const usePrepareGoodsStore = defineStore('prepareGoods', {
         await assignDriver(prepareSn, driverId);
 
         // Update local state
-        const pkg = this.shopPackages.find(pkg => pkg.prepareSn === prepareSn);
+        const pkg = this.shopPackages.find((pkg) => pkg.prepareSn === prepareSn);
         if (pkg) {
           // Note: Driver name not immediately available, will be loaded on next fetch
           pkg.driverId = driverId;
@@ -243,7 +249,7 @@ export const usePrepareGoodsStore = defineStore('prepareGoods', {
       this.isLoading = true;
       try {
         const packages = await listDriverPreparePackages(driverId);
-        this.driverPackages = packages.map(pkg => decorateSummary(pkg));
+        this.driverPackages = packages.map((pkg) => decorateSummary(pkg));
       } finally {
         this.isLoading = false;
       }
@@ -256,7 +262,7 @@ export const usePrepareGoodsStore = defineStore('prepareGoods', {
       this.isLoading = true;
       try {
         const packages = await listMyDriverPreparePackages();
-        this.driverPackages = packages.map(pkg => decorateSummary(pkg));
+        this.driverPackages = packages.map((pkg) => decorateSummary(pkg));
       } finally {
         this.isLoading = false;
       }
@@ -269,7 +275,7 @@ export const usePrepareGoodsStore = defineStore('prepareGoods', {
       this.isLoading = true;
       try {
         const packages = await listAvailablePreparePackages();
-        this.availablePackages = packages.map(pkg => decorateSummary(pkg));
+        this.availablePackages = packages.map((pkg) => decorateSummary(pkg));
       } finally {
         this.isLoading = false;
       }
@@ -285,7 +291,7 @@ export const usePrepareGoodsStore = defineStore('prepareGoods', {
 
         // Remove from available packages
         this.availablePackages = this.availablePackages.filter(
-          pkg => pkg.prepareSn !== prepareSn
+          (pkg) => pkg.prepareSn !== prepareSn
         );
 
         // Refresh driver packages to show the newly picked up package
@@ -304,7 +310,7 @@ export const usePrepareGoodsStore = defineStore('prepareGoods', {
         await confirmPickup(prepareSn, photo, notes);
 
         // Update local state - package moves from status 6 to status 1
-        const pkg = this.driverPackages.find(pkg => pkg.prepareSn === prepareSn);
+        const pkg = this.driverPackages.find((pkg) => pkg.prepareSn === prepareSn);
         if (pkg) {
           pkg.prepareStatus = 1;
           pkg.prepareStatusLabel = prepareStatusLabels[1] || 'Unknown';
@@ -326,7 +332,7 @@ export const usePrepareGoodsStore = defineStore('prepareGoods', {
         await confirmDelivery(prepareSn, photo, notes);
 
         // Update local state - package status changes based on shipping type
-        const pkg = this.driverPackages.find(pkg => pkg.prepareSn === prepareSn);
+        const pkg = this.driverPackages.find((pkg) => pkg.prepareSn === prepareSn);
         if (pkg) {
           // shipping_type = 0 (Workflow 3): warehouse → status 2 (司机送达仓库)
           // shipping_type = 1 (Workflow 4): user → status 3 (已送达)

@@ -15,7 +15,7 @@
 <script setup lang="ts">
 import { onMounted, ref, onUnmounted } from 'vue';
 import mapboxgl from 'mapbox-gl';
-import { createClient } from '@supabase/supabase-js';
+import axios from 'axios';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 const mapContainer = ref<HTMLDivElement | null>(null);
@@ -25,16 +25,13 @@ let map: mapboxgl.Map | null = null;
 let markers: mapboxgl.Marker[] = [];
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 const GTA_CENTER: [number, number] = [-79.3832, 43.6532]; // Toronto coordinates
 const GTA_ZOOM = 10;
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
 interface Mark {
-  id: string;
+  id: number;
   name: string;
   latitude: number;
   longitude: number;
@@ -44,15 +41,16 @@ interface Mark {
 
 async function fetchMarks(): Promise<Mark[]> {
   try {
-    const { data, error: fetchError } = await supabase
-      .from('marks')
-      .select('*');
+    const response = await axios.get(`${API_URL}/marks`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('delivery_token')}`
+      }
+    });
     
-    if (fetchError) throw fetchError;
-    return data || [];
+    return response.data.marks || [];
   } catch (err: any) {
     console.error('Error fetching marks:', err);
-    throw new Error(err.message || 'Failed to fetch marks');
+    throw new Error(err.response?.data?.detail || err.message || 'Failed to fetch marks');
   }
 }
 
@@ -97,8 +95,8 @@ async function initMap() {
       throw new Error('Mapbox token is not configured. Please set VITE_MAPBOX_TOKEN in .env.local');
     }
 
-    if (!SUPABASE_URL || !SUPABASE_KEY) {
-      throw new Error('Supabase is not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.local');
+    if (!API_URL) {
+      throw new Error('API URL is not configured. Please set VITE_API_URL in .env.local');
     }
 
     mapboxgl.accessToken = MAPBOX_TOKEN;

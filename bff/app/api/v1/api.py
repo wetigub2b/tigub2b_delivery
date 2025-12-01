@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.routes import admin, auth, order_actions, orders, prepare_goods, routes, warehouses
+from app.api.v1.routes import admin, auth, marks, order_actions, orders, prepare_goods, routes, warehouses
 
 api_router = APIRouter()
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
@@ -10,3 +10,4 @@ api_router.include_router(order_actions.router, prefix="/orders", tags=["order-a
 api_router.include_router(prepare_goods.router, prefix="/prepare-goods", tags=["prepare-goods"])
 api_router.include_router(routes.router, prefix="/routes", tags=["routes"])
 api_router.include_router(warehouses.router, prefix="/warehouses", tags=["warehouses"])
+api_router.include_router(marks.router, prefix="/marks", tags=["marks"])

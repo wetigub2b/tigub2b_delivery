@@ -38,6 +38,7 @@
     "title": "Task Board",
     "description": "Manage delivery tasks and track progress",
     "assignments": "Assignments",
+    "map": "Map",
     "pending": "Pending",
     "available": "Available",
     "pendingPickup": "Pending Pickup",
@@ -192,6 +193,10 @@
   },
   "mapPanel": {
     "loadingMessage": "Map preview loads when Google Maps script is available."
+  },
+  "map": {
+    "loading": "Loading map...",
+    "retry": "Retry"
   },
   "packageModal": {
     "orderDetails": "Order Details",

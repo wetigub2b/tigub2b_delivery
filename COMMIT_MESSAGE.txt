@@ -1,0 +1,46 @@
+feat(frontend): Add map tab to driver dashboard with Mapbox and Supabase
+
+Implemented a new map tab as the first and default tab in the driver's
+dashboard. The feature uses Mapbox GL for map rendering and Supabase for
+dynamic marker data, centered on the Greater Toronto Area (GTA).
+
+Features:
+- Map tab appears as first tab in TaskBoard
+- Set as default active tab for drivers
+- Mapbox GL integration with GTA center (Toronto)
+- Supabase integration for dynamic markers
+- Interactive popups with marker details
+- Navigation controls (zoom, pan, fullscreen)
+- Feature flag for easy enable/disable (VITE_FEATURE_MAP_TAB)
+- Isolated component design (MapTab.vue)
+- i18n support (English & Chinese)
+- Error handling and loading states
+
+New Files:
+- frontend/src/config/features.ts - Feature flag configuration
+- frontend/src/components/MapTab.vue - Map component
+- MAP_TAB_FEATURE.md - Complete documentation
+- MAP_TAB_IMPLEMENTATION.md - Technical details
+- frontend/MAP_TAB_QUICK_REF.md - Quick reference
+- MAP_TAB_SUMMARY.txt - Implementation summary
+
+Modified Files:
+- frontend/src/views/TaskBoard.vue - Integrated map tab
+- frontend/src/locales/en.json - Added translations
+- frontend/src/locales/zh.json - Added translations
+- frontend/.env.local.example - Added config examples
+- frontend/package.json - Added mapbox-gl, @supabase/supabase-js
+
+Configuration Required:
+- VITE_MAPBOX_TOKEN - Mapbox access token
+- VITE_SUPABASE_URL - Supabase project URL
+- VITE_SUPABASE_ANON_KEY - Supabase anonymous key
+- VITE_FEATURE_MAP_TAB - Feature toggle (default: true)
+
+Database Required:
+- Create 'marks' table in Supabase with lat/lng columns
+- Enable Row Level Security with public read policy
+
+To disable feature: Set VITE_FEATURE_MAP_TAB=false
+
+Refs: #map-feature, #driver-dashboard

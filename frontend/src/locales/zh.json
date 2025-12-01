@@ -38,6 +38,7 @@
     "title": "任务看板",
     "description": "管理配送任务并跟踪进度",
     "assignments": "任务分配",
+    "map": "地图",
     "pending": "待处理",
     "available": "可接单",
     "pendingPickup": "待取货",
@@ -390,6 +391,10 @@
   },
   "mapPanel": {
     "loadingMessage": "谷歌地图脚本可用时将加载地图预览。"
+  },
+  "map": {
+    "loading": "加载地图中...",
+    "retry": "重试"
   },
   "packageModal": {
     "orderDetails": "订单详情",

@@ -19,8 +19,11 @@
       </button>
     </nav>
 
+    <!-- Map Tab -->
+    <MapTab v-if="activeStatus === 'map' && features.mapTab" />
+
     <!-- Packages List (All Tabs) -->
-    <section v-if="filteredPackages.length" class="board__list">
+    <section v-if="activeStatus !== 'map' && filteredPackages.length" class="board__list">
       <div class="prepare-packages-grid">
         <div
           v-for="pkg in filteredPackages"
@@ -59,7 +62,7 @@
       </div>
     </section>
 
-    <EmptyState v-else :message="t('taskBoard.noPackages')" />
+    <EmptyState v-else-if="activeStatus !== 'map'" :message="t('taskBoard.noPackages')" />
 
     <!-- Package Orders Modal -->
     <PackageOrdersModal
@@ -125,10 +128,12 @@ import PackageOrdersModal from '@/components/PackageOrdersModal.vue';
 import ConfirmPackagePickupModal from '@/components/ConfirmPackagePickupModal.vue';
 import PickupProofModal from '@/components/PickupProofModal.vue';
 import PreparePackageDeliveryModal from '@/components/PreparePackageDeliveryModal.vue';
+import MapTab from '@/components/MapTab.vue';
+import features from '@/config/features';
 
 const { t } = useI18n();
 const prepareGoodsStore = usePrepareGoodsStore();
-const activeStatus = ref('available');
+const activeStatus = ref(features.mapTab ? 'map' : 'available');
 
 // Modal state
 const showOrdersModal = ref(false);
@@ -147,13 +152,23 @@ const packageForProof = ref<any>(null);
 const showDeliveryProofModal = ref(false);
 const packageForDelivery = ref<any>(null);
 
-const statuses = computed(() => [
-  { key: 'available', label: t('taskBoard.available'), prepareStatus: 0 },
-  { key: 'pending_pickup', label: t('taskBoard.pendingPickup'), prepareStatus: 6 },
-  { key: 'in_transit', label: t('taskBoard.inTransit'), prepareStatus: 1 },
-  { key: 'warehouse', label: t('taskBoard.warehouse'), prepareStatus: 2 },
-  { key: 'completed', label: t('taskBoard.completed'), prepareStatus: 3 }
-]);
+const statuses = computed(() => {
+  const tabs = [];
+  
+  if (features.mapTab) {
+    tabs.push({ key: 'map', label: t('taskBoard.map'), prepareStatus: null });
+  }
+  
+  tabs.push(
+    { key: 'available', label: t('taskBoard.available'), prepareStatus: 0 },
+    { key: 'pending_pickup', label: t('taskBoard.pendingPickup'), prepareStatus: 6 },
+    { key: 'in_transit', label: t('taskBoard.inTransit'), prepareStatus: 1 },
+    { key: 'warehouse', label: t('taskBoard.warehouse'), prepareStatus: 2 },
+    { key: 'completed', label: t('taskBoard.completed'), prepareStatus: 3 }
+  );
+  
+  return tabs;
+});
 
 onMounted(() => {
   // Fetch both available (unassigned) and driver's assigned packages
@@ -164,7 +179,7 @@ onMounted(() => {
 // Filter packages by prepare_status based on active tab
 const filteredPackages = computed(() => {
   const currentTab = statuses.value.find(s => s.key === activeStatus.value);
-  if (!currentTab) return [];
+  if (!currentTab || currentTab.key === 'map') return [];
 
   // For "Available" tab, use availablePackages (unassigned)
   // For other tabs, use driverPackages (assigned to this driver)

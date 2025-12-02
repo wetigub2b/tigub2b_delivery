@@ -54,7 +54,8 @@ const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
 const API_URL = import.meta.env.VITE_API_URL || '';
 
 const GTA_CENTER: [number, number] = [-79.3832, 43.6532]; // Toronto coordinates
-const GTA_ZOOM = 7; // Zoomed out to see more pickup locations
+const INITIAL_ZOOM = 5; // Initial zoomed out view to see all locations
+const DRIVER_ZOOM = 8; // Zoomed in view when centering on driver
 
 interface Mark {
   id: number;
@@ -100,29 +101,21 @@ function addMarkers(marks: Mark[]) {
   marks.forEach((mark) => {
     if (!map) return;
 
-    // Only show markers with orders or that are pickup locations
+    // Only show pickup locations (with shop_id or warehouse_id)
     const isPickupLocation = mark.shop_id || mark.warehouse_id;
+    if (!isPickupLocation) return;
 
     const el = document.createElement('div');
-    el.className = 'custom-marker';
-    
-    if (isPickupLocation) {
-      // Numbered red pin for pickup locations (show count even if 0)
-      el.className = 'custom-marker numbered-pin';
-      el.innerHTML = `<span class="pin-number">${mark.order_count}</span>`;
-      el.onclick = () => openPickupModal(mark);
-    } else {
-      // Regular marker for general locations
-      el.innerHTML = '📍';
-      el.style.fontSize = '24px';
-    }
+    el.className = 'custom-marker numbered-pin';
+    el.innerHTML = `<span class="pin-number">${mark.order_count}</span>`;
     el.style.cursor = 'pointer';
+    el.onclick = () => openPickupModal(mark);
 
     const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
       <div class="marker-popup">
         <h3>${mark.name}</h3>
         ${mark.type ? `<p><strong>Type:</strong> ${mark.type}</p>` : ''}
-        ${isPickupLocation ? `<p><strong>Available Orders:</strong> ${mark.order_count}</p>` : ''}
+        <p><strong>Available Orders:</strong> ${mark.order_count}</p>
         ${mark.description ? `<p>${mark.description}</p>` : ''}
       </div>
     `);
@@ -212,7 +205,7 @@ async function startLocationTracking() {
     if (map) {
       map.flyTo({
         center: [position.longitude, position.latitude],
-        zoom: 10, // Zoomed out to see more pickup locations
+        zoom: DRIVER_ZOOM,
         duration: 1500
       });
     }
@@ -289,7 +282,7 @@ function centerOnDriver() {
     const lngLat = driverMarker.getLngLat();
     map.flyTo({
       center: [lngLat.lng, lngLat.lat],
-      zoom: 10, // Zoomed out to see more pickup locations
+      zoom: DRIVER_ZOOM,
       duration: 1000
     });
   }
@@ -316,7 +309,7 @@ async function initMap() {
       container: mapContainer.value,
       style: 'mapbox://styles/mapbox/streets-v12',
       center: GTA_CENTER,
-      zoom: GTA_ZOOM
+      zoom: INITIAL_ZOOM
     });
 
     map.addControl(new mapboxgl.NavigationControl(), 'top-right');

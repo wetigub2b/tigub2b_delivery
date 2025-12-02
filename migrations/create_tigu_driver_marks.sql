@@ -40,16 +40,6 @@ INSERT INTO tigu_driver_marks (name, latitude, longitude, type, description, sho
     ('GreenBuild Supplies', 43.58900000, -79.64410000, 'Vendor', 'Vendor pickup - Mississauga', 2002),
     ('Modern Timber Co.', 43.85610000, -79.33700000, 'Vendor', 'Vendor pickup - Markham', 2003);
 
--- General hub locations (not linked to specific shop/warehouse)
-INSERT INTO tigu_driver_marks (name, latitude, longitude, type, description) VALUES
-    ('Scarborough Depot', 43.77310000, -79.25780000, 'Depot', 'East GTA depot'),
-    ('Brampton Station', 43.73150000, -79.76240000, 'Station', 'Northwest GTA station'),
-    ('Richmond Hill Point', 43.88280000, -79.44030000, 'Point', 'North York region pickup point'),
-    ('Vaughan Facility', 43.83610000, -79.49830000, 'Facility', 'Vaughan distribution facility'),
-    ('Oakville Center', 43.46750000, -79.68770000, 'Center', 'Oakville service center'),
-    ('Ajax Station', 43.85090000, -79.02040000, 'Station', 'East GTA Ajax station'),
-    ('Milton Hub', 43.51830000, -79.87740000, 'Hub', 'West GTA Milton hub');
-
 -- Verify insertion
 SELECT COUNT(*) as marker_count FROM tigu_driver_marks WHERE is_active = 1;
 SELECT id, name, type, shop_id, warehouse_id FROM tigu_driver_marks;

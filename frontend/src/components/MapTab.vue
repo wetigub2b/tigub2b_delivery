@@ -45,6 +45,7 @@ let map: mapboxgl.Map | null = null;
 let markers: mapboxgl.Marker[] = [];
 let driverMarker: mapboxgl.Marker | null = null;
 let watchId: number | null = null;
+let refreshInterval: ReturnType<typeof setInterval> | null = null;
 
 // Modal state
 const showPickupModal = ref(false);
@@ -52,6 +53,7 @@ const selectedMark = ref<Mark | null>(null);
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
 const API_URL = import.meta.env.VITE_API_URL || '';
+const REFRESH_INTERVAL_MS = 30000; // Refresh markers every 30 seconds
 
 const GTA_CENTER: [number, number] = [-79.3832, 43.6532]; // Toronto coordinates
 const INITIAL_ZOOM = 5; // Initial zoomed out view to see all locations
@@ -321,6 +323,17 @@ async function initMap() {
         const marks = await fetchMarks();
         addMarkers(marks);
         loading.value = false;
+        
+        // Start auto-refresh interval for markers
+        refreshInterval = setInterval(async () => {
+          try {
+            console.log('Refreshing markers...');
+            const updatedMarks = await fetchMarks();
+            addMarkers(updatedMarks);
+          } catch (err) {
+            console.error('Error refreshing marks:', err);
+          }
+        }, REFRESH_INTERVAL_MS);
       } catch (err: any) {
         console.error('Error loading marks:', err);
         error.value = err.message;
@@ -355,6 +368,11 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  // Stop auto-refresh
+  if (refreshInterval) {
+    clearInterval(refreshInterval);
+    refreshInterval = null;
+  }
   stopLocationTracking();
   markers.forEach(marker => marker.remove());
   markers = [];

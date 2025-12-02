@@ -1,33 +1,32 @@
 <template>
-  <Teleport to="body">
-    <Transition name="modal">
-      <div v-if="show" class="modal-overlay" @click="handleClose">
-        <div class="modal-container" @click.stop>
-          <div class="modal-header">
-            <div class="header-info">
-              <span class="location-type" :class="`type-${mark.type?.toLowerCase()}`">
-                {{ mark.type === 'Vendor' ? '🏪' : '🏭' }} {{ mark.type }}
-              </span>
-              <h3>{{ mark.name }}</h3>
-            </div>
-            <button class="modal-close" @click="handleClose" aria-label="Close">
-              ✕
-            </button>
+  <Transition name="modal">
+    <div v-if="show" class="modal-overlay" @click="handleClose">
+      <div class="modal-container" @click.stop>
+        <div class="modal-header">
+          <div class="header-info">
+            <span class="location-type" :class="`type-${mark.type?.toLowerCase()}`">
+              {{ mark.type === 'Vendor' ? '🏪' : '🏭' }} {{ mark.type }}
+            </span>
+            <h3>{{ mark.name }}</h3>
+          </div>
+          <button class="modal-close" @click="handleClose" aria-label="Close">
+            ✕
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div v-if="loading" class="loading-state">
+            <div class="spinner"></div>
+            <p>{{ $t('common.loading') }}</p>
           </div>
 
-          <div class="modal-body">
-            <div v-if="loading" class="loading-state">
-              <div class="spinner"></div>
-              <p>{{ $t('common.loading') }}</p>
-            </div>
+          <div v-else-if="error" class="error-state">
+            <p>{{ error }}</p>
+            <button @click="fetchPackages" class="retry-button">{{ $t('map.retry') }}</button>
+          </div>
 
-            <div v-else-if="error" class="error-state">
-              <p>{{ error }}</p>
-              <button @click="fetchPackages" class="retry-button">{{ $t('map.retry') }}</button>
-            </div>
-
-            <div v-else-if="packages.length === 0" class="empty-state">
-              <div class="empty-icon">📦</div>
+          <div v-else-if="packages.length === 0" class="empty-state">
+            <div class="empty-icon">📦</div>
               <p>{{ $t('pickupLocation.noPackages') }}</p>
             </div>
 
@@ -77,7 +76,6 @@
         </div>
       </div>
     </Transition>
-  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -193,7 +191,7 @@ function handleClose() {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: 2147483647;
   padding: var(--spacing-md);
 }
 

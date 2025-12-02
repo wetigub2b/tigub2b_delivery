@@ -17,15 +17,15 @@
         📍 My Location
       </button>
     </div>
-    <div ref="mapContainer" class="map"></div>
-
-    <!-- Pickup Location Modal -->
-    <PickupLocationModal
-      v-if="selectedMark"
-      :show="showPickupModal"
-      :mark="selectedMark"
-      @close="closePickupModal"
-    />
+    <div ref="mapContainer" class="map">
+      <!-- Pickup Location Modal - inside map div for fullscreen support -->
+      <PickupLocationModal
+        v-if="selectedMark"
+        :show="showPickupModal"
+        :mark="selectedMark"
+        @close="closePickupModal"
+      />
+    </div>
   </div>
 </template>
 

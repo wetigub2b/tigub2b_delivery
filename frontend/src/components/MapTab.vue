@@ -547,39 +547,23 @@ onUnmounted(() => {
   box-shadow: var(--shadow-lg);
 }
 
-/* Numbered pin styles for pickup locations with orders */
+/* Numbered pin styles for pickup locations */
 :deep(.numbered-pin) {
-  width: 32px;
-  height: 40px;
-  background: linear-gradient(180deg, #e53935 0%, #c62828 100%);
-  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  width: 28px;
+  height: 28px;
+  background: #e53935;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
-}
-
-:deep(.numbered-pin)::after {
-  content: '';
-  position: absolute;
-  bottom: -6px;
-  left: 50%;
-  margin-left: -8px;
-  width: 0;
-  height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-top: 10px solid #c62828;
-  pointer-events: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  border: 2px solid white;
 }
 
 :deep(.numbered-pin .pin-number) {
   color: white;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: bold;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  margin-top: -4px;
-  pointer-events: none;
 }
 
 /* Empty pin styles - no longer used but kept for reference */

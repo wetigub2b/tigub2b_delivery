@@ -920,3 +920,64 @@ async def confirm_delivery(
     )
 
     await session.commit()
+
+
+@router.get("/by-location", response_model=List[PrepareGoodsSummary], response_model_by_alias=True)
+async def list_packages_by_location(
+    shop_id: Optional[int] = Query(default=None, description="Filter by shop ID (vendor pickup)"),
+    warehouse_id: Optional[int] = Query(default=None, description="Filter by warehouse ID (warehouse pickup)"),
+    limit: int = Query(default=50, ge=1, le=100),
+    current_user=Depends(deps.get_current_user),
+    session: AsyncSession = Depends(deps.get_db_session)
+) -> List[PrepareGoodsSummary]:
+    """
+    Get available packages at a specific pickup location.
+
+    Returns packages that are:
+    - prepare_status = 0 (prepared, ready for pickup)
+    - driver_id IS NULL (not assigned to any driver yet)
+    - delivery_type = 1 (third-party delivery)
+    - Matching the specified shop_id OR warehouse_id
+
+    Args:
+        shop_id: Filter by vendor/shop ID (for type=0 vendor pickup)
+        warehouse_id: Filter by warehouse ID (for type=1 warehouse pickup)
+        limit: Maximum number of records (default 50, max 100)
+        current_user: Authenticated user
+        session: Database session
+
+    Returns:
+        List of available PrepareGoods packages at the location
+    """
+    if not shop_id and not warehouse_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Either shop_id or warehouse_id must be provided"
+        )
+
+    packages = await prepare_goods_service.get_packages_by_location(
+        session=session,
+        shop_id=shop_id,
+        warehouse_id=warehouse_id,
+        limit=limit
+    )
+
+    # Build summary responses
+    summaries = []
+    for pkg in packages:
+        order_ids = parse_order_id_list(pkg.order_ids)
+        summaries.append(
+            PrepareGoodsSummary(
+                prepare_sn=pkg.prepare_sn,
+                order_count=len(order_ids),
+                delivery_type=pkg.delivery_type,
+                shipping_type=pkg.shipping_type,
+                prepare_status=pkg.prepare_status,
+                prepare_status_label=get_prepare_status_label(pkg.prepare_status, pkg.shipping_type),
+                warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
+                driver_name=None,  # Available packages have no driver assigned
+                create_time=pkg.create_time
+            )
+        )
+
+    return summaries

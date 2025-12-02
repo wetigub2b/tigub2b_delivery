@@ -430,3 +430,53 @@ async def get_order_delivery_type(
     )
     result = await session.execute(stmt)
     return result.scalar_one_or_none()
+
+
+async def get_packages_by_location(
+    session: AsyncSession,
+    shop_id: int | None = None,
+    warehouse_id: int | None = None,
+    limit: int = 50
+) -> List[PrepareGoods]:
+    """
+    Get available packages at a specific pickup location.
+
+    Returns packages that are:
+    - prepare_status = 0 (prepared, ready for pickup)
+    - driver_id IS NULL (not assigned to any driver yet)
+    - delivery_type = 1 (third-party driver delivery)
+    - Matching shop_id (for vendor pickup, type=0) OR warehouse_id (for warehouse pickup, type=1)
+
+    Args:
+        session: Database session
+        shop_id: Filter by vendor/shop ID (type=0 vendor pickup)
+        warehouse_id: Filter by warehouse ID (type=1 warehouse pickup)
+        limit: Maximum number of records
+
+    Returns:
+        List of PrepareGoods instances at the location
+    """
+    stmt = (
+        select(PrepareGoods)
+        .options(
+            selectinload(PrepareGoods.items),
+            selectinload(PrepareGoods.warehouse)
+        )
+        .where(PrepareGoods.driver_id.is_(None))  # Not assigned
+        .where(PrepareGoods.prepare_status == 0)  # Prepared
+        .where(PrepareGoods.delivery_type == 1)  # Third-party only
+    )
+
+    if shop_id is not None:
+        # Vendor pickup - filter by shop_id and type=0
+        stmt = stmt.where(PrepareGoods.shop_id == shop_id)
+        stmt = stmt.where(PrepareGoods.type == 0)
+    elif warehouse_id is not None:
+        # Warehouse pickup - filter by warehouse_id and type=1
+        stmt = stmt.where(PrepareGoods.warehouse_id == warehouse_id)
+        stmt = stmt.where(PrepareGoods.type == 1)
+
+    stmt = stmt.order_by(PrepareGoods.create_time.desc()).limit(limit)
+
+    result = await session.execute(stmt)
+    return list(result.scalars().unique().all())

@@ -19,7 +19,8 @@
     "ok": "OK",
     "warning": "Warning",
     "info": "Information",
-    "create": "Create"
+    "create": "Create",
+    "close": "Close"
   },
   "app": {
     "title": "Tigu Delivery Console",
@@ -197,6 +198,11 @@
   "map": {
     "loading": "Loading map...",
     "retry": "Retry"
+  },
+  "pickupLocation": {
+    "availablePackages": "Available Packages",
+    "noPackages": "No packages available at this location",
+    "fetchError": "Failed to load packages"
   },
   "packageModal": {
     "orderDetails": "Order Details",

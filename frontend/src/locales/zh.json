@@ -19,7 +19,8 @@
     "ok": "确定",
     "warning": "警告",
     "info": "信息",
-    "create": "创建"
+    "create": "创建",
+    "close": "关闭"
   },
   "app": {
     "title": "梯谷配送控制台",
@@ -395,6 +396,11 @@
   "map": {
     "loading": "加载地图中...",
     "retry": "重试"
+  },
+  "pickupLocation": {
+    "availablePackages": "可取包裹",
+    "noPackages": "此地点暂无可取包裹",
+    "fetchError": "加载包裹失败"
   },
   "packageModal": {
     "orderDetails": "订单详情",

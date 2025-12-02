@@ -10,33 +10,44 @@ from app.schemas.marks import Mark
 
 async def fetch_marks(session: AsyncSession, active_only: bool = True) -> List[Mark]:
     """
-    Fetch all markers from database.
+    Fetch all markers from database with order counts.
     
     Args:
         session: Database session
         active_only: If True, return only active markers
     
     Returns:
-        List of Mark objects
+        List of Mark objects with order_count for each location
     """
     query = """
         SELECT 
-            id,
-            name,
-            latitude,
-            longitude,
-            type,
-            description,
-            is_active,
-            created_at,
-            updated_at
-        FROM tigu_driver_marks
+            m.id,
+            m.name,
+            m.latitude,
+            m.longitude,
+            m.type,
+            m.description,
+            m.shop_id,
+            m.warehouse_id,
+            m.is_active,
+            m.created_at,
+            m.updated_at,
+            COALESCE(COUNT(pg.id), 0) as order_count
+        FROM tigu_driver_marks m
+        LEFT JOIN tigu_prepare_goods pg ON (
+            (m.shop_id IS NOT NULL AND pg.shop_id = m.shop_id AND pg.type = 0)
+            OR 
+            (m.warehouse_id IS NOT NULL AND pg.warehouse_id = m.warehouse_id AND pg.type = 1)
+        )
+        AND pg.delivery_type = 1
+        AND pg.prepare_status = 0
+        AND pg.driver_id IS NULL
     """
     
     if active_only:
-        query += " WHERE is_active = 1"
+        query += " WHERE m.is_active = 1"
     
-    query += " ORDER BY name ASC"
+    query += " GROUP BY m.id ORDER BY m.name ASC"
     
     result = await session.execute(text(query))
     rows = result.fetchall()
@@ -50,6 +61,9 @@ async def fetch_marks(session: AsyncSession, active_only: bool = True) -> List[M
             longitude=float(row.longitude),
             type=row.type,
             description=row.description,
+            shop_id=row.shop_id,
+            warehouse_id=row.warehouse_id,
+            order_count=row.order_count,
             is_active=bool(row.is_active),
             created_at=row.created_at,
             updated_at=row.updated_at
@@ -60,7 +74,7 @@ async def fetch_marks(session: AsyncSession, active_only: bool = True) -> List[M
 
 async def fetch_mark_by_id(session: AsyncSession, mark_id: int) -> Optional[Mark]:
     """
-    Fetch a specific marker by ID.
+    Fetch a specific marker by ID with order count.
     
     Args:
         session: Database session
@@ -71,17 +85,29 @@ async def fetch_mark_by_id(session: AsyncSession, mark_id: int) -> Optional[Mark
     """
     query = """
         SELECT 
-            id,
-            name,
-            latitude,
-            longitude,
-            type,
-            description,
-            is_active,
-            created_at,
-            updated_at
-        FROM tigu_driver_marks
-        WHERE id = :mark_id
+            m.id,
+            m.name,
+            m.latitude,
+            m.longitude,
+            m.type,
+            m.description,
+            m.shop_id,
+            m.warehouse_id,
+            m.is_active,
+            m.created_at,
+            m.updated_at,
+            COALESCE(COUNT(pg.id), 0) as order_count
+        FROM tigu_driver_marks m
+        LEFT JOIN tigu_prepare_goods pg ON (
+            (m.shop_id IS NOT NULL AND pg.shop_id = m.shop_id AND pg.type = 0)
+            OR 
+            (m.warehouse_id IS NOT NULL AND pg.warehouse_id = m.warehouse_id AND pg.type = 1)
+        )
+        AND pg.delivery_type = 1
+        AND pg.prepare_status = 0
+        AND pg.driver_id IS NULL
+        WHERE m.id = :mark_id
+        GROUP BY m.id
     """
     
     result = await session.execute(text(query), {"mark_id": mark_id})
@@ -97,6 +123,9 @@ async def fetch_mark_by_id(session: AsyncSession, mark_id: int) -> Optional[Mark
         longitude=float(row.longitude),
         type=row.type,
         description=row.description,
+        shop_id=row.shop_id,
+        warehouse_id=row.warehouse_id,
+        order_count=row.order_count,
         is_active=bool(row.is_active),
         created_at=row.created_at,
         updated_at=row.updated_at

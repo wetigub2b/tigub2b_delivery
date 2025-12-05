@@ -61,8 +61,9 @@ async def fetch_marks(session: AsyncSession, active_only: bool = True) -> List[M
             longitude=float(row.longitude),
             type=row.type,
             description=row.description,
-            shop_id=row.shop_id,
-            warehouse_id=row.warehouse_id,
+            # Convert bigint IDs to strings to preserve precision in JavaScript
+            shop_id=str(row.shop_id) if row.shop_id else None,
+            warehouse_id=str(row.warehouse_id) if row.warehouse_id else None,
             order_count=row.order_count,
             is_active=bool(row.is_active),
             created_at=row.created_at,
@@ -123,8 +124,9 @@ async def fetch_mark_by_id(session: AsyncSession, mark_id: int) -> Optional[Mark
         longitude=float(row.longitude),
         type=row.type,
         description=row.description,
-        shop_id=row.shop_id,
-        warehouse_id=row.warehouse_id,
+        # Convert bigint IDs to strings to preserve precision in JavaScript
+        shop_id=str(row.shop_id) if row.shop_id else None,
+        warehouse_id=str(row.warehouse_id) if row.warehouse_id else None,
         order_count=row.order_count,
         is_active=bool(row.is_active),
         created_at=row.created_at,

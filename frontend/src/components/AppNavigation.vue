@@ -117,7 +117,41 @@ const closeMobileMenu = () => {
   showMobileMenu.value = false;
 };
 
-const handleReload = () => {
+const handleReload = async () => {
+  try {
+    // Unregister all service workers
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (const registration of registrations) {
+        await registration.unregister();
+        console.log('Service worker unregistered:', registration.scope);
+      }
+    }
+
+    // Clear all caches
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      for (const cacheName of cacheNames) {
+        await caches.delete(cacheName);
+        console.log('Cache deleted:', cacheName);
+      }
+    }
+
+    // Clear localStorage cache-related items (keep auth tokens)
+    const keysToKeep = ['delivery_token', 'admin_token', 'admin_refresh_token'];
+    const allKeys = Object.keys(localStorage);
+    for (const key of allKeys) {
+      if (!keysToKeep.includes(key)) {
+        localStorage.removeItem(key);
+      }
+    }
+
+    console.log('Cache and service workers cleared, reloading...');
+  } catch (err) {
+    console.error('Error clearing cache:', err);
+  }
+
+  // Force reload from server (bypass cache)
   window.location.reload();
 };
 

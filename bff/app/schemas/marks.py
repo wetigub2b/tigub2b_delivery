@@ -14,8 +14,9 @@ class Mark(BaseModel):
     longitude: float = Field(..., description="Longitude coordinate")
     type: Optional[str] = Field(None, description="Marker type (Warehouse, Vendor, Hub, etc.)")
     description: Optional[str] = Field(None, description="Marker description")
-    shop_id: Optional[int] = Field(None, description="Linked shop ID for vendor pickup")
-    warehouse_id: Optional[int] = Field(None, description="Linked warehouse ID for warehouse pickup")
+    # Use str for bigint IDs to preserve precision in JavaScript
+    shop_id: Optional[str] = Field(None, description="Linked shop ID for vendor pickup")
+    warehouse_id: Optional[str] = Field(None, description="Linked warehouse ID for warehouse pickup")
     order_count: int = Field(0, description="Number of available packages at this location")
     is_active: bool = Field(True, description="Whether marker is active")
     created_at: datetime = Field(..., description="Creation timestamp")

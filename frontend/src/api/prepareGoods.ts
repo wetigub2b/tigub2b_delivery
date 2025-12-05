@@ -47,6 +47,8 @@ export interface PrepareGoodsSummaryDto {
   shippingType: number;
   prepareStatus: number | null;
   prepareStatusLabel: string;
+  shopId: string | null;  // String to preserve bigint precision
+  warehouseId: string | null;  // String to preserve bigint precision
   warehouseName: string | null;
   driverName: string | null;
   createTime: string;

@@ -121,6 +121,9 @@ class PrepareGoodsSummary(BaseModel):
     shipping_type: int = Field(alias="shippingType")
     prepare_status: Optional[int] = Field(default=None, alias="prepareStatus")
     prepare_status_label: str = Field(alias="prepareStatusLabel")
+    # Use str for bigint IDs to preserve precision in JavaScript
+    shop_id: Optional[str] = Field(default=None, alias="shopId")
+    warehouse_id: Optional[str] = Field(default=None, alias="warehouseId")
     warehouse_name: Optional[str] = Field(default=None, alias="warehouseName")
     driver_name: Optional[str] = Field(default=None, alias="driverName")
     create_time: datetime = Field(alias="createTime")

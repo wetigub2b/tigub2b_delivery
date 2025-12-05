@@ -156,6 +156,8 @@ async def list_available_packages(
                 shipping_type=pkg.shipping_type,
                 prepare_status=pkg.prepare_status,
                 prepare_status_label=get_prepare_status_label(pkg.prepare_status, pkg.shipping_type),
+                shop_id=str(pkg.shop_id) if pkg.shop_id else None,
+                warehouse_id=str(pkg.warehouse_id) if pkg.warehouse_id else None,
                 warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
                 driver_name=None,  # Available packages have no driver assigned
                 create_time=pkg.create_time
@@ -211,6 +213,8 @@ async def list_my_driver_packages(
                 shipping_type=pkg.shipping_type,
                 prepare_status=pkg.prepare_status,
                 prepare_status_label=get_prepare_status_label(pkg.prepare_status, pkg.shipping_type),
+                shop_id=str(pkg.shop_id) if pkg.shop_id else None,
+                warehouse_id=str(pkg.warehouse_id) if pkg.warehouse_id else None,
                 warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
                 driver_name=pkg.driver.name if pkg.driver else None,
                 create_time=pkg.create_time
@@ -259,6 +263,8 @@ async def list_driver_packages(
                 shipping_type=pkg.shipping_type,
                 prepare_status=pkg.prepare_status,
                 prepare_status_label=get_prepare_status_label(pkg.prepare_status, pkg.shipping_type),
+                shop_id=str(pkg.shop_id) if pkg.shop_id else None,
+                warehouse_id=str(pkg.warehouse_id) if pkg.warehouse_id else None,
                 warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
                 driver_name=pkg.driver.name if pkg.driver else None,
                 create_time=pkg.create_time
@@ -308,6 +314,8 @@ async def list_shop_prepare_packages(
                 shipping_type=pkg.shipping_type,
                 prepare_status=pkg.prepare_status,
                 prepare_status_label=get_prepare_status_label(pkg.prepare_status, pkg.shipping_type),
+                shop_id=str(pkg.shop_id) if pkg.shop_id else None,
+                warehouse_id=str(pkg.warehouse_id) if pkg.warehouse_id else None,
                 warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
                 driver_name=pkg.driver.name if pkg.driver else None,
                 create_time=pkg.create_time
@@ -924,8 +932,8 @@ async def confirm_delivery(
 
 @router.get("/by-location", response_model=List[PrepareGoodsSummary], response_model_by_alias=True)
 async def list_packages_by_location(
-    shop_id: Optional[int] = Query(default=None, description="Filter by shop ID (vendor pickup)"),
-    warehouse_id: Optional[int] = Query(default=None, description="Filter by warehouse ID (warehouse pickup)"),
+    shop_id: Optional[str] = Query(default=None, description="Filter by shop ID (vendor pickup)"),
+    warehouse_id: Optional[str] = Query(default=None, description="Filter by warehouse ID (warehouse pickup)"),
     limit: int = Query(default=50, ge=1, le=100),
     current_user=Depends(deps.get_current_user),
     session: AsyncSession = Depends(deps.get_db_session)
@@ -940,8 +948,8 @@ async def list_packages_by_location(
     - Matching the specified shop_id OR warehouse_id
 
     Args:
-        shop_id: Filter by vendor/shop ID (for type=0 vendor pickup)
-        warehouse_id: Filter by warehouse ID (for type=1 warehouse pickup)
+        shop_id: Filter by vendor/shop ID (for type=0 vendor pickup) - string to preserve bigint precision
+        warehouse_id: Filter by warehouse ID (for type=1 warehouse pickup) - string to preserve bigint precision
         limit: Maximum number of records (default 50, max 100)
         current_user: Authenticated user
         session: Database session
@@ -955,10 +963,14 @@ async def list_packages_by_location(
             detail="Either shop_id or warehouse_id must be provided"
         )
 
+    # Convert string IDs to int for database query
+    shop_id_int = int(shop_id) if shop_id else None
+    warehouse_id_int = int(warehouse_id) if warehouse_id else None
+
     packages = await prepare_goods_service.get_packages_by_location(
         session=session,
-        shop_id=shop_id,
-        warehouse_id=warehouse_id,
+        shop_id=shop_id_int,
+        warehouse_id=warehouse_id_int,
         limit=limit
     )
 
@@ -974,6 +986,8 @@ async def list_packages_by_location(
                 shipping_type=pkg.shipping_type,
                 prepare_status=pkg.prepare_status,
                 prepare_status_label=get_prepare_status_label(pkg.prepare_status, pkg.shipping_type),
+                shop_id=str(pkg.shop_id) if pkg.shop_id else None,
+                warehouse_id=str(pkg.warehouse_id) if pkg.warehouse_id else None,
                 warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
                 driver_name=None,  # Available packages have no driver assigned
                 create_time=pkg.create_time

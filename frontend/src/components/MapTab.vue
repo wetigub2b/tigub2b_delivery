@@ -66,8 +66,8 @@ interface Mark {
   longitude: number;
   type?: string;
   description?: string;
-  shop_id?: number;
-  warehouse_id?: number;
+  shop_id?: string;  // String to preserve bigint precision
+  warehouse_id?: string;  // String to preserve bigint precision
   order_count: number;
 }
 

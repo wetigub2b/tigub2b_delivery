@@ -79,10 +79,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { usePrepareGoodsStore } from '@/store/prepareGoods';
-import axios from 'axios';
 
 const { t } = useI18n();
 const prepareGoodsStore = usePrepareGoodsStore();
@@ -94,18 +93,9 @@ interface Mark {
   longitude: number;
   type?: string;
   description?: string;
-  shop_id?: number;
-  warehouse_id?: number;
+  shop_id?: string;  // String to preserve bigint precision
+  warehouse_id?: string;  // String to preserve bigint precision
   order_count: number;
-}
-
-interface Package {
-  prepareSn: string;
-  prepareStatus: number;
-  prepareStatusLabel: string;
-  orderCount: number;
-  workflowLabel: string;
-  warehouseName?: string;
 }
 
 const props = defineProps<{
@@ -117,41 +107,36 @@ const emit = defineEmits<{
   close: [];
 }>();
 
-const API_URL = import.meta.env.VITE_API_URL || '';
-
 const loading = ref(false);
 const error = ref<string | null>(null);
-const packages = ref<Package[]>([]);
 const isPickingUp = ref(false);
 
-watch(() => props.show, (newVal) => {
+// Filter available packages from store by shop_id or warehouse_id
+const packages = computed(() => {
+  const allPackages = prepareGoodsStore.availablePackages;
+  
+  if (props.mark.shop_id) {
+    return allPackages.filter(pkg => pkg.shopId === props.mark.shop_id);
+  }
+  if (props.mark.warehouse_id) {
+    return allPackages.filter(pkg => pkg.warehouseId === props.mark.warehouse_id);
+  }
+  return [];
+});
+
+watch(() => props.show, async (newVal) => {
   if (newVal) {
-    fetchPackages();
+    await fetchPackages();
   }
 });
 
 async function fetchPackages() {
   loading.value = true;
   error.value = null;
-  packages.value = [];
 
   try {
-    const params: Record<string, any> = {};
-    if (props.mark.shop_id) {
-      params.shop_id = props.mark.shop_id;
-    }
-    if (props.mark.warehouse_id) {
-      params.warehouse_id = props.mark.warehouse_id;
-    }
-
-    const response = await axios.get(`${API_URL}/prepare-goods/by-location`, {
-      params,
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('delivery_token')}`
-      }
-    });
-
-    packages.value = response.data.packages || [];
+    // Refresh the store's available packages
+    await prepareGoodsStore.fetchAvailablePackages();
   } catch (err: any) {
     console.error('Error fetching packages:', err);
     error.value = err.response?.data?.detail || err.message || t('pickupLocation.fetchError');
@@ -160,13 +145,11 @@ async function fetchPackages() {
   }
 }
 
-async function handlePickup(pkg: Package) {
+async function handlePickup(pkg: any) {
   isPickingUp.value = true;
   try {
     await prepareGoodsStore.pickupPackage(pkg.prepareSn);
-    // Refresh packages list
-    await fetchPackages();
-    // Also refresh the main available packages list
+    // Refresh available packages list (computed will auto-filter)
     await prepareGoodsStore.fetchAvailablePackages();
   } catch (err: any) {
     alert(`Error: ${err.response?.data?.detail || err.message}`);

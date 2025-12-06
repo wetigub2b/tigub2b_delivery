@@ -127,8 +127,8 @@ const workflowLabel = computed(() => {
   const workflows: Record<string, string> = {
     '0,0': 'Workflow 1: Merchant → Warehouse → User',
     '0,1': 'Workflow 2: Merchant → User',
-    '1,0': 'Workflow 3: Driver → Warehouse → User',
-    '1,1': 'Workflow 4: Driver → User'
+    '1,0': 'Workflow 3: Driver → User',
+    '1,1': 'Workflow 4: Driver → Warehouse → User'
   };
   return workflows[key] || '';
 });

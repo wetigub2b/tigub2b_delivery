@@ -48,8 +48,8 @@ function getWorkflowLabel(deliveryType: number, shippingType: number): string {
   const workflows: Record<string, string> = {
     '0,0': 'Workflow 1: Merchant → Warehouse → User',
     '0,1': 'Workflow 2: Merchant → User',
-    '1,0': 'Workflow 3: Driver → Warehouse → User',
-    '1,1': 'Workflow 4: Driver → User'
+    '1,0': 'Workflow 3: Driver → User',
+    '1,1': 'Workflow 4: Driver → Warehouse → User'
   };
   return workflows[key] || 'Unknown Workflow';
 }
@@ -334,8 +334,8 @@ export const usePrepareGoodsStore = defineStore('prepareGoods', {
         // Update local state - package status changes based on shipping type
         const pkg = this.driverPackages.find((pkg) => pkg.prepareSn === prepareSn);
         if (pkg) {
-          // shipping_type = 0 (Workflow 4): user → status 3 (已送达)
-          // shipping_type = 1 (Workflow 3): warehouse → status 2 (司机送达仓库)
+          // shipping_type = 0 (Workflow 3): user → status 3 (已送达)
+          // shipping_type = 1 (Workflow 4): warehouse → status 2 (司机送达仓库)
           const newStatus = pkg.shippingType === 1 ? 2 : 3;
           pkg.prepareStatus = newStatus;
           pkg.prepareStatusLabel = prepareStatusLabels[newStatus] || 'Unknown';

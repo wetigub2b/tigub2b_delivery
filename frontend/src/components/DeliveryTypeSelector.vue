@@ -57,15 +57,41 @@
         </div>
       </div>
 
-      <!-- Workflow 3: Driver → Warehouse → User -->
+      <!-- Workflow 3: Driver → User -->
       <div
         class="workflow-card"
         :class="{ selected: isSelected(1, 0) }"
         @click="selectWorkflow(1, 0)"
       >
-        <div class="workflow-icon">🚗🏭</div>
+        <div class="workflow-icon">🚗✅</div>
         <div class="workflow-title">{{ $t('workflow.workflow3.title') }}</div>
         <div class="workflow-description">{{ $t('workflow.workflow3.description') }}</div>
+        <div class="workflow-path">
+          <span class="path-step">{{ $t('workflow.driver') }}</span>
+          <span class="path-arrow">→</span>
+          <span class="path-step">{{ $t('workflow.user') }}</span>
+        </div>
+        <div class="workflow-details">
+          <div class="detail-row">
+            <span class="detail-label">{{ $t('workflow.deliveryType') }}:</span>
+            <span class="detail-value">{{ $t('workflow.thirdParty') }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">{{ $t('workflow.shippingType') }}:</span>
+            <span class="detail-value">{{ $t('workflow.toUser') }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Workflow 4: Driver → Warehouse → User -->
+      <div
+        class="workflow-card"
+        :class="{ selected: isSelected(1, 1) }"
+        @click="selectWorkflow(1, 1)"
+      >
+        <div class="workflow-icon">🚗🏭</div>
+        <div class="workflow-title">{{ $t('workflow.workflow4.title') }}</div>
+        <div class="workflow-description">{{ $t('workflow.workflow4.description') }}</div>
         <div class="workflow-path">
           <span class="path-step">{{ $t('workflow.driver') }}</span>
           <span class="path-arrow">→</span>
@@ -84,35 +110,9 @@
           </div>
         </div>
       </div>
-
-      <!-- Workflow 4: Driver → User -->
-      <div
-        class="workflow-card"
-        :class="{ selected: isSelected(1, 1) }"
-        @click="selectWorkflow(1, 1)"
-      >
-        <div class="workflow-icon">🚗✅</div>
-        <div class="workflow-title">{{ $t('workflow.workflow4.title') }}</div>
-        <div class="workflow-description">{{ $t('workflow.workflow4.description') }}</div>
-        <div class="workflow-path">
-          <span class="path-step">{{ $t('workflow.driver') }}</span>
-          <span class="path-arrow">→</span>
-          <span class="path-step">{{ $t('workflow.user') }}</span>
-        </div>
-        <div class="workflow-details">
-          <div class="detail-row">
-            <span class="detail-label">{{ $t('workflow.deliveryType') }}:</span>
-            <span class="detail-value">{{ $t('workflow.thirdParty') }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">{{ $t('workflow.shippingType') }}:</span>
-            <span class="detail-value">{{ $t('workflow.toUser') }}</span>
-          </div>
-        </div>
-      </div>
     </div>
 
-    <!-- Warehouse selection for workflows that need it (Workflow 1 & 3) -->
+    <!-- Warehouse selection for workflows that need it (Workflow 1 & 4) -->
     <div v-if="requiresWarehouse" class="warehouse-selection">
       <label class="warehouse-label">{{ $t('prepareGoods.selectWarehouse') }}</label>
       <select
@@ -158,8 +158,8 @@ const selectedShippingType = ref<number | null>(props.modelValue?.shippingType ?
 const selectedWarehouseId = ref<number | null>(props.modelValue?.warehouseId ?? null);
 
 const requiresWarehouse = computed(() => {
-  // Workflows 1 and 3 require warehouse (shippingType = 0)
-  return selectedShippingType.value === 0;
+  // Workflow 4 requires warehouse (shippingType = 1)
+  return selectedShippingType.value === 1;
 });
 
 function isSelected(deliveryType: number, shippingType: number): boolean {

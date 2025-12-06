@@ -48,8 +48,11 @@
                   </span>
                 </div>
                 <div class="package-body">
-                  <div class="package-info-row">
+                  <div class="package-info-row package-info-row--with-action">
                     <span>📦 {{ pkg.orderCount }} {{ $t('taskBoard.orders') }}</span>
+                    <button class="detail-button" @click="openOrdersModal(pkg)">
+                      {{ $t('packageModal.viewDetails') }}
+                    </button>
                   </div>
                   <div class="package-info-row">
                     <span>🏷️ {{ pkg.workflowLabel }}</span>
@@ -76,12 +79,22 @@
         </div>
       </div>
     </Transition>
+
+    <!-- Package Orders Modal -->
+    <PackageOrdersModal
+      v-if="selectedPackage"
+      :show="showOrdersModal"
+      :package-sn="selectedPackage.prepareSn"
+      :order-count="selectedPackage.orderCount"
+      @close="closeOrdersModal"
+    />
 </template>
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { usePrepareGoodsStore } from '@/store/prepareGoods';
+import PackageOrdersModal from './PackageOrdersModal.vue';
 
 const { t } = useI18n();
 const prepareGoodsStore = usePrepareGoodsStore();
@@ -110,6 +123,10 @@ const emit = defineEmits<{
 const loading = ref(false);
 const error = ref<string | null>(null);
 const isPickingUp = ref(false);
+
+// Modal state for package orders detail
+const showOrdersModal = ref(false);
+const selectedPackage = ref<{ prepareSn: string; orderCount: number } | null>(null);
 
 // Filter available packages from store by shop_id or warehouse_id
 const packages = computed(() => {
@@ -160,6 +177,19 @@ async function handlePickup(pkg: any) {
 
 function handleClose() {
   emit('close');
+}
+
+function openOrdersModal(pkg: any) {
+  selectedPackage.value = {
+    prepareSn: pkg.prepareSn,
+    orderCount: pkg.orderCount
+  };
+  showOrdersModal.value = true;
+}
+
+function closeOrdersModal() {
+  showOrdersModal.value = false;
+  selectedPackage.value = null;
 }
 </script>
 
@@ -375,6 +405,31 @@ function handleClose() {
   padding: var(--spacing-xs) 0;
   font-size: 0.875rem;
   color: var(--color-text-secondary);
+}
+
+.package-info-row--with-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.detail-button {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--color-white);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  white-space: nowrap;
+}
+
+.detail-button:hover {
+  background: var(--color-primary);
+  color: var(--color-white);
 }
 
 .package-footer {

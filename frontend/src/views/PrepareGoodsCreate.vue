@@ -140,8 +140,8 @@ const deliveryTypeLabel = computed(() => {
 });
 
 const shippingTypeLabel = computed(() => {
-  if (workflowSelection.value?.shippingType === 0) return 'To Warehouse';
-  if (workflowSelection.value?.shippingType === 1) return 'To User';
+  if (workflowSelection.value?.shippingType === 0) return 'To User';
+  if (workflowSelection.value?.shippingType === 1) return 'To Warehouse';
   return '';
 });
 
@@ -156,7 +156,7 @@ const canSubmit = computed(() => {
   if (selectedOrderIds.value.length === 0) return false;
 
   // If shipping to warehouse, warehouse must be selected
-  if (workflowSelection.value.shippingType === 0 && !workflowSelection.value.warehouseId) {
+  if (workflowSelection.value.shippingType === 1 && !workflowSelection.value.warehouseId) {
     return false;
   }
 

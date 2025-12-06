@@ -33,17 +33,17 @@ class PrepareGoods(Base):
     can contain multiple orders and defines the delivery configuration.
 
     Delivery Workflows (based on delivery_type + shipping_type):
-    - delivery_type=0, shipping_type=0: Merchant self-delivery to warehouse
-    - delivery_type=0, shipping_type=1: Merchant self-delivery to user
-    - delivery_type=1, shipping_type=0: Third-party driver to warehouse
-    - delivery_type=1, shipping_type=1: Third-party driver to user
+    - delivery_type=0, shipping_type=0: Merchant self-delivery to user
+    - delivery_type=0, shipping_type=1: Merchant self-delivery to warehouse
+    - delivery_type=1, shipping_type=0: Third-party driver to user
+    - delivery_type=1, shipping_type=1: Third-party driver to warehouse
 
     Status Flow (prepare_status):
     - NULL: 待备货 (Pending prepare)
     - 0: 已备货 (Prepared - merchant uploaded photo)
     - 1: 司机收货中 (Driver pickup in progress - driver has goods)
-    - 2: 司机送达仓库 (Driver delivered to warehouse - Workflow 3)
-    - 3: 已送达/仓库已收货 (Delivered complete - Workflow 4, or Warehouse received - Workflow 3 future use)
+    - 2: 司机送达仓库 (Driver delivered to warehouse - Workflow 2)
+    - 3: 已送达/仓库已收货 (Delivered complete - Workflow 3, or Warehouse received - Workflow 2 future use)
     - 4: 司机配送用户 (Driver delivering to user - legacy/future)
     - 5: 已送达 (Delivered to user - legacy/future)
     - 6: 司机已认领 (Driver claimed, pending pickup confirmation)
@@ -143,13 +143,13 @@ class PrepareGoods(Base):
         comment="收货人邮编"
     )
 
-    # Warehouse (if applicable - shipping_type=0)
+    # Warehouse (if applicable - shipping_type=1)
     warehouse_id: Mapped[int | None] = mapped_column(
         BIGINT(unsigned=True),
         ForeignKey("tigu_warehouse.id"),
         nullable=True,
         index=True,
-        comment="目标仓库ID (仅当shipping_type=0)"
+        comment="目标仓库ID (仅当shipping_type=1)"
     )
 
     # Driver (if third-party delivery - delivery_type=1)

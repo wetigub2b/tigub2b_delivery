@@ -9,8 +9,8 @@ INSERT INTO tigu_lookup (lookup_number, lookup_string, lookup_desc, map_table_na
 
 -- Insert shipping_type lookup values
 INSERT INTO tigu_lookup (lookup_number, lookup_string, lookup_desc, map_table_name, map_column_name) VALUES
-(0, 'TO_WAREHOUSE', '货物配送到仓库', 'tigu_prepare_goods', 'shipping_type'),
-(1, 'TO_USER', '货物配送到用户', 'tigu_prepare_goods', 'shipping_type');
+(1, 'TO_WAREHOUSE', '货物配送到仓库', 'tigu_prepare_goods', 'shipping_type'),
+(0, 'TO_USER', '货物配送到用户', 'tigu_prepare_goods', 'shipping_type');
 
 -- Insert type lookup values (merchant/warehouse type)
 INSERT INTO tigu_lookup (lookup_number, lookup_string, lookup_desc, map_table_name, map_column_name) VALUES

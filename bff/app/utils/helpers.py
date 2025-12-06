@@ -257,8 +257,8 @@ def validate_shipping_type(shipping_type: int) -> bool:
     Validate shipping_type value.
 
     Valid shipping types:
-    0 = 发仓库 (Ship to warehouse)
-    1 = 发用户 (Ship to user)
+    0 = 发用户 (Ship to user)
+    1 = 发仓库 (Ship to warehouse)
 
     Args:
         shipping_type: Shipping type code
@@ -394,22 +394,22 @@ def get_workflow_type(delivery_type: int, shipping_type: int) -> int:
 
     Args:
         delivery_type: 0=Merchant, 1=Third-party
-        shipping_type: 0=To warehouse, 1=To user
+        shipping_type: 0=To user, 1=To warehouse
 
     Returns:
         Workflow type (1-4)
 
     Example:
-        workflow = get_workflow_type(delivery_type=0, shipping_type=1)
+        workflow = get_workflow_type(delivery_type=0, shipping_type=0)
         # Returns 1 (Merchant self-delivery to user)
     """
-    if delivery_type == 0 and shipping_type == 1:
+    if delivery_type == 0 and shipping_type == 0:
         return 1  # Merchant → User
-    elif delivery_type == 1 and shipping_type == 0:
-        return 2  # Merchant → Driver → Warehouse → User
     elif delivery_type == 1 and shipping_type == 1:
+        return 2  # Merchant → Driver → Warehouse → User
+    elif delivery_type == 1 and shipping_type == 0:
         return 3  # Merchant → Driver → User
-    elif delivery_type == 0 and shipping_type == 0:
+    elif delivery_type == 0 and shipping_type == 1:
         return 4  # Merchant → Warehouse (special case)
     else:
         raise ValueError(f"Invalid delivery/shipping type combination: {delivery_type}/{shipping_type}")

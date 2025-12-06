@@ -8,8 +8,30 @@
     </div>
 
     <div class="timeline-steps">
-      <!-- Workflow 1: Merchant → Warehouse → User (0,0) -->
+      <!-- Workflow 1: Merchant → User (0,0) -->
       <template v-if="deliveryType === 0 && shippingType === 0">
+        <WorkflowStep
+          :completed="prepareStatus !== null && prepareStatus >= 0"
+          :active="prepareStatus === 0"
+          icon="📦"
+          :label="$t('workflow.steps.merchantPrepared')"
+        />
+        <WorkflowStep
+          :completed="prepareStatus !== null && prepareStatus >= 5"
+          :active="prepareStatus === 5"
+          icon="🚚"
+          :label="$t('workflow.steps.shipped')"
+        />
+        <WorkflowStep
+          :completed="prepareStatus !== null && prepareStatus >= 6"
+          :active="prepareStatus === 6"
+          icon="✅"
+          :label="$t('workflow.steps.delivered')"
+        />
+      </template>
+
+      <!-- Workflow 4: Merchant → Warehouse → User (0,1) -->
+      <template v-else-if="deliveryType === 0 && shippingType === 1">
         <WorkflowStep
           :completed="prepareStatus !== null && prepareStatus >= 0"
           :active="prepareStatus === 0"
@@ -36,30 +58,30 @@
         />
       </template>
 
-      <!-- Workflow 2: Merchant → User (0,1) -->
-      <template v-else-if="deliveryType === 0 && shippingType === 1">
+      <!-- Workflow 3: Driver → User (1,0) -->
+      <template v-else-if="deliveryType === 1 && shippingType === 0">
         <WorkflowStep
           :completed="prepareStatus !== null && prepareStatus >= 0"
           :active="prepareStatus === 0"
           icon="📦"
-          :label="$t('workflow.steps.merchantPrepared')"
+          :label="$t('workflow.steps.goodsReady')"
+        />
+        <WorkflowStep
+          :completed="prepareStatus !== null && prepareStatus >= 1"
+          :active="prepareStatus === 1"
+          icon="🚗"
+          :label="$t('workflow.steps.driverPickup')"
         />
         <WorkflowStep
           :completed="prepareStatus !== null && prepareStatus >= 5"
           :active="prepareStatus === 5"
-          icon="🚚"
-          :label="$t('workflow.steps.shipped')"
-        />
-        <WorkflowStep
-          :completed="prepareStatus !== null && prepareStatus >= 6"
-          :active="prepareStatus === 6"
           icon="✅"
-          :label="$t('workflow.steps.delivered')"
+          :label="$t('workflow.steps.deliveredToUser')"
         />
       </template>
 
-      <!-- Workflow 3: Driver → Warehouse → User (1,0) -->
-      <template v-else-if="deliveryType === 1 && shippingType === 0">
+      <!-- Workflow 2: Driver → Warehouse → User (1,1) -->
+      <template v-else-if="deliveryType === 1 && shippingType === 1">
         <WorkflowStep
           :completed="prepareStatus !== null && prepareStatus >= 0"
           :active="prepareStatus === 0"
@@ -95,28 +117,6 @@
           :active="prepareStatus === 6"
           icon="✅"
           :label="$t('workflow.steps.delivered')"
-        />
-      </template>
-
-      <!-- Workflow 4: Driver → User (1,1) -->
-      <template v-else-if="deliveryType === 1 && shippingType === 1">
-        <WorkflowStep
-          :completed="prepareStatus !== null && prepareStatus >= 0"
-          :active="prepareStatus === 0"
-          icon="📦"
-          :label="$t('workflow.steps.goodsReady')"
-        />
-        <WorkflowStep
-          :completed="prepareStatus !== null && prepareStatus >= 1"
-          :active="prepareStatus === 1"
-          icon="🚗"
-          :label="$t('workflow.steps.driverPickup')"
-        />
-        <WorkflowStep
-          :completed="prepareStatus !== null && prepareStatus >= 5"
-          :active="prepareStatus === 5"
-          icon="✅"
-          :label="$t('workflow.steps.deliveredToUser')"
         />
       </template>
     </div>

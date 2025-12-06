@@ -41,7 +41,7 @@ class CreatePreparePackageRequest(BaseModel):
     warehouse_id: Optional[int] = Field(
         default=None,
         alias="warehouseId",
-        description="Target warehouse ID (required if shipping_type=0)"
+        description="Target warehouse ID (required if shipping_type=1)"
     )
 
 

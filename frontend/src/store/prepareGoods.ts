@@ -334,9 +334,9 @@ export const usePrepareGoodsStore = defineStore('prepareGoods', {
         // Update local state - package status changes based on shipping type
         const pkg = this.driverPackages.find((pkg) => pkg.prepareSn === prepareSn);
         if (pkg) {
-          // shipping_type = 0 (Workflow 3): warehouse → status 2 (司机送达仓库)
-          // shipping_type = 1 (Workflow 4): user → status 3 (已送达)
-          const newStatus = pkg.shippingType === 0 ? 2 : 3;
+          // shipping_type = 0 (Workflow 4): user → status 3 (已送达)
+          // shipping_type = 1 (Workflow 3): warehouse → status 2 (司机送达仓库)
+          const newStatus = pkg.shippingType === 1 ? 2 : 3;
           pkg.prepareStatus = newStatus;
           pkg.prepareStatusLabel = prepareStatusLabels[newStatus] || 'Unknown';
         }

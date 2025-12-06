@@ -173,8 +173,8 @@ function selectWorkflow(deliveryType: number, shippingType: number) {
   selectedDeliveryType.value = deliveryType;
   selectedShippingType.value = shippingType;
 
-  // Reset warehouse if not required
-  if (shippingType !== 0) {
+  // Reset warehouse if not required (only required for shippingType=1)
+  if (shippingType !== 1) {
     selectedWarehouseId.value = null;
   }
 

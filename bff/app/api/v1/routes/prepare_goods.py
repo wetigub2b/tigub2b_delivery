@@ -31,19 +31,8 @@ from app.utils import parse_order_id_list
 router = APIRouter()
 
 # Prepare status labels for different shipping types
-# shipping_type=0: To warehouse
-# shipping_type=1: Direct to user
-PREPARE_STATUS_LABELS_TO_WAREHOUSE = {
-    None: "待备货",        # Pending Prepare
-    0: "已备货",           # Prepared
-    1: "司机收货中",        # Driver Pickup
-    2: "司机送达仓库",      # Driver to Warehouse
-    3: "仓库已收货",        # Warehouse Received
-    4: "司机配送用户",      # Driver to User
-    5: "已送达",           # Delivered
-    6: "司机已认领",        # Driver Claimed
-}
-
+# shipping_type=0: Direct to user
+# shipping_type=1: To warehouse
 PREPARE_STATUS_LABELS_TO_USER = {
     None: "待备货",        # Pending Prepare
     0: "已备货",           # Prepared
@@ -55,9 +44,20 @@ PREPARE_STATUS_LABELS_TO_USER = {
     6: "司机已认领",        # Driver Claimed
 }
 
+PREPARE_STATUS_LABELS_TO_WAREHOUSE = {
+    None: "待备货",        # Pending Prepare
+    0: "已备货",           # Prepared
+    1: "司机收货中",        # Driver Pickup
+    2: "司机送达仓库",      # Driver to Warehouse
+    3: "仓库已收货",        # Warehouse Received
+    4: "司机配送用户",      # Driver to User
+    5: "已送达",           # Delivered
+    6: "司机已认领",        # Driver Claimed
+}
+
 def get_prepare_status_label(status: Optional[int], shipping_type: int) -> str:
     """Get status label based on shipping type."""
-    if shipping_type == 0:
+    if shipping_type == 1:
         return PREPARE_STATUS_LABELS_TO_WAREHOUSE.get(status, "Unknown")
     else:
         return PREPARE_STATUS_LABELS_TO_USER.get(status, "Unknown")
@@ -83,7 +83,7 @@ async def create_prepare_package(
         Created PrepareGoods package
 
     Raises:
-        HTTPException 400: Invalid input (missing warehouse_id when shipping_type=0)
+        HTTPException 400: Invalid input (missing warehouse_id when shipping_type=1)
         HTTPException 404: No orders found
     """
     try:
@@ -759,12 +759,12 @@ async def confirm_delivery(
     This action:
     1. Saves photo to tigu_uploaded_files (biz_type='prepare_good', biz_id=package.id)
     2. Creates OrderAction records for each order
-       - For warehouse delivery (shipping_type=0): action_type=2 - 司机送达仓库
-       - For user delivery (shipping_type=1): action_type=5 - 完成
+       - For warehouse delivery (shipping_type=1): action_type=2 - 司机送达仓库
+       - For user delivery (shipping_type=0): action_type=5 - 完成
        - logistics_voucher_file contains the file ID from tigu_uploaded_files
     3. Updates package status based on shipping type:
-       - shipping_type=0 (Workflow 3): prepare_status to 2 (司机送达仓库 - Driver delivered to warehouse)
-       - shipping_type=1 (Workflow 4): prepare_status to 3 (已送达 - Delivered to user, complete)
+       - shipping_type=1 (Workflow 3): prepare_status to 2 (司机送达仓库 - Driver delivered to warehouse)
+       - shipping_type=0 (Workflow 4): prepare_status to 3 (已送达 - Delivered to user, complete)
 
     Args:
         prepare_sn: Prepare goods serial number
@@ -883,7 +883,7 @@ async def confirm_delivery(
     orders = orders_result.scalars().all()
 
     # Determine action type and new status based on shipping type
-    if package.shipping_type == 0:
+    if package.shipping_type == 1:
         # To warehouse workflow (Workflow 3)
         action_type = 2  # 司机送达仓库 - Driver arrives at warehouse (action_type=2)
         new_status = 2  # 司机送达仓库 (Driver delivered to warehouse)
@@ -912,7 +912,7 @@ async def confirm_delivery(
         
         # Update tigu_order based on shipping type
         order.shipping_status = order_shipping_status
-        if package.shipping_type == 0:
+        if package.shipping_type == 1:
             # Driver arrived at warehouse
             order.arrive_warehouse_time = datetime.now()
         else:

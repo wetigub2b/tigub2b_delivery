@@ -41,14 +41,14 @@ async def create_prepare_package(
         order_ids: List of order IDs to include in package
         shop_id: Merchant shop ID
         delivery_type: 0=Merchant self-delivery, 1=Third-party driver
-        shipping_type: 0=To warehouse, 1=To user
-        warehouse_id: Target warehouse (required if shipping_type=0)
+        shipping_type: 0=To user, 1=To warehouse
+        warehouse_id: Target warehouse (required if shipping_type=1)
 
     Returns:
         Created PrepareGoods instance with items loaded
 
     Raises:
-        ValueError: If warehouse_id missing when shipping_type=0
+        ValueError: If warehouse_id missing when shipping_type=1
         ValueError: If no orders found for given order_ids
 
     Workflow:
@@ -60,8 +60,8 @@ async def create_prepare_package(
         6. Commit transaction
     """
     # Validation
-    if shipping_type == 0 and warehouse_id is None:
-        raise ValueError("warehouse_id required when shipping_type=0 (to warehouse)")
+    if shipping_type == 1 and warehouse_id is None:
+        raise ValueError("warehouse_id required when shipping_type=1 (to warehouse)")
 
     if not order_ids:
         raise ValueError("order_ids cannot be empty")

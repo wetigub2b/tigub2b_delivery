@@ -46,7 +46,7 @@
             <div class="package-info-row">
               <span>🏷️ {{ pkg.workflowLabel }}</span>
             </div>
-            <div v-if="pkg.shippingType === 0 && pkg.warehouseName" class="package-info-row">
+            <div v-if="pkg.shippingType === 1 && pkg.warehouseName" class="package-info-row">
               <span>🏭 {{ pkg.warehouseName }}</span>
             </div>
           </div>

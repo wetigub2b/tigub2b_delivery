@@ -73,8 +73,8 @@ class WorkflowValidator:
 
         Args:
             delivery_type: 0=Merchant self, 1=Third-party driver
-            shipping_type: 0=To warehouse, 1=To user
-            warehouse_id: Warehouse ID (required if shipping_type=0)
+            shipping_type: 0=To user, 1=To warehouse
+            warehouse_id: Warehouse ID (required if shipping_type=1)
 
         Returns:
             True if configuration is valid
@@ -95,13 +95,13 @@ class WorkflowValidator:
             )
 
         # If shipping to warehouse, warehouse_id is required
-        if shipping_type == 0 and warehouse_id is None:
+        if shipping_type == 1 and warehouse_id is None:
             raise WorkflowValidationError(
-                "warehouse_id required when shipping_type=0 (to warehouse)"
+                "warehouse_id required when shipping_type=1 (to warehouse)"
             )
 
         # If shipping to user, warehouse_id should be None
-        if shipping_type == 1 and warehouse_id is not None:
+        if shipping_type == 0 and warehouse_id is not None:
             # This is a warning, not an error - we'll allow it but log
             pass
 

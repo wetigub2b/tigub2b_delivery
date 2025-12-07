@@ -23,6 +23,7 @@
           📋 {{ $t('navigation.taskBoard') }}
         </router-link>
         <router-link
+          v-if="features.routePlanner"
           to="/route-planner"
           class="nav__link"
           :class="{ 'nav__link--active': $route.name === 'route-planner' }"
@@ -74,6 +75,7 @@
         📋 {{ $t('navigation.taskBoard') }}
       </router-link>
       <router-link
+        v-if="features.routePlanner"
         to="/route-planner"
         class="nav__mobile-link"
         @click="closeMobileMenu"
@@ -104,6 +106,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useOrdersStore } from '@/store/orders';
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
+import features from '@/config/features';
 
 const showMobileMenu = ref(false);
 const router = useRouter();

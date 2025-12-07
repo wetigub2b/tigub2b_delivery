@@ -5,7 +5,7 @@
         <h2>{{ $t('taskBoard.assignments') }}</h2>
         <p>{{ $t('taskBoard.description') }}</p>
       </div>
-      <RouterLink class="board__route" to="/route-planner">{{ $t('taskBoard.openRoutePlanner') }}</RouterLink>
+      <RouterLink v-if="features.routePlanner" class="board__route" to="/route-planner">{{ $t('taskBoard.openRoutePlanner') }}</RouterLink>
     </header>
 
     <nav class="board__filters">

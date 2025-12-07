@@ -63,6 +63,24 @@ def get_prepare_status_label(status: Optional[int], shipping_type: int) -> str:
         return PREPARE_STATUS_LABELS_TO_USER.get(status, "Unknown")
 
 
+def parse_localized_value(val) -> str:
+    """Parse a value that may be a JSON string with localized values or a plain string."""
+    if not val:
+        return ""
+    if isinstance(val, str):
+        val = val.strip()
+        if val.startswith("{"):
+            try:
+                import json
+                parsed = json.loads(val)
+                if isinstance(parsed, dict):
+                    return parsed.get("en-US") or parsed.get("en") or next(iter(parsed.values()), "")
+            except:
+                pass
+        return val
+    return str(val)
+
+
 def build_warehouse_address(warehouse) -> Optional[str]:
     """Build full address string from warehouse model."""
     if not warehouse:
@@ -70,8 +88,10 @@ def build_warehouse_address(warehouse) -> Optional[str]:
     parts = [warehouse.line1]
     if warehouse.line2:
         parts.append(warehouse.line2)
-    parts.extend([warehouse.city, warehouse.province, warehouse.postal_code])
-    return ", ".join(parts)
+    city = parse_localized_value(warehouse.city)
+    province = parse_localized_value(warehouse.province)
+    parts.extend([city, province, warehouse.postal_code])
+    return ", ".join([p for p in parts if p])
 
 
 def build_pickup_address(shop) -> Optional[str]:
@@ -82,24 +102,9 @@ def build_pickup_address(shop) -> Optional[str]:
         import json
         info = json.loads(shop.shop_info) if isinstance(shop.shop_info, str) else shop.shop_info
         address = info.get("address", "")
-        city_raw = info.get("city", "")
-        state_raw = info.get("state", "")
+        city = parse_localized_value(info.get("city", ""))
+        state = parse_localized_value(info.get("state", ""))
         zip_code = info.get("zip", "")
-        
-        # Parse city/state which may be JSON strings with localized values
-        def parse_localized(val):
-            if not val:
-                return ""
-            if isinstance(val, str) and val.startswith("{"):
-                try:
-                    parsed = json.loads(val)
-                    return parsed.get("en-US") or parsed.get("en") or list(parsed.values())[0] if parsed else ""
-                except:
-                    return val
-            return val
-        
-        city = parse_localized(city_raw)
-        state = parse_localized(state_raw)
         
         parts = [p for p in [address, city, state, zip_code] if p]
         return ", ".join(parts) if parts else None

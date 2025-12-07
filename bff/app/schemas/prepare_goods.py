@@ -127,6 +127,8 @@ class PrepareGoodsSummary(BaseModel):
     shop_id: Optional[str] = Field(default=None, alias="shopId")
     warehouse_id: Optional[str] = Field(default=None, alias="warehouseId")
     warehouse_name: Optional[str] = Field(default=None, alias="warehouseName")
+    warehouse_address: Optional[str] = Field(default=None, alias="warehouseAddress")
+    pickup_address: Optional[str] = Field(default=None, alias="pickupAddress")
     driver_name: Optional[str] = Field(default=None, alias="driverName")
     receiver_address: Optional[str] = Field(default=None, alias="receiverAddress")
     total_value: Optional[float] = Field(default=None, alias="totalValue")

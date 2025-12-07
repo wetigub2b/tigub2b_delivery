@@ -177,7 +177,8 @@ async def get_prepare_package(
         .options(
             selectinload(PrepareGoods.items).selectinload(PrepareGoodsItem.order_item),
             selectinload(PrepareGoods.warehouse),
-            selectinload(PrepareGoods.driver)
+            selectinload(PrepareGoods.driver),
+            selectinload(PrepareGoods.shop)
         )
         .where(PrepareGoods.prepare_sn == prepare_sn)
     )
@@ -211,7 +212,8 @@ async def get_prepare_package_by_order_id(
         select(PrepareGoods)
         .options(
             selectinload(PrepareGoods.warehouse),
-            selectinload(PrepareGoods.driver)
+            selectinload(PrepareGoods.driver),
+            selectinload(PrepareGoods.shop)
         )
         .where(PrepareGoods.order_ids.like(f"%{order_id}%"))
     )
@@ -242,7 +244,8 @@ async def get_shop_prepare_packages(
         .options(
             selectinload(PrepareGoods.items),
             selectinload(PrepareGoods.warehouse),
-            selectinload(PrepareGoods.driver)
+            selectinload(PrepareGoods.driver),
+            selectinload(PrepareGoods.shop)
         )
         .where(PrepareGoods.shop_id == shop_id)
         .order_by(PrepareGoods.create_time.desc())
@@ -310,7 +313,8 @@ async def get_driver_assigned_packages(
         select(PrepareGoods)
         .options(
             selectinload(PrepareGoods.items),
-            selectinload(PrepareGoods.warehouse)
+            selectinload(PrepareGoods.warehouse),
+            selectinload(PrepareGoods.shop)
         )
         .where(PrepareGoods.driver_id == driver_id)
         .where(PrepareGoods.delivery_type == 1)  # Third-party only
@@ -345,7 +349,8 @@ async def get_available_packages(
         select(PrepareGoods)
         .options(
             selectinload(PrepareGoods.items),
-            selectinload(PrepareGoods.warehouse)
+            selectinload(PrepareGoods.warehouse),
+            selectinload(PrepareGoods.shop)
         )
         .where(PrepareGoods.driver_id.is_(None))  # Not assigned
         .where(PrepareGoods.prepare_status == 0)  # Prepared
@@ -383,7 +388,8 @@ async def get_pending_pickup_packages(
         select(PrepareGoods)
         .options(
             selectinload(PrepareGoods.items),
-            selectinload(PrepareGoods.warehouse)
+            selectinload(PrepareGoods.warehouse),
+            selectinload(PrepareGoods.shop)
         )
         .where(PrepareGoods.driver_id == driver_id)
         .where(PrepareGoods.prepare_status == 6)  # Driver claimed
@@ -460,7 +466,8 @@ async def get_packages_by_location(
         select(PrepareGoods)
         .options(
             selectinload(PrepareGoods.items),
-            selectinload(PrepareGoods.warehouse)
+            selectinload(PrepareGoods.warehouse),
+            selectinload(PrepareGoods.shop)
         )
         .where(PrepareGoods.driver_id.is_(None))  # Not assigned
         .where(PrepareGoods.prepare_status == 0)  # Prepared

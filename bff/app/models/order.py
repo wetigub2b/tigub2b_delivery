@@ -253,3 +253,12 @@ class Warehouse(Base):
     latitude: Mapped[Decimal | None] = mapped_column(Numeric(10, 6))
 
     orders: Mapped[list[Order]] = relationship("Order", back_populates="warehouse")
+
+
+class Shop(Base):
+    """Shop/Merchant model for pickup address lookup."""
+    __tablename__ = "tigu_shop"
+
+    id: Mapped[int] = mapped_column(BIGINT(unsigned=True), primary_key=True)
+    name: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    shop_info: Mapped[str | None] = mapped_column(String(255), nullable=True)

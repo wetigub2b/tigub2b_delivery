@@ -52,6 +52,8 @@ export interface PrepareGoodsSummaryDto {
   shopId: string | null;  // String to preserve bigint precision
   warehouseId: string | null;  // String to preserve bigint precision
   warehouseName: string | null;
+  warehouseAddress: string | null;
+  pickupAddress: string | null;
   driverName: string | null;
   receiverAddress: string | null;
   totalValue: number | null;

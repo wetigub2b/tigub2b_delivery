@@ -74,7 +74,10 @@
     "deliveryProof": "送达凭证",
     "deliveryNotes": "送达备注（可选）",
     "deliveryNotesPlaceholder": "添加送达备注...",
-    "submitDelivery": "提交送达"
+    "submitDelivery": "提交送达",
+    "pickupAddress": "取货地址",
+    "warehouseAddress": "仓库地址",
+    "receiverAddress": "收货地址"
   },
   "routePlanner": {
     "title": "路线规划",

@@ -23,7 +23,7 @@ from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.models.driver import Driver
-    from app.models.order import OrderItem, Warehouse
+    from app.models.order import OrderItem, Shop, Warehouse
 
 
 class PrepareGoods(Base):
@@ -195,6 +195,13 @@ class PrepareGoods(Base):
     driver: Mapped[Driver | None] = relationship(
         "Driver",
         lazy="joined"
+    )
+
+    shop: Mapped[Shop | None] = relationship(
+        "Shop",
+        lazy="joined",
+        foreign_keys=[shop_id],
+        primaryjoin="PrepareGoods.shop_id == Shop.id"
     )
 
 

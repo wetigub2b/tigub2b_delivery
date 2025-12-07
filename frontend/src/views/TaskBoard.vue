@@ -49,11 +49,20 @@
             <div v-if="pkg.totalValue" class="package-info-row">
               <span>💰 {{ formatAmount(pkg.totalValue) }}</span>
             </div>
-            <div v-if="pkg.receiverAddress" class="package-info-row package-info-row--address">
-              <a class="address-link" @click.stop="openAddressMap(pkg.receiverAddress)">📍 {{ pkg.receiverAddress }}</a>
+            <!-- Pickup Address -->
+            <div v-if="pkg.pickupAddress" class="package-info-row package-info-row--address">
+              <span class="address-label">{{ $t('taskBoard.pickupAddress') }}:</span>
+              <a class="address-link" @click.stop="openAddressMap(pkg.pickupAddress, 'pickup')">📍 {{ pkg.pickupAddress }}</a>
             </div>
-            <div v-if="pkg.shippingType === 1 && pkg.warehouseName" class="package-info-row">
-              <span>🏭 {{ pkg.warehouseName }}</span>
+            <!-- Warehouse Address (for workflow Driver -> Warehouse -> User) -->
+            <div v-if="pkg.shippingType === 1 && pkg.warehouseAddress" class="package-info-row package-info-row--address">
+              <span class="address-label">{{ $t('taskBoard.warehouseAddress') }}:</span>
+              <a class="address-link" @click.stop="openAddressMap(pkg.warehouseAddress, 'warehouse')">🏭 {{ pkg.warehouseAddress }}</a>
+            </div>
+            <!-- Receiver Address -->
+            <div v-if="pkg.receiverAddress" class="package-info-row package-info-row--address">
+              <span class="address-label">{{ $t('taskBoard.receiverAddress') }}:</span>
+              <a class="address-link" @click.stop="openAddressMap(pkg.receiverAddress, 'receiver')">📍 {{ pkg.receiverAddress }}</a>
             </div>
           </div>
           <div v-if="![2, 3].includes(pkg.prepareStatus)" class="package-footer">
@@ -228,7 +237,7 @@ function formatAmount(amount: number): string {
   return `$${amount.toFixed(2)}`;
 }
 
-function openAddressMap(address: string) {
+function openAddressMap(address: string, _type?: string) {
   selectedAddress.value = address;
   showAddressMapModal.value = true;
 }
@@ -484,6 +493,16 @@ function cancelDeliveryProof() {
 .package-info-row--address {
   font-size: 0.8rem;
   line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.address-label {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  text-transform: uppercase;
 }
 
 .address-link {

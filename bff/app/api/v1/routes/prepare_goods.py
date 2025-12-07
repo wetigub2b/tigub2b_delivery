@@ -63,6 +63,50 @@ def get_prepare_status_label(status: Optional[int], shipping_type: int) -> str:
         return PREPARE_STATUS_LABELS_TO_USER.get(status, "Unknown")
 
 
+def build_warehouse_address(warehouse) -> Optional[str]:
+    """Build full address string from warehouse model."""
+    if not warehouse:
+        return None
+    parts = [warehouse.line1]
+    if warehouse.line2:
+        parts.append(warehouse.line2)
+    parts.extend([warehouse.city, warehouse.province, warehouse.postal_code])
+    return ", ".join(parts)
+
+
+def build_pickup_address(shop) -> Optional[str]:
+    """Build pickup address from shop model's shop_info JSON field."""
+    if not shop or not shop.shop_info:
+        return None
+    try:
+        import json
+        info = json.loads(shop.shop_info) if isinstance(shop.shop_info, str) else shop.shop_info
+        address = info.get("address", "")
+        city_raw = info.get("city", "")
+        state_raw = info.get("state", "")
+        zip_code = info.get("zip", "")
+        
+        # Parse city/state which may be JSON strings with localized values
+        def parse_localized(val):
+            if not val:
+                return ""
+            if isinstance(val, str) and val.startswith("{"):
+                try:
+                    parsed = json.loads(val)
+                    return parsed.get("en-US") or parsed.get("en") or list(parsed.values())[0] if parsed else ""
+                except:
+                    return val
+            return val
+        
+        city = parse_localized(city_raw)
+        state = parse_localized(state_raw)
+        
+        parts = [p for p in [address, city, state, zip_code] if p]
+        return ", ".join(parts) if parts else None
+    except Exception:
+        return None
+
+
 @router.post("", response_model=PrepareGoodsResponse, response_model_by_alias=True, status_code=status.HTTP_201_CREATED)
 async def create_prepare_package(
     payload: CreatePreparePackageRequest,
@@ -159,6 +203,8 @@ async def list_available_packages(
                 shop_id=str(pkg.shop_id) if pkg.shop_id else None,
                 warehouse_id=str(pkg.warehouse_id) if pkg.warehouse_id else None,
                 warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
+                warehouse_address=build_warehouse_address(pkg.warehouse),
+                pickup_address=build_pickup_address(pkg.shop),
                 driver_name=None,  # Available packages have no driver assigned
                 receiver_address=pkg.receiver_address,
                 total_value=float(pkg.total_value) if pkg.total_value else None,
@@ -218,6 +264,8 @@ async def list_my_driver_packages(
                 shop_id=str(pkg.shop_id) if pkg.shop_id else None,
                 warehouse_id=str(pkg.warehouse_id) if pkg.warehouse_id else None,
                 warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
+                warehouse_address=build_warehouse_address(pkg.warehouse),
+                pickup_address=build_pickup_address(pkg.shop),
                 driver_name=pkg.driver.name if pkg.driver else None,
                 receiver_address=pkg.receiver_address,
                 total_value=float(pkg.total_value) if pkg.total_value else None,
@@ -270,6 +318,8 @@ async def list_driver_packages(
                 shop_id=str(pkg.shop_id) if pkg.shop_id else None,
                 warehouse_id=str(pkg.warehouse_id) if pkg.warehouse_id else None,
                 warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
+                warehouse_address=build_warehouse_address(pkg.warehouse),
+                pickup_address=build_pickup_address(pkg.shop),
                 driver_name=pkg.driver.name if pkg.driver else None,
                 receiver_address=pkg.receiver_address,
                 total_value=float(pkg.total_value) if pkg.total_value else None,
@@ -323,6 +373,8 @@ async def list_shop_prepare_packages(
                 shop_id=str(pkg.shop_id) if pkg.shop_id else None,
                 warehouse_id=str(pkg.warehouse_id) if pkg.warehouse_id else None,
                 warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
+                warehouse_address=build_warehouse_address(pkg.warehouse),
+                pickup_address=build_pickup_address(pkg.shop),
                 driver_name=pkg.driver.name if pkg.driver else None,
                 receiver_address=pkg.receiver_address,
                 total_value=float(pkg.total_value) if pkg.total_value else None,
@@ -999,6 +1051,8 @@ async def list_packages_by_location(
                 shop_id=str(pkg.shop_id) if pkg.shop_id else None,
                 warehouse_id=str(pkg.warehouse_id) if pkg.warehouse_id else None,
                 warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
+                warehouse_address=build_warehouse_address(pkg.warehouse),
+                pickup_address=build_pickup_address(pkg.shop),
                 driver_name=None,  # Available packages have no driver assigned
                 receiver_address=pkg.receiver_address,
                 total_value=float(pkg.total_value) if pkg.total_value else None,

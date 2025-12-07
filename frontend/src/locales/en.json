@@ -74,7 +74,10 @@
     "deliveryProof": "Delivery Proof",
     "deliveryNotes": "Delivery Notes (Optional)",
     "deliveryNotesPlaceholder": "Add delivery notes...",
-    "submitDelivery": "Submit Delivery"
+    "submitDelivery": "Submit Delivery",
+    "pickupAddress": "Pickup",
+    "warehouseAddress": "Warehouse",
+    "receiverAddress": "Delivery"
   },
   "routePlanner": {
     "title": "Route Planner",

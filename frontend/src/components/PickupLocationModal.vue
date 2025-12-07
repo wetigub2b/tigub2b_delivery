@@ -60,7 +60,19 @@
                   <div v-if="pkg.totalValue" class="package-info-row">
                     <span>💰 {{ formatAmount(pkg.totalValue) }}</span>
                   </div>
+                  <!-- Pickup Address -->
+                  <div v-if="pkg.pickupAddress" class="package-info-row package-info-row--address">
+                    <span class="address-label">{{ $t('taskBoard.pickupAddress') }}:</span>
+                    <a class="address-link" @click.stop="openAddressMap(pkg.pickupAddress)">📍 {{ pkg.pickupAddress }}</a>
+                  </div>
+                  <!-- Warehouse Address (for workflow Driver -> Warehouse -> User) -->
+                  <div v-if="pkg.shippingType === 1 && pkg.warehouseAddress" class="package-info-row package-info-row--address">
+                    <span class="address-label">{{ $t('taskBoard.warehouseAddress') }}:</span>
+                    <a class="address-link" @click.stop="openAddressMap(pkg.warehouseAddress)">🏭 {{ pkg.warehouseAddress }}</a>
+                  </div>
+                  <!-- Receiver Address -->
                   <div v-if="pkg.receiverAddress" class="package-info-row package-info-row--address">
+                    <span class="address-label">{{ $t('taskBoard.receiverAddress') }}:</span>
                     <a class="address-link" @click.stop="openAddressMap(pkg.receiverAddress)">📍 {{ pkg.receiverAddress }}</a>
                   </div>
                 </div>
@@ -450,6 +462,16 @@ function closeAddressMapModal() {
 .package-info-row--address {
   font-size: 0.8rem;
   line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.address-label {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  text-transform: uppercase;
 }
 
 .address-link {

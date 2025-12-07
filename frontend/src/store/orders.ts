@@ -29,7 +29,9 @@ function getPhoneFromToken(): string {
   if (!token) return '';
 
   const payload = decodeJWT(token);
-  return payload?.phonenumber || payload?.phone || payload?.sub || '';
+  // Only return if it's actually a phone number field
+  // Do NOT fallback to 'sub' as it contains user_id, not phone number
+  return payload?.phonenumber || payload?.phone || '';
 }
 
 export interface DeliveryProof {

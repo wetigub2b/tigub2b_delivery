@@ -61,7 +61,7 @@
                     <span>💰 {{ formatAmount(pkg.totalValue) }}</span>
                   </div>
                   <div v-if="pkg.receiverAddress" class="package-info-row package-info-row--address">
-                    <span>📍 {{ pkg.receiverAddress }}</span>
+                    <a class="address-link" @click.stop="openAddressMap(pkg.receiverAddress)">📍 {{ pkg.receiverAddress }}</a>
                   </div>
                 </div>
                 <div class="package-footer">
@@ -94,6 +94,14 @@
       :order-count="selectedPackage.orderCount"
       @close="closeOrdersModal"
     />
+
+    <!-- Address Map Modal -->
+    <AddressMapModal
+      v-if="selectedAddress"
+      :show="showAddressMapModal"
+      :address="selectedAddress"
+      @close="closeAddressMapModal"
+    />
 </template>
 
 <script setup lang="ts">
@@ -101,6 +109,7 @@ import { ref, watch, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { usePrepareGoodsStore } from '@/store/prepareGoods';
 import PackageOrdersModal from './PackageOrdersModal.vue';
+import AddressMapModal from './AddressMapModal.vue';
 
 const { t } = useI18n();
 const prepareGoodsStore = usePrepareGoodsStore();
@@ -133,6 +142,10 @@ const isPickingUp = ref(false);
 // Modal state for package orders detail
 const showOrdersModal = ref(false);
 const selectedPackage = ref<{ prepareSn: string; orderCount: number } | null>(null);
+
+// Address map modal state
+const showAddressMapModal = ref(false);
+const selectedAddress = ref<string | null>(null);
 
 // Filter available packages from store by shop_id or warehouse_id
 const packages = computed(() => {
@@ -200,6 +213,16 @@ function openOrdersModal(pkg: any) {
 function closeOrdersModal() {
   showOrdersModal.value = false;
   selectedPackage.value = null;
+}
+
+function openAddressMap(address: string) {
+  selectedAddress.value = address;
+  showAddressMapModal.value = true;
+}
+
+function closeAddressMapModal() {
+  showAddressMapModal.value = false;
+  selectedAddress.value = null;
 }
 </script>
 
@@ -427,6 +450,17 @@ function closeOrdersModal() {
 .package-info-row--address {
   font-size: 0.8rem;
   line-height: 1.4;
+}
+
+.address-link {
+  color: var(--color-primary);
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color var(--transition-base);
+}
+
+.address-link:hover {
+  color: var(--color-primary-dark);
 }
 
 .detail-button {

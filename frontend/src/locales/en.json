@@ -215,6 +215,10 @@
     "noOrders": "No orders in this package",
     "viewDetails": "View Details"
   },
+  "addressMap": {
+    "title": "Delivery Location",
+    "openInGoogleMaps": "Open in Google Maps"
+  },
   "admin": {
     "title": "Admin Portal",
     "subtitle": "Delivery Management System",

@@ -412,5 +412,9 @@
     "orderList": "订单列表",
     "noOrders": "此包裹中没有订单",
     "viewDetails": "查看详情"
+  },
+  "addressMap": {
+    "title": "配送地点",
+    "openInGoogleMaps": "在谷歌地图中打开"
   }
 }

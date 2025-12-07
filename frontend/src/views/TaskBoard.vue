@@ -50,7 +50,7 @@
               <span>💰 {{ formatAmount(pkg.totalValue) }}</span>
             </div>
             <div v-if="pkg.receiverAddress" class="package-info-row package-info-row--address">
-              <span>📍 {{ pkg.receiverAddress }}</span>
+              <a class="address-link" @click.stop="openAddressMap(pkg.receiverAddress)">📍 {{ pkg.receiverAddress }}</a>
             </div>
             <div v-if="pkg.shippingType === 1 && pkg.warehouseName" class="package-info-row">
               <span>🏭 {{ pkg.warehouseName }}</span>
@@ -121,6 +121,14 @@
       @submit="submitDeliveryProof"
       @cancel="cancelDeliveryProof"
     />
+
+    <!-- Address Map Modal -->
+    <AddressMapModal
+      v-if="selectedAddress"
+      :show="showAddressMapModal"
+      :address="selectedAddress"
+      @close="closeAddressMapModal"
+    />
   </section>
 </template>
 
@@ -135,6 +143,7 @@ import ConfirmPackagePickupModal from '@/components/ConfirmPackagePickupModal.vu
 import PickupProofModal from '@/components/PickupProofModal.vue';
 import PreparePackageDeliveryModal from '@/components/PreparePackageDeliveryModal.vue';
 import MapTab from '@/components/MapTab.vue';
+import AddressMapModal from '@/components/AddressMapModal.vue';
 import features from '@/config/features';
 
 const { t } = useI18n();
@@ -157,6 +166,10 @@ const packageForProof = ref<any>(null);
 // Delivery proof modal state
 const showDeliveryProofModal = ref(false);
 const packageForDelivery = ref<any>(null);
+
+// Address map modal state
+const showAddressMapModal = ref(false);
+const selectedAddress = ref<string | null>(null);
 
 const statuses = computed(() => {
   const tabs = [];
@@ -213,6 +226,16 @@ function getPackageActionLabel(status: number | null): string {
 
 function formatAmount(amount: number): string {
   return `$${amount.toFixed(2)}`;
+}
+
+function openAddressMap(address: string) {
+  selectedAddress.value = address;
+  showAddressMapModal.value = true;
+}
+
+function closeAddressMapModal() {
+  showAddressMapModal.value = false;
+  selectedAddress.value = null;
 }
 
 function handlePackageAction(pkg: any) {
@@ -461,6 +484,17 @@ function cancelDeliveryProof() {
 .package-info-row--address {
   font-size: 0.8rem;
   line-height: 1.4;
+}
+
+.address-link {
+  color: var(--color-primary);
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color var(--transition-base);
+}
+
+.address-link:hover {
+  color: var(--color-primary-dark);
 }
 
 .package-info-row--with-action {

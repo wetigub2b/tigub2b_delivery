@@ -36,6 +36,8 @@ export interface PrepareGoodsDetailDto extends PrepareGoodsDto {
   items: PrepareGoodsItemDto[];
   warehouseName: string | null;
   driverName: string | null;
+  receiverAddress: string | null;
+  totalValue: number | null;
   orderSerialNumbers: string[];
   pickupPhotos: UploadedFileDto[];
 }
@@ -51,6 +53,8 @@ export interface PrepareGoodsSummaryDto {
   warehouseId: string | null;  // String to preserve bigint precision
   warehouseName: string | null;
   driverName: string | null;
+  receiverAddress: string | null;
+  totalValue: number | null;
   createTime: string;
 }
 

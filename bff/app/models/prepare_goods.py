@@ -12,9 +12,10 @@ Tables:
 from __future__ import annotations
 
 from datetime import datetime
+from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.dialects.mysql import BIGINT
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -141,6 +142,12 @@ class PrepareGoods(Base):
         String(16),
         nullable=True,
         comment="收货人邮编"
+    )
+
+    total_value: Mapped[Decimal | None] = mapped_column(
+        Numeric(15, 2),
+        nullable=True,
+        comment="包裹总价值"
     )
 
     # Warehouse (if applicable - shipping_type=1)

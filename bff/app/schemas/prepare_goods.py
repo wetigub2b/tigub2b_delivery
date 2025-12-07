@@ -107,6 +107,8 @@ class PrepareGoodsDetailResponse(PrepareGoodsResponse):
     items: List[PrepareGoodsItemSchema] = Field(default_factory=list)
     warehouse_name: Optional[str] = Field(default=None, alias="warehouseName")
     driver_name: Optional[str] = Field(default=None, alias="driverName")
+    receiver_address: Optional[str] = Field(default=None, alias="receiverAddress", description="Delivery address")
+    total_value: Optional[float] = Field(default=None, alias="totalValue", description="Total package value")
     order_serial_numbers: List[str] = Field(default_factory=list, alias="orderSerialNumbers", description="List of order serial numbers")
     pickup_photos: List[UploadedFileSchema] = Field(default_factory=list, alias="pickupPhotos", description="Pickup proof photos")
 
@@ -126,4 +128,6 @@ class PrepareGoodsSummary(BaseModel):
     warehouse_id: Optional[str] = Field(default=None, alias="warehouseId")
     warehouse_name: Optional[str] = Field(default=None, alias="warehouseName")
     driver_name: Optional[str] = Field(default=None, alias="driverName")
+    receiver_address: Optional[str] = Field(default=None, alias="receiverAddress")
+    total_value: Optional[float] = Field(default=None, alias="totalValue")
     create_time: datetime = Field(alias="createTime")

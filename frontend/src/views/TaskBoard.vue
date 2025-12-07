@@ -46,6 +46,12 @@
             <div class="package-info-row">
               <span>🏷️ {{ pkg.workflowLabel }}</span>
             </div>
+            <div v-if="pkg.totalValue" class="package-info-row">
+              <span>💰 {{ formatAmount(pkg.totalValue) }}</span>
+            </div>
+            <div v-if="pkg.receiverAddress" class="package-info-row package-info-row--address">
+              <span>📍 {{ pkg.receiverAddress }}</span>
+            </div>
             <div v-if="pkg.shippingType === 1 && pkg.warehouseName" class="package-info-row">
               <span>🏭 {{ pkg.warehouseName }}</span>
             </div>
@@ -203,6 +209,10 @@ function getPackageActionLabel(status: number | null): string {
   if (status === 6) return t('taskBoard.confirmPickupButton');
   if (status === 1) return t('taskBoard.confirmDeliveryButton');
   return t('taskBoard.viewDetails');
+}
+
+function formatAmount(amount: number): string {
+  return `$${amount.toFixed(2)}`;
 }
 
 function handlePackageAction(pkg: any) {
@@ -446,6 +456,11 @@ function cancelDeliveryProof() {
   padding: var(--spacing-xs) 0;
   font-size: 0.875rem;
   color: var(--color-text-secondary);
+}
+
+.package-info-row--address {
+  font-size: 0.8rem;
+  line-height: 1.4;
 }
 
 .package-info-row--with-action {

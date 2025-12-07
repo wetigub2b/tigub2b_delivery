@@ -160,6 +160,8 @@ async def list_available_packages(
                 warehouse_id=str(pkg.warehouse_id) if pkg.warehouse_id else None,
                 warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
                 driver_name=None,  # Available packages have no driver assigned
+                receiver_address=pkg.receiver_address,
+                total_value=float(pkg.total_value) if pkg.total_value else None,
                 create_time=pkg.create_time
             )
         )
@@ -217,6 +219,8 @@ async def list_my_driver_packages(
                 warehouse_id=str(pkg.warehouse_id) if pkg.warehouse_id else None,
                 warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
                 driver_name=pkg.driver.name if pkg.driver else None,
+                receiver_address=pkg.receiver_address,
+                total_value=float(pkg.total_value) if pkg.total_value else None,
                 create_time=pkg.create_time
             )
         )
@@ -267,6 +271,8 @@ async def list_driver_packages(
                 warehouse_id=str(pkg.warehouse_id) if pkg.warehouse_id else None,
                 warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
                 driver_name=pkg.driver.name if pkg.driver else None,
+                receiver_address=pkg.receiver_address,
+                total_value=float(pkg.total_value) if pkg.total_value else None,
                 create_time=pkg.create_time
             )
         )
@@ -318,6 +324,8 @@ async def list_shop_prepare_packages(
                 warehouse_id=str(pkg.warehouse_id) if pkg.warehouse_id else None,
                 warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
                 driver_name=pkg.driver.name if pkg.driver else None,
+                receiver_address=pkg.receiver_address,
+                total_value=float(pkg.total_value) if pkg.total_value else None,
                 create_time=pkg.create_time
             )
         )
@@ -453,6 +461,8 @@ async def get_prepare_package(
         items=items,
         warehouse_name=prepare_goods.warehouse.name if prepare_goods.warehouse else None,
         driver_name=prepare_goods.driver.name if prepare_goods.driver else None,
+        receiver_address=prepare_goods.receiver_address,
+        total_value=float(prepare_goods.total_value) if prepare_goods.total_value else None,
         order_serial_numbers=order_serial_numbers,
         pickup_photos=pickup_photos
     )
@@ -990,6 +1000,8 @@ async def list_packages_by_location(
                 warehouse_id=str(pkg.warehouse_id) if pkg.warehouse_id else None,
                 warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
                 driver_name=None,  # Available packages have no driver assigned
+                receiver_address=pkg.receiver_address,
+                total_value=float(pkg.total_value) if pkg.total_value else None,
                 create_time=pkg.create_time
             )
         )

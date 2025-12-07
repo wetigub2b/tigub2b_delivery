@@ -57,6 +57,12 @@
                   <div class="package-info-row">
                     <span>🏷️ {{ pkg.workflowLabel }}</span>
                   </div>
+                  <div v-if="pkg.totalValue" class="package-info-row">
+                    <span>💰 {{ formatAmount(pkg.totalValue) }}</span>
+                  </div>
+                  <div v-if="pkg.receiverAddress" class="package-info-row package-info-row--address">
+                    <span>📍 {{ pkg.receiverAddress }}</span>
+                  </div>
                 </div>
                 <div class="package-footer">
                   <button
@@ -177,6 +183,10 @@ async function handlePickup(pkg: any) {
 
 function handleClose() {
   emit('close');
+}
+
+function formatAmount(amount: number): string {
+  return `$${amount.toFixed(2)}`;
 }
 
 function openOrdersModal(pkg: any) {
@@ -412,6 +422,11 @@ function closeOrdersModal() {
   justify-content: space-between;
   align-items: center;
   gap: var(--spacing-sm);
+}
+
+.package-info-row--address {
+  font-size: 0.8rem;
+  line-height: 1.4;
 }
 
 .detail-button {

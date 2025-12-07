@@ -142,6 +142,9 @@ class Order(Base):
     user_id: Mapped[int] = mapped_column(BIGINT(unsigned=True), index=True)
     shop_id: Mapped[int] = mapped_column(BIGINT(unsigned=True))
 
+    # Amount fields
+    total_amount: Mapped[Decimal] = mapped_column(Numeric(15, 2), default=0)
+
     # Delivery configuration
     # NOTE: delivery_type is stored in tigu_prepare_goods (single source of truth)
     # Access via: prepare_goods.delivery_type

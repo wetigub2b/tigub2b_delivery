@@ -208,6 +208,8 @@
     "orderDetails": "Order Details",
     "packageNumber": "Package Number",
     "totalOrders": "Total Orders",
+    "totalValue": "Total Value",
+    "deliveryAddress": "Delivery Address",
     "pickupPhotos": "Pickup Photos",
     "orderList": "Order List",
     "noOrders": "No orders in this package",

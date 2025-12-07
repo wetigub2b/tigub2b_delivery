@@ -20,6 +20,14 @@
                 <span class="summary-label">{{ $t('packageModal.totalOrders') }}:</span>
                 <span class="summary-value">{{ orderCount }}</span>
               </div>
+              <div v-if="totalValue !== null" class="summary-row">
+                <span class="summary-label">{{ $t('packageModal.totalValue') }}:</span>
+                <span class="summary-value summary-value--amount">{{ formatAmount(totalValue) }}</span>
+              </div>
+              <div v-if="receiverAddress" class="summary-row summary-row--address">
+                <span class="summary-label">{{ $t('packageModal.deliveryAddress') }}:</span>
+                <span class="summary-value">📍 {{ receiverAddress }}</span>
+              </div>
             </div>
 
             <!-- Pickup Photos Section -->
@@ -93,38 +101,52 @@ import type { UploadedFileDto } from '@/api/prepareGoods';
 
 const prepareGoodsStore = usePrepareGoodsStore();
 const orderSerialNumbers = ref<string[]>([]);
+const receiverAddress = ref<string | null>(null);
+const totalValue = ref<number | null>(null);
 const pickupPhotos = ref<UploadedFileDto[]>([]);
 const isLoading = ref(false);
 
 // Fetch package details when modal opens
 watch(() => props.show, async (newValue) => {
   if (newValue && props.packageSn) {
-    await fetchOrderSerialNumbers();
+    await fetchPackageDetails();
   } else {
     // Clear data when modal closes
     orderSerialNumbers.value = [];
+    receiverAddress.value = null;
+    totalValue.value = null;
     pickupPhotos.value = [];
   }
 }, { immediate: true });
 
-async function fetchOrderSerialNumbers() {
+async function fetchPackageDetails() {
   isLoading.value = true;
   try {
     const detail = await prepareGoodsStore.fetchPackageDetail(props.packageSn);
     if (detail) {
       orderSerialNumbers.value = detail.orderSerialNumbers || [];
+      receiverAddress.value = detail.receiverAddress || null;
+      totalValue.value = detail.totalValue || null;
       pickupPhotos.value = detail.pickupPhotos || [];
     } else {
       orderSerialNumbers.value = [];
+      receiverAddress.value = null;
+      totalValue.value = null;
       pickupPhotos.value = [];
     }
   } catch (error) {
     console.error('Failed to fetch package details:', error);
     orderSerialNumbers.value = [];
+    receiverAddress.value = null;
+    totalValue.value = null;
     pickupPhotos.value = [];
   } finally {
     isLoading.value = false;
   }
+}
+
+function formatAmount(amount: number): string {
+  return `$${amount.toFixed(2)}`;
 }
 
 function formatFileSize(bytes: number): string {
@@ -229,6 +251,21 @@ function handleClose() {
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   font-size: 0.875rem;
+}
+
+.summary-value--amount {
+  color: var(--color-success);
+}
+
+.summary-row--address {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-xs);
+}
+
+.summary-row--address .summary-value {
+  font-size: 0.8rem;
+  line-height: 1.4;
 }
 
 .photos-section {

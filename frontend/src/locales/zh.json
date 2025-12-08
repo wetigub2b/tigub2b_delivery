@@ -416,6 +416,16 @@
     "noOrders": "此包裹中没有订单",
     "viewDetails": "查看详情"
   },
+  "prepareStatus": {
+    "pendingPrepare": "待备货",
+    "prepared": "已备货",
+    "driverConfirmedPickup": "司机已确认取货",
+    "driverToUser": "司机配送用户",
+    "driverToWarehouse": "司机送达仓库",
+    "warehouseReceived": "仓库已收货",
+    "delivered": "已送达",
+    "driverClaimed": "司机已认领"
+  },
   "addressMap": {
     "title": "配送地点",
     "openInGoogleMaps": "在谷歌地图中打开"

@@ -34,25 +34,25 @@ router = APIRouter()
 # shipping_type=0: Direct to user
 # shipping_type=1: To warehouse
 PREPARE_STATUS_LABELS_TO_USER = {
-    None: "待备货",        # Pending Prepare
-    0: "已备货",           # Prepared
-    1: "司机收货中",        # Driver Pickup
-    2: "司机配送用户",      # Driver to User
-    3: "已送达",           # Delivered
-    4: "已送达",           # Delivered
-    5: "已送达",           # Delivered
-    6: "司机已认领",        # Driver Claimed
+    None: "待备货",              # Pending Prepare
+    0: "已备货",                 # Prepared
+    1: "司机已确认取货",          # Driver Confirmed Pickup
+    2: "司机配送用户",            # Driver to User
+    3: "已送达",                 # Delivered
+    4: "已送达",                 # Delivered
+    5: "已送达",                 # Delivered
+    6: "司机已认领",              # Driver Claimed
 }
 
 PREPARE_STATUS_LABELS_TO_WAREHOUSE = {
-    None: "待备货",        # Pending Prepare
-    0: "已备货",           # Prepared
-    1: "司机收货中",        # Driver Pickup
-    2: "司机送达仓库",      # Driver to Warehouse
-    3: "仓库已收货",        # Warehouse Received
-    4: "司机配送用户",      # Driver to User
-    5: "已送达",           # Delivered
-    6: "司机已认领",        # Driver Claimed
+    None: "待备货",              # Pending Prepare
+    0: "已备货",                 # Prepared
+    1: "司机已确认取货",          # Driver Confirmed Pickup
+    2: "司机送达仓库",            # Driver to Warehouse
+    3: "仓库已收货",              # Warehouse Received
+    4: "司机配送用户",            # Driver to User
+    5: "已送达",                 # Delivered
+    6: "司机已认领",              # Driver Claimed
 }
 
 def get_prepare_status_label(status: Optional[int], shipping_type: int) -> str:

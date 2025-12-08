@@ -218,6 +218,16 @@
     "noOrders": "No orders in this package",
     "viewDetails": "View Details"
   },
+  "prepareStatus": {
+    "pendingPrepare": "Pending Prepare",
+    "prepared": "Prepared",
+    "driverConfirmedPickup": "Driver Confirmed Pickup",
+    "driverToUser": "Driver Delivering to User",
+    "driverToWarehouse": "Driver Delivered to Warehouse",
+    "warehouseReceived": "Warehouse Received",
+    "delivered": "Delivered",
+    "driverClaimed": "Driver Claimed"
+  },
   "addressMap": {
     "title": "Delivery Location",
     "openInGoogleMaps": "Open in Google Maps"

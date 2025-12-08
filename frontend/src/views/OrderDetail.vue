@@ -11,12 +11,28 @@
       <div class="detail__card">
         <h3>{{ $t('orderDetail.pickup') }}</h3>
         <p>{{ order?.pickupLocation?.name }}</p>
-        <p>{{ order?.pickupLocation?.address }}</p>
+        <a
+          v-if="order?.pickupLocation?.address"
+          class="detail__address-link"
+          @click="openAddressMap(order.pickupLocation.address)"
+        >
+          📍 {{ order?.pickupLocation?.address }}
+        </a>
+        <p v-else>{{ order?.pickupLocation?.address }}</p>
       </div>
       <div class="detail__card">
         <h3>{{ $t('orderDetail.dropOff') }}</h3>
-        <p>{{ order?.receiverAddress }}</p>
-        <p>{{ order?.receiverCity }}, {{ order?.receiverProvince }} {{ order?.receiverPostalCode }}</p>
+        <a
+          v-if="fullDeliveryAddress"
+          class="detail__address-link"
+          @click="openAddressMap(fullDeliveryAddress)"
+        >
+          📍 {{ fullDeliveryAddress }}
+        </a>
+        <template v-else>
+          <p>{{ order?.receiverAddress }}</p>
+          <p>{{ order?.receiverCity }}, {{ order?.receiverProvince }} {{ order?.receiverPostalCode }}</p>
+        </template>
       </div>
       <div class="detail__card">
         <h3>{{ $t('orderDetail.status') }}</h3>
@@ -67,23 +83,59 @@
         </div>
       </div>
     </section>
+
+    <!-- Address Map Modal -->
+    <AddressMapModal
+      v-if="selectedAddress"
+      :show="showAddressMapModal"
+      :address="selectedAddress"
+      @close="closeAddressMapModal"
+    />
   </article>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
 import { useOrdersStore } from '@/store/orders';
+import AddressMapModal from '@/components/AddressMapModal.vue';
 
 const route = useRoute();
 const ordersStore = useOrdersStore();
 const orderSn = String(route.params.orderSn);
+
+// Address map modal state
+const showAddressMapModal = ref(false);
+const selectedAddress = ref<string | null>(null);
 
 onMounted(() => {
   ordersStore.fetchOrderDetail(orderSn);
 });
 
 const order = computed(() => ordersStore.activeBySn(orderSn));
+
+const fullDeliveryAddress = computed(() => {
+  if (!order.value) return null;
+  // Always return receiverAddress if available, append city/province/postal if present
+  if (!order.value.receiverAddress) return null;
+  const parts = [
+    order.value.receiverAddress,
+    order.value.receiverCity,
+    order.value.receiverProvince,
+    order.value.receiverPostalCode
+  ].filter(Boolean);
+  return parts.join(', ');
+});
+
+function openAddressMap(address: string) {
+  selectedAddress.value = address;
+  showAddressMapModal.value = true;
+}
+
+function closeAddressMapModal() {
+  showAddressMapModal.value = false;
+  selectedAddress.value = null;
+}
 </script>
 
 <style scoped>
@@ -219,5 +271,17 @@ const order = computed(() => ordersStore.activeBySn(orderSn));
 .detail__proof-date {
   color: #6b7280;
   font-size: 13px;
+}
+
+.detail__address-link {
+  color: #2563eb;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.2s;
+  display: block;
+}
+
+.detail__address-link:hover {
+  color: #1d4ed8;
 }
 </style>

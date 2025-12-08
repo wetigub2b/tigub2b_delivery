@@ -26,9 +26,17 @@
               </div>
               <div v-if="receiverAddress" class="summary-row summary-row--address">
                 <span class="summary-label">{{ $t('packageModal.deliveryAddress') }}:</span>
-                <span class="summary-value">📍 {{ receiverAddress }}</span>
+                <a class="summary-value summary-value--link" @click="openAddressMap(receiverAddress)">📍 {{ receiverAddress }}</a>
               </div>
             </div>
+
+            <!-- Address Map Modal -->
+            <AddressMapModal
+              v-if="selectedAddress"
+              :show="showAddressMapModal"
+              :address="selectedAddress"
+              @close="closeAddressMapModal"
+            />
 
             <!-- Pickup Photos Section -->
             <div v-if="pickupPhotos.length > 0" class="photos-section">
@@ -86,6 +94,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { usePrepareGoodsStore } from '@/store/prepareGoods';
+import AddressMapModal from '@/components/AddressMapModal.vue';
 
 const props = defineProps<{
   show: boolean;
@@ -158,6 +167,20 @@ function formatFileSize(bytes: number): string {
 function formatDateTime(dateString: string): string {
   const date = new Date(dateString);
   return date.toLocaleString();
+}
+
+// Address map modal state
+const showAddressMapModal = ref(false);
+const selectedAddress = ref<string | null>(null);
+
+function openAddressMap(address: string) {
+  selectedAddress.value = address;
+  showAddressMapModal.value = true;
+}
+
+function closeAddressMapModal() {
+  showAddressMapModal.value = false;
+  selectedAddress.value = null;
 }
 
 function handleClose() {
@@ -266,6 +289,17 @@ function handleClose() {
 .summary-row--address .summary-value {
   font-size: 0.8rem;
   line-height: 1.4;
+}
+
+.summary-value--link {
+  color: var(--color-primary);
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color var(--transition-base);
+}
+
+.summary-value--link:hover {
+  color: var(--color-primary-dark);
 }
 
 .photos-section {

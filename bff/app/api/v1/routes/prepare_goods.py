@@ -785,6 +785,14 @@ async def confirm_pickup(
 
     # Create OrderAction record for each order AND update tigu_order
     for order in orders:
+        # Determine new shipping_status based on workflow (shipping_type from package)
+        # shipping_type=0 (Driver->User): shipping_status=4 (司机配送中)
+        # shipping_type=1 (Driver->Warehouse->User): shipping_status=2 (司机收货中)
+        if package.shipping_type == 0:
+            new_shipping_status = 4  # 司机配送中 - Driver delivering to user
+        else:
+            new_shipping_status = 2  # 司机收货中 - Driver picking up (going to warehouse)
+        
         order_action = OrderAction(
             id=generate_snowflake_id(),
             order_id=order.id,
@@ -793,18 +801,13 @@ async def confirm_pickup(
             create_by=driver.name,
             create_time=datetime.now(),
             order_status=order.order_status,
-            shipping_status=order.shipping_status,
+            shipping_status=new_shipping_status,  # Record the new status
             shipping_type=order.shipping_type
         )
         session.add(order_action)
         
-        # Update tigu_order based on workflow (shipping_type from package)
-        # shipping_type=0 (Driver->User): shipping_status=4 (司机配送中)
-        # shipping_type=1 (Driver->Warehouse->User): shipping_status=2 (司机收货中)
-        if package.shipping_type == 0:
-            order.shipping_status = 4  # 司机配送中 - Driver delivering to user
-        else:
-            order.shipping_status = 2  # 司机收货中 - Driver picking up (going to warehouse)
+        # Update tigu_order
+        order.shipping_status = new_shipping_status
         order.driver_receive_time = datetime.now()
         order.driver_id = driver.id
 
@@ -962,9 +965,9 @@ async def confirm_delivery(
         order_shipping_status = 3  # Update tigu_order.shipping_status to 3
     else:
         # To user workflow (Workflow 4)
-        action_type = 5  # 完成 - Delivery complete (action_type=5)
+        action_type = 4  # 司机送达用户 - Driver delivers to user (action_type=4)
         new_status = 3  # 已送达 - Delivered to user (Workflow 4 complete)
-        order_shipping_status = 6  # Update tigu_order.shipping_status to 6 (已送达)
+        order_shipping_status = 4  # Update tigu_order.shipping_status to 4 (司机送达用户)
 
     # Create OrderAction record for each order AND update tigu_order
     # Note: logistics_voucher_file should contain file ID from tigu_uploaded_files
@@ -977,7 +980,7 @@ async def confirm_delivery(
             create_by=driver.name,
             create_time=datetime.now(),
             order_status=order.order_status,
-            shipping_status=order.shipping_status,
+            shipping_status=order_shipping_status,  # Record the new status
             shipping_type=order.shipping_type
         )
         session.add(order_action)

@@ -798,8 +798,13 @@ async def confirm_pickup(
         )
         session.add(order_action)
         
-        # Update tigu_order: set shipping_status=2 (司机收货中), driver_receive_time, and driver_id
-        order.shipping_status = 2
+        # Update tigu_order based on workflow (shipping_type from package)
+        # shipping_type=0 (Driver->User): shipping_status=4 (司机配送中)
+        # shipping_type=1 (Driver->Warehouse->User): shipping_status=2 (司机收货中)
+        if package.shipping_type == 0:
+            order.shipping_status = 4  # 司机配送中 - Driver delivering to user
+        else:
+            order.shipping_status = 2  # 司机收货中 - Driver picking up (going to warehouse)
         order.driver_receive_time = datetime.now()
         order.driver_id = driver.id
 

@@ -1077,7 +1077,7 @@ async def confirm_delivery(
     # Determine action type and new status based on shipping type
     if package.shipping_type == 1:
         # To warehouse workflow (Workflow 3)
-        action_type = 2  # 司机送达仓库 - Driver arrives at warehouse (action_type=2)
+        action_type = 11  # 司机送达仓库 - Driver arrives at warehouse (action_type=11)
         new_status = 2  # 司机送达仓库 (Driver delivered to warehouse)
         order_shipping_status = 3  # Update tigu_order.shipping_status to 3
     else:

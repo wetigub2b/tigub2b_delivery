@@ -123,6 +123,11 @@ class PrepareGoodsSummary(BaseModel):
     shipping_type: int = Field(alias="shippingType")
     prepare_status: Optional[int] = Field(default=None, alias="prepareStatus")
     prepare_status_label: str = Field(alias="prepareStatusLabel")
+    pickup_type: str = Field(
+        default="merchant",
+        alias="pickupType",
+        description="Pickup location type: 'merchant' (from shop) or 'warehouse' (from warehouse for second-leg delivery)"
+    )
     # Use str for bigint IDs to preserve precision in JavaScript
     shop_id: Optional[str] = Field(default=None, alias="shopId")
     warehouse_id: Optional[str] = Field(default=None, alias="warehouseId")

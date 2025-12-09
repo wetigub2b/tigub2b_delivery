@@ -164,10 +164,12 @@ const packages = computed(() => {
   const allPackages = prepareGoodsStore.availablePackages;
   
   if (props.mark.shop_id) {
-    return allPackages.filter(pkg => pkg.shopId === props.mark.shop_id);
+    // For vendor/shop marks: filter by shop_id and pickupType='merchant'
+    return allPackages.filter(pkg => pkg.shopId === props.mark.shop_id && pkg.pickupType === 'merchant');
   }
   if (props.mark.warehouse_id) {
-    return allPackages.filter(pkg => pkg.warehouseId === props.mark.warehouse_id);
+    // For warehouse marks: filter by warehouse_id and pickupType='warehouse' (Workflow 5 only)
+    return allPackages.filter(pkg => pkg.warehouseId === props.mark.warehouse_id && pkg.pickupType === 'warehouse');
   }
   return [];
 });

@@ -49,6 +49,7 @@ export interface PrepareGoodsSummaryDto {
   shippingType: number;
   prepareStatus: number | null;
   prepareStatusLabel: string;
+  pickupType: string;  // 'merchant' or 'warehouse' - indicates pickup location for driver
   shopId: string | null;  // String to preserve bigint precision
   warehouseId: string | null;  // String to preserve bigint precision
   warehouseName: string | null;

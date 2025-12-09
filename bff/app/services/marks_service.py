@@ -18,6 +18,10 @@ async def fetch_marks(session: AsyncSession, active_only: bool = True) -> List[M
     
     Returns:
         List of Mark objects with order_count for each location
+        
+    Order count logic:
+        - For shop/vendor marks: Count packages with prepare_status=0 (ready for merchant pickup)
+        - For warehouse marks: Count packages with prepare_status=5 AND shipping_type=1 (Workflow 5 - ready for warehouse pickup)
     """
     query = """
         SELECT 
@@ -35,13 +39,15 @@ async def fetch_marks(session: AsyncSession, active_only: bool = True) -> List[M
             COALESCE(COUNT(pg.id), 0) as order_count
         FROM tigu_driver_marks m
         LEFT JOIN tigu_prepare_goods pg ON (
-            (m.shop_id IS NOT NULL AND pg.shop_id = m.shop_id AND pg.type = 0)
+            -- Shop/vendor marks: packages ready for merchant pickup (prepare_status=0)
+            (m.shop_id IS NOT NULL AND pg.shop_id = m.shop_id AND pg.type = 0 
+             AND pg.prepare_status = 0 AND pg.driver_id IS NULL)
             OR 
-            (m.warehouse_id IS NOT NULL AND pg.warehouse_id = m.warehouse_id AND pg.type = 1)
+            -- Warehouse marks: Workflow 5 packages ready for warehouse pickup (prepare_status=5, shipping_type=1)
+            (m.warehouse_id IS NOT NULL AND pg.warehouse_id = m.warehouse_id 
+             AND pg.prepare_status = 5 AND pg.shipping_type = 1)
         )
         AND pg.delivery_type = 1
-        AND pg.prepare_status = 0
-        AND pg.driver_id IS NULL
     """
     
     if active_only:
@@ -83,6 +89,10 @@ async def fetch_mark_by_id(session: AsyncSession, mark_id: int) -> Optional[Mark
     
     Returns:
         Mark object or None if not found
+        
+    Order count logic:
+        - For shop/vendor marks: Count packages with prepare_status=0 (ready for merchant pickup)
+        - For warehouse marks: Count packages with prepare_status=5 AND shipping_type=1 (Workflow 5 - ready for warehouse pickup)
     """
     query = """
         SELECT 
@@ -100,13 +110,15 @@ async def fetch_mark_by_id(session: AsyncSession, mark_id: int) -> Optional[Mark
             COALESCE(COUNT(pg.id), 0) as order_count
         FROM tigu_driver_marks m
         LEFT JOIN tigu_prepare_goods pg ON (
-            (m.shop_id IS NOT NULL AND pg.shop_id = m.shop_id AND pg.type = 0)
+            -- Shop/vendor marks: packages ready for merchant pickup (prepare_status=0)
+            (m.shop_id IS NOT NULL AND pg.shop_id = m.shop_id AND pg.type = 0 
+             AND pg.prepare_status = 0 AND pg.driver_id IS NULL)
             OR 
-            (m.warehouse_id IS NOT NULL AND pg.warehouse_id = m.warehouse_id AND pg.type = 1)
+            -- Warehouse marks: Workflow 5 packages ready for warehouse pickup (prepare_status=5, shipping_type=1)
+            (m.warehouse_id IS NOT NULL AND pg.warehouse_id = m.warehouse_id 
+             AND pg.prepare_status = 5 AND pg.shipping_type = 1)
         )
         AND pg.delivery_type = 1
-        AND pg.prepare_status = 0
-        AND pg.driver_id IS NULL
         WHERE m.id = :mark_id
         GROUP BY m.id
     """

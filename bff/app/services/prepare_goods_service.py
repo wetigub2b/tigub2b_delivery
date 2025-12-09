@@ -14,7 +14,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import List
 
-from sqlalchemy import select, update
+from sqlalchemy import or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -334,9 +334,14 @@ async def get_available_packages(
     Get available packages that are ready for driver pickup.
 
     Returns packages that are:
-    - prepare_status = 0 (prepared, ready for pickup)
-    - driver_id IS NULL (not assigned to any driver yet)
-    - delivery_type = 1 (third-party driver delivery)
+    - Case 1 (Merchant -> Driver -> User/Warehouse):
+      - prepare_status = 0 (prepared, ready for pickup from merchant)
+      - driver_id IS NULL (not assigned to any driver yet)
+      - delivery_type = 1 (third-party driver delivery)
+    - Case 2 (Workflow 5: Warehouse -> User):
+      - prepare_status = 5 (warehouse ready for driver pickup)
+      - shipping_type = 1 (to warehouse flow, second leg)
+      - delivery_type = 1 (third-party driver delivery)
 
     Args:
         session: Database session
@@ -345,6 +350,21 @@ async def get_available_packages(
     Returns:
         List of PrepareGoods instances available for pickup
     """
+    # Case 1: Packages ready for pickup from merchant (prepare_status=0, no driver)
+    merchant_pickup_condition = (
+        (PrepareGoods.driver_id.is_(None)) &
+        (PrepareGoods.prepare_status == 0) &
+        (PrepareGoods.delivery_type == 1)
+    )
+
+    # Case 2: Workflow 5 - Packages at warehouse ready for driver pickup to user
+    # When prepare_status=5 and shipping_type=1, package is at warehouse ready for delivery
+    warehouse_to_user_condition = (
+        (PrepareGoods.prepare_status == 5) &
+        (PrepareGoods.shipping_type == 1) &
+        (PrepareGoods.delivery_type == 1)
+    )
+
     stmt = (
         select(PrepareGoods)
         .options(
@@ -352,9 +372,7 @@ async def get_available_packages(
             selectinload(PrepareGoods.warehouse),
             selectinload(PrepareGoods.shop)
         )
-        .where(PrepareGoods.driver_id.is_(None))  # Not assigned
-        .where(PrepareGoods.prepare_status == 0)  # Prepared
-        .where(PrepareGoods.delivery_type == 1)  # Third-party only
+        .where(or_(merchant_pickup_condition, warehouse_to_user_condition))
         .order_by(PrepareGoods.create_time.desc())
         .limit(limit)
     )
@@ -448,15 +466,14 @@ async def get_packages_by_location(
     Get available packages at a specific pickup location.
 
     Returns packages that are:
-    - prepare_status = 0 (prepared, ready for pickup)
-    - driver_id IS NULL (not assigned to any driver yet)
+    - For shop/vendor: prepare_status = 0 (prepared, ready for merchant pickup)
+    - For warehouse: prepare_status = 5 AND shipping_type = 1 (Workflow 5 - ready for warehouse pickup)
     - delivery_type = 1 (third-party driver delivery)
-    - Matching shop_id (for vendor pickup, type=0) OR warehouse_id (for warehouse pickup, type=1)
 
     Args:
         session: Database session
-        shop_id: Filter by vendor/shop ID (type=0 vendor pickup)
-        warehouse_id: Filter by warehouse ID (type=1 warehouse pickup)
+        shop_id: Filter by vendor/shop ID (vendor pickup)
+        warehouse_id: Filter by warehouse ID (warehouse pickup - Workflow 5)
         limit: Maximum number of records
 
     Returns:
@@ -469,19 +486,20 @@ async def get_packages_by_location(
             selectinload(PrepareGoods.warehouse),
             selectinload(PrepareGoods.shop)
         )
-        .where(PrepareGoods.driver_id.is_(None))  # Not assigned
-        .where(PrepareGoods.prepare_status == 0)  # Prepared
         .where(PrepareGoods.delivery_type == 1)  # Third-party only
     )
 
     if shop_id is not None:
-        # Vendor pickup - filter by shop_id and type=0
+        # Vendor pickup - filter by shop_id, prepare_status=0, driver not assigned
         stmt = stmt.where(PrepareGoods.shop_id == shop_id)
         stmt = stmt.where(PrepareGoods.type == 0)
+        stmt = stmt.where(PrepareGoods.prepare_status == 0)
+        stmt = stmt.where(PrepareGoods.driver_id.is_(None))
     elif warehouse_id is not None:
-        # Warehouse pickup - filter by warehouse_id and type=1
+        # Warehouse pickup (Workflow 5) - filter by warehouse_id, prepare_status=5, shipping_type=1
         stmt = stmt.where(PrepareGoods.warehouse_id == warehouse_id)
-        stmt = stmt.where(PrepareGoods.type == 1)
+        stmt = stmt.where(PrepareGoods.prepare_status == 5)
+        stmt = stmt.where(PrepareGoods.shipping_type == 1)
 
     stmt = stmt.order_by(PrepareGoods.create_time.desc()).limit(limit)
 

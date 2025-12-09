@@ -51,7 +51,7 @@ PREPARE_STATUS_LABELS_TO_WAREHOUSE = {
     2: "司机送达仓库",            # Driver to Warehouse
     3: "仓库已收货",              # Warehouse Received
     4: "司机配送用户",            # Driver to User
-    5: "已送达",                 # Delivered
+    5: "仓库确认送达",            # Warehouse Confirmed Ready (for Workflow 5 pickup)
     6: "司机已认领",              # Driver Claimed
 }
 
@@ -61,6 +61,19 @@ def get_prepare_status_label(status: Optional[int], shipping_type: int) -> str:
         return PREPARE_STATUS_LABELS_TO_WAREHOUSE.get(status, "Unknown")
     else:
         return PREPARE_STATUS_LABELS_TO_USER.get(status, "Unknown")
+
+
+def get_pickup_type(prepare_status: Optional[int], shipping_type: int) -> str:
+    """
+    Determine pickup location type based on package status.
+    
+    Returns:
+        "warehouse" - If prepare_status=5 and shipping_type=1 (Workflow 5: warehouse->user)
+        "merchant" - For all other cases (standard merchant pickup)
+    """
+    if prepare_status == 5 and shipping_type == 1:
+        return "warehouse"
+    return "merchant"
 
 
 def parse_localized_value(val) -> str:
@@ -176,9 +189,14 @@ async def list_available_packages(
     Get available packages ready for driver pickup.
 
     Returns packages that are:
-    - prepare_status = 0 (prepared, ready for pickup)
-    - driver_id IS NULL (not assigned to any driver yet)
-    - delivery_type = 1 (third-party delivery)
+    - Case 1 (Pickup from Merchant):
+      - prepare_status = 0 (prepared, ready for pickup)
+      - driver_id IS NULL (not assigned to any driver yet)
+      - delivery_type = 1 (third-party delivery)
+    - Case 2 (Workflow 5: Warehouse to User):
+      - prepare_status = 5 (warehouse ready for driver pickup)
+      - shipping_type = 1 (to warehouse flow, second leg)
+      - delivery_type = 1 (third-party delivery)
 
     Args:
         limit: Maximum number of records (default 50, max 100)
@@ -186,7 +204,7 @@ async def list_available_packages(
         session: Database session
 
     Returns:
-        List of available PrepareGoods packages
+        List of available PrepareGoods packages with pickup_type indicator
     """
     packages = await prepare_goods_service.get_available_packages(
         session=session,
@@ -197,6 +215,15 @@ async def list_available_packages(
     summaries = []
     for pkg in packages:
         order_ids = parse_order_id_list(pkg.order_ids)
+        pickup_type = get_pickup_type(pkg.prepare_status, pkg.shipping_type)
+        
+        # For warehouse pickup (Workflow 5), use warehouse address
+        # For merchant pickup, use shop address
+        if pickup_type == "warehouse":
+            pickup_addr = build_warehouse_address(pkg.warehouse)
+        else:
+            pickup_addr = build_pickup_address(pkg.shop)
+        
         summaries.append(
             PrepareGoodsSummary(
                 prepare_sn=pkg.prepare_sn,
@@ -205,11 +232,12 @@ async def list_available_packages(
                 shipping_type=pkg.shipping_type,
                 prepare_status=pkg.prepare_status,
                 prepare_status_label=get_prepare_status_label(pkg.prepare_status, pkg.shipping_type),
+                pickup_type=pickup_type,
                 shop_id=str(pkg.shop_id) if pkg.shop_id else None,
                 warehouse_id=str(pkg.warehouse_id) if pkg.warehouse_id else None,
                 warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
                 warehouse_address=build_warehouse_address(pkg.warehouse),
-                pickup_address=build_pickup_address(pkg.shop),
+                pickup_address=pickup_addr,
                 driver_name=None,  # Available packages have no driver assigned
                 receiver_address=pkg.receiver_address,
                 total_value=float(pkg.total_value) if pkg.total_value else None,
@@ -258,6 +286,7 @@ async def list_my_driver_packages(
     summaries = []
     for pkg in packages:
         order_ids = parse_order_id_list(pkg.order_ids)
+        pickup_type = get_pickup_type(pkg.prepare_status, pkg.shipping_type)
         summaries.append(
             PrepareGoodsSummary(
                 prepare_sn=pkg.prepare_sn,
@@ -266,6 +295,7 @@ async def list_my_driver_packages(
                 shipping_type=pkg.shipping_type,
                 prepare_status=pkg.prepare_status,
                 prepare_status_label=get_prepare_status_label(pkg.prepare_status, pkg.shipping_type),
+                pickup_type=pickup_type,
                 shop_id=str(pkg.shop_id) if pkg.shop_id else None,
                 warehouse_id=str(pkg.warehouse_id) if pkg.warehouse_id else None,
                 warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
@@ -312,6 +342,7 @@ async def list_driver_packages(
     summaries = []
     for pkg in packages:
         order_ids = parse_order_id_list(pkg.order_ids)
+        pickup_type = get_pickup_type(pkg.prepare_status, pkg.shipping_type)
         summaries.append(
             PrepareGoodsSummary(
                 prepare_sn=pkg.prepare_sn,
@@ -320,6 +351,7 @@ async def list_driver_packages(
                 shipping_type=pkg.shipping_type,
                 prepare_status=pkg.prepare_status,
                 prepare_status_label=get_prepare_status_label(pkg.prepare_status, pkg.shipping_type),
+                pickup_type=pickup_type,
                 shop_id=str(pkg.shop_id) if pkg.shop_id else None,
                 warehouse_id=str(pkg.warehouse_id) if pkg.warehouse_id else None,
                 warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
@@ -367,6 +399,7 @@ async def list_shop_prepare_packages(
     summaries = []
     for pkg in packages:
         order_ids = parse_order_id_list(pkg.order_ids)
+        pickup_type = get_pickup_type(pkg.prepare_status, pkg.shipping_type)
         summaries.append(
             PrepareGoodsSummary(
                 prepare_sn=pkg.prepare_sn,
@@ -375,12 +408,85 @@ async def list_shop_prepare_packages(
                 shipping_type=pkg.shipping_type,
                 prepare_status=pkg.prepare_status,
                 prepare_status_label=get_prepare_status_label(pkg.prepare_status, pkg.shipping_type),
+                pickup_type=pickup_type,
                 shop_id=str(pkg.shop_id) if pkg.shop_id else None,
                 warehouse_id=str(pkg.warehouse_id) if pkg.warehouse_id else None,
                 warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
                 warehouse_address=build_warehouse_address(pkg.warehouse),
                 pickup_address=build_pickup_address(pkg.shop),
                 driver_name=pkg.driver.name if pkg.driver else None,
+                receiver_address=pkg.receiver_address,
+                total_value=float(pkg.total_value) if pkg.total_value else None,
+                create_time=pkg.create_time
+            )
+        )
+
+    return summaries
+
+
+@router.get("/by-location", response_model=List[PrepareGoodsSummary], response_model_by_alias=True)
+async def list_packages_by_location(
+    shop_id: Optional[str] = Query(default=None, description="Filter by shop ID (vendor pickup)"),
+    warehouse_id: Optional[str] = Query(default=None, description="Filter by warehouse ID (warehouse pickup)"),
+    limit: int = Query(default=50, ge=1, le=100),
+    current_user=Depends(deps.get_current_user),
+    session: AsyncSession = Depends(deps.get_db_session)
+) -> List[PrepareGoodsSummary]:
+    """
+    Get available packages at a specific pickup location.
+
+    Returns packages that are:
+    - For shop/vendor: prepare_status = 0 (prepared, ready for merchant pickup)
+    - For warehouse: prepare_status = 5 AND shipping_type = 1 (Workflow 5 - ready for warehouse pickup)
+    - delivery_type = 1 (third-party delivery)
+
+    Args:
+        shop_id: Filter by vendor/shop ID (for vendor pickup) - string to preserve bigint precision
+        warehouse_id: Filter by warehouse ID (for Workflow 5 warehouse pickup) - string to preserve bigint precision
+        limit: Maximum number of records (default 50, max 100)
+        current_user: Authenticated user
+        session: Database session
+
+    Returns:
+        List of available PrepareGoods packages at the location
+    """
+    if not shop_id and not warehouse_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Either shop_id or warehouse_id must be provided"
+        )
+
+    # Convert string IDs to int for database query
+    shop_id_int = int(shop_id) if shop_id else None
+    warehouse_id_int = int(warehouse_id) if warehouse_id else None
+
+    packages = await prepare_goods_service.get_packages_by_location(
+        session=session,
+        shop_id=shop_id_int,
+        warehouse_id=warehouse_id_int,
+        limit=limit
+    )
+
+    # Build summary responses
+    summaries = []
+    for pkg in packages:
+        order_ids = parse_order_id_list(pkg.order_ids)
+        pickup_type = get_pickup_type(pkg.prepare_status, pkg.shipping_type)
+        summaries.append(
+            PrepareGoodsSummary(
+                prepare_sn=pkg.prepare_sn,
+                order_count=len(order_ids),
+                delivery_type=pkg.delivery_type,
+                shipping_type=pkg.shipping_type,
+                prepare_status=pkg.prepare_status,
+                prepare_status_label=get_prepare_status_label(pkg.prepare_status, pkg.shipping_type),
+                pickup_type=pickup_type,
+                shop_id=str(pkg.shop_id) if pkg.shop_id else None,
+                warehouse_id=str(pkg.warehouse_id) if pkg.warehouse_id else None,
+                warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
+                warehouse_address=build_warehouse_address(pkg.warehouse),
+                pickup_address=build_pickup_address(pkg.shop),
+                driver_name=None,  # Available packages have no driver assigned
                 receiver_address=pkg.receiver_address,
                 total_value=float(pkg.total_value) if pkg.total_value else None,
                 create_time=pkg.create_time
@@ -1003,74 +1109,3 @@ async def confirm_delivery(
     )
 
     await session.commit()
-
-
-@router.get("/by-location", response_model=List[PrepareGoodsSummary], response_model_by_alias=True)
-async def list_packages_by_location(
-    shop_id: Optional[str] = Query(default=None, description="Filter by shop ID (vendor pickup)"),
-    warehouse_id: Optional[str] = Query(default=None, description="Filter by warehouse ID (warehouse pickup)"),
-    limit: int = Query(default=50, ge=1, le=100),
-    current_user=Depends(deps.get_current_user),
-    session: AsyncSession = Depends(deps.get_db_session)
-) -> List[PrepareGoodsSummary]:
-    """
-    Get available packages at a specific pickup location.
-
-    Returns packages that are:
-    - prepare_status = 0 (prepared, ready for pickup)
-    - driver_id IS NULL (not assigned to any driver yet)
-    - delivery_type = 1 (third-party delivery)
-    - Matching the specified shop_id OR warehouse_id
-
-    Args:
-        shop_id: Filter by vendor/shop ID (for type=0 vendor pickup) - string to preserve bigint precision
-        warehouse_id: Filter by warehouse ID (for type=1 warehouse pickup) - string to preserve bigint precision
-        limit: Maximum number of records (default 50, max 100)
-        current_user: Authenticated user
-        session: Database session
-
-    Returns:
-        List of available PrepareGoods packages at the location
-    """
-    if not shop_id and not warehouse_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Either shop_id or warehouse_id must be provided"
-        )
-
-    # Convert string IDs to int for database query
-    shop_id_int = int(shop_id) if shop_id else None
-    warehouse_id_int = int(warehouse_id) if warehouse_id else None
-
-    packages = await prepare_goods_service.get_packages_by_location(
-        session=session,
-        shop_id=shop_id_int,
-        warehouse_id=warehouse_id_int,
-        limit=limit
-    )
-
-    # Build summary responses
-    summaries = []
-    for pkg in packages:
-        order_ids = parse_order_id_list(pkg.order_ids)
-        summaries.append(
-            PrepareGoodsSummary(
-                prepare_sn=pkg.prepare_sn,
-                order_count=len(order_ids),
-                delivery_type=pkg.delivery_type,
-                shipping_type=pkg.shipping_type,
-                prepare_status=pkg.prepare_status,
-                prepare_status_label=get_prepare_status_label(pkg.prepare_status, pkg.shipping_type),
-                shop_id=str(pkg.shop_id) if pkg.shop_id else None,
-                warehouse_id=str(pkg.warehouse_id) if pkg.warehouse_id else None,
-                warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
-                warehouse_address=build_warehouse_address(pkg.warehouse),
-                pickup_address=build_pickup_address(pkg.shop),
-                driver_name=None,  # Available packages have no driver assigned
-                receiver_address=pkg.receiver_address,
-                total_value=float(pkg.total_value) if pkg.total_value else None,
-                create_time=pkg.create_time
-            )
-        )
-
-    return summaries

@@ -43,7 +43,13 @@ const shippingTypeLabels: Record<number, string> = {
 };
 
 // Workflow labels
-function getWorkflowLabel(deliveryType: number, shippingType: number): string {
+function getWorkflowLabel(deliveryType: number, shippingType: number, prepareStatus?: number | null, pickupType?: string): string {
+  // Workflow 5: Warehouse → User (second leg delivery)
+  // This is when prepare_status=5 and the package is ready for pickup from warehouse
+  if (pickupType === 'warehouse' || (prepareStatus === 5 && shippingType === 1)) {
+    return 'Workflow 5: Warehouse → User';
+  }
+
   const key = `${deliveryType},${shippingType}`;
   const workflows: Record<string, string> = {
     '0,0': 'Workflow 1: Merchant → Warehouse → User',
@@ -74,7 +80,7 @@ function decorateSummary(pkg: PrepareGoodsSummaryDto): PrepareGoodsPackage {
       pkg.prepareStatusLabel || prepareStatusLabels[pkg.prepareStatus as any] || 'Unknown',
     deliveryTypeLabel: deliveryTypeLabels[pkg.deliveryType] || 'Unknown',
     shippingTypeLabel: shippingTypeLabels[pkg.shippingType] || 'Unknown',
-    workflowLabel: getWorkflowLabel(pkg.deliveryType, pkg.shippingType),
+    workflowLabel: getWorkflowLabel(pkg.deliveryType, pkg.shippingType, pkg.prepareStatus, pkg.pickupType),
     warehouseName: parseI18nJson(pkg.warehouseName, currentLocale),
     driverName: parseI18nJson(pkg.driverName, currentLocale)
   };
@@ -86,7 +92,7 @@ function decorateDetail(detail: PrepareGoodsDetailDto): PrepareGoodsDetail {
     ...detail,
     deliveryTypeLabel: deliveryTypeLabels[detail.deliveryType] || 'Unknown',
     shippingTypeLabel: shippingTypeLabels[detail.shippingType] || 'Unknown',
-    workflowLabel: getWorkflowLabel(detail.deliveryType, detail.shippingType),
+    workflowLabel: getWorkflowLabel(detail.deliveryType, detail.shippingType, detail.prepareStatus),
     warehouseName: parseI18nJson(detail.warehouseName, currentLocale),
     driverName: parseI18nJson(detail.driverName, currentLocale)
   };

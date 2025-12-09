@@ -188,7 +188,8 @@ const statuses = computed(() => {
   }
   
   tabs.push(
-    { key: 'available', label: t('taskBoard.available'), prepareStatus: 0 },
+    // Available: includes both merchant pickup (status=0) and warehouse pickup (status=5)
+    { key: 'available', label: t('taskBoard.available'), prepareStatus: [0, 5] },
     { key: 'pending_pickup', label: t('taskBoard.pendingPickup'), prepareStatus: 6 },
     { key: 'in_transit', label: t('taskBoard.inTransit'), prepareStatus: 1 },
     { key: 'warehouse', label: t('taskBoard.warehouse'), prepareStatus: 2 },
@@ -227,7 +228,7 @@ const filteredPackages = computed(() => {
 });
 
 function getPackageActionLabel(status: number | null): string {
-  if (status === null || status === 0) return t('taskBoard.pickupPackage');
+  if (status === null || status === 0 || status === 5) return t('taskBoard.pickupPackage');
   if (status === 6) return t('taskBoard.confirmPickupButton');
   if (status === 1) return t('taskBoard.confirmDeliveryButton');
   return t('taskBoard.viewDetails');
@@ -248,8 +249,8 @@ function closeAddressMapModal() {
 }
 
 function handlePackageAction(pkg: any) {
-  if (pkg.prepareStatus === null || pkg.prepareStatus === 0) {
-    // Available package - show pickup confirmation modal
+  if (pkg.prepareStatus === null || pkg.prepareStatus === 0 || pkg.prepareStatus === 5) {
+    // Available package (merchant or warehouse pickup) - show pickup confirmation modal
     packageToPickup.value = pkg;
     showPickupModal.value = true;
   } else if (pkg.prepareStatus === 6) {

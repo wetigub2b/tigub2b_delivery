@@ -901,6 +901,11 @@ async def confirm_pickup(
     orders = orders_result.scalars().all()
 
     # Create OrderAction record for each order AND update tigu_order
+    # Determine action_type based on package type:
+    # type=0 (first leg from merchant): action_type=1 (司机收货 - 到商家收货)
+    # type=1 (second leg from warehouse - Workflow 5): action_type=12 (司机收货 - 到仓库收货)
+    pickup_action_type = 12 if package.type == 1 else 1
+    
     for order in orders:
         # Determine new shipping_status based on workflow (shipping_type from package)
         # shipping_type=0 (Driver->User): shipping_status=4 (司机配送中)
@@ -913,7 +918,7 @@ async def confirm_pickup(
         order_action = OrderAction(
             id=generate_snowflake_id(),
             order_id=order.id,
-            action_type=1,  # 司机收货 - Driver Pickup
+            action_type=pickup_action_type,  # 1=司机收货(商家), 12=司机收货(仓库)
             logistics_voucher_file=str(uploaded_file.id),  # Use file ID, not URL
             create_by=driver.name,
             create_time=datetime.now(),

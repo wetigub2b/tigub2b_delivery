@@ -63,14 +63,23 @@ def get_prepare_status_label(status: Optional[int], shipping_type: int) -> str:
         return PREPARE_STATUS_LABELS_TO_USER.get(status, "Unknown")
 
 
-def get_pickup_type(prepare_status: Optional[int], shipping_type: int) -> str:
+def get_pickup_type(pkg_type: Optional[int], prepare_status: Optional[int], shipping_type: int) -> str:
     """
-    Determine pickup location type based on package status.
+    Determine pickup location type based on package type column.
+    
+    Args:
+        pkg_type: Package type (0=first leg from merchant, 1=second leg from warehouse - Workflow 5)
+        prepare_status: Package prepare status
+        shipping_type: Shipping type (0=to warehouse, 1=to user)
     
     Returns:
-        "warehouse" - If prepare_status=5 and shipping_type=1 (Workflow 5: warehouse->user)
-        "merchant" - For all other cases (standard merchant pickup)
+        "warehouse" - If type=1 (Workflow 5: warehouse->user, second leg delivery)
+        "merchant" - For type=0 or None (first leg delivery from merchant)
     """
+    # type=1 means this is a second leg delivery from warehouse to user (Workflow 5)
+    if pkg_type == 1:
+        return "warehouse"
+    # Legacy fallback: check prepare_status=5 and shipping_type=1
     if prepare_status == 5 and shipping_type == 1:
         return "warehouse"
     return "merchant"
@@ -215,7 +224,7 @@ async def list_available_packages(
     summaries = []
     for pkg in packages:
         order_ids = parse_order_id_list(pkg.order_ids)
-        pickup_type = get_pickup_type(pkg.prepare_status, pkg.shipping_type)
+        pickup_type = get_pickup_type(pkg.type, pkg.prepare_status, pkg.shipping_type)
         
         # For warehouse pickup (Workflow 5), use warehouse address
         # For merchant pickup, use shop address
@@ -286,7 +295,7 @@ async def list_my_driver_packages(
     summaries = []
     for pkg in packages:
         order_ids = parse_order_id_list(pkg.order_ids)
-        pickup_type = get_pickup_type(pkg.prepare_status, pkg.shipping_type)
+        pickup_type = get_pickup_type(pkg.type, pkg.prepare_status, pkg.shipping_type)
         summaries.append(
             PrepareGoodsSummary(
                 prepare_sn=pkg.prepare_sn,
@@ -342,7 +351,7 @@ async def list_driver_packages(
     summaries = []
     for pkg in packages:
         order_ids = parse_order_id_list(pkg.order_ids)
-        pickup_type = get_pickup_type(pkg.prepare_status, pkg.shipping_type)
+        pickup_type = get_pickup_type(pkg.type, pkg.prepare_status, pkg.shipping_type)
         summaries.append(
             PrepareGoodsSummary(
                 prepare_sn=pkg.prepare_sn,
@@ -399,7 +408,7 @@ async def list_shop_prepare_packages(
     summaries = []
     for pkg in packages:
         order_ids = parse_order_id_list(pkg.order_ids)
-        pickup_type = get_pickup_type(pkg.prepare_status, pkg.shipping_type)
+        pickup_type = get_pickup_type(pkg.type, pkg.prepare_status, pkg.shipping_type)
         summaries.append(
             PrepareGoodsSummary(
                 prepare_sn=pkg.prepare_sn,
@@ -471,7 +480,7 @@ async def list_packages_by_location(
     summaries = []
     for pkg in packages:
         order_ids = parse_order_id_list(pkg.order_ids)
-        pickup_type = get_pickup_type(pkg.prepare_status, pkg.shipping_type)
+        pickup_type = get_pickup_type(pkg.type, pkg.prepare_status, pkg.shipping_type)
         summaries.append(
             PrepareGoodsSummary(
                 prepare_sn=pkg.prepare_sn,

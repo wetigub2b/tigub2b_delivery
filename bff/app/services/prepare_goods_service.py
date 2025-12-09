@@ -334,13 +334,15 @@ async def get_available_packages(
     Get available packages that are ready for driver pickup.
 
     Returns packages that are:
-    - Case 1 (Merchant -> Driver -> User/Warehouse):
+    - Case 1 (First leg: Merchant -> Driver -> User/Warehouse):
+      - type = 0 or NULL (first leg delivery)
       - prepare_status = 0 (prepared, ready for pickup from merchant)
       - driver_id IS NULL (not assigned to any driver yet)
       - delivery_type = 1 (third-party driver delivery)
-    - Case 2 (Workflow 5: Warehouse -> User):
-      - prepare_status = 5 (warehouse ready for driver pickup)
-      - shipping_type = 1 (to warehouse flow, second leg)
+    - Case 2 (Workflow 5: Warehouse -> User, second leg):
+      - type = 1 (second leg delivery from warehouse)
+      - prepare_status = 0 (prepared, ready for pickup from warehouse)
+      - driver_id IS NULL (not assigned to any driver yet)
       - delivery_type = 1 (third-party driver delivery)
 
     Args:
@@ -350,19 +352,21 @@ async def get_available_packages(
     Returns:
         List of PrepareGoods instances available for pickup
     """
-    # Case 1: Packages ready for pickup from merchant (prepare_status=0, no driver)
+    # Case 1: First leg - Packages ready for pickup from merchant (type=0 or NULL, prepare_status=0, no driver)
     merchant_pickup_condition = (
         (PrepareGoods.driver_id.is_(None)) &
         (PrepareGoods.prepare_status == 0) &
-        (PrepareGoods.delivery_type == 1)
+        (PrepareGoods.delivery_type == 1) &
+        (or_(PrepareGoods.type == 0, PrepareGoods.type.is_(None)))
     )
 
-    # Case 2: Workflow 5 - Packages at warehouse ready for driver pickup to user
-    # When prepare_status=5 and shipping_type=1, package is at warehouse ready for delivery
+    # Case 2: Workflow 5 - Second leg packages at warehouse ready for driver pickup to user
+    # type=1 indicates this is a second leg delivery (warehouse to user)
     warehouse_to_user_condition = (
-        (PrepareGoods.prepare_status == 5) &
-        (PrepareGoods.shipping_type == 1) &
-        (PrepareGoods.delivery_type == 1)
+        (PrepareGoods.driver_id.is_(None)) &
+        (PrepareGoods.prepare_status == 0) &
+        (PrepareGoods.delivery_type == 1) &
+        (PrepareGoods.type == 1)
     )
 
     stmt = (

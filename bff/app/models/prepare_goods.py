@@ -94,6 +94,14 @@ class PrepareGoods(Base):
         comment="备货状态: NULL=待备货, 0=已备货, 1=司机收货中, 2=司机送达仓库, 3=仓库已收货, 4=司机配送用户, 5=已送达, 6=司机已认领"
     )
 
+    # Package type (leg of delivery)
+    type: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+        default=0,
+        comment="备货类型: 0=首段配送(商家→仓库/用户), 1=末段配送(仓库→用户, Workflow 5)"
+    )
+
     # Merchant info
     shop_id: Mapped[int] = mapped_column(
         BIGINT(unsigned=True),

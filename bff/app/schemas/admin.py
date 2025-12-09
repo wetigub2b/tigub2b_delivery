@@ -248,3 +248,29 @@ class AlertActionRequest(BaseModel):
     alert_id: int
     action: str  # acknowledge, resolve, dismiss
     notes: Optional[str] = None
+
+
+class AdminPrepareGoodsSummary(BaseModel):
+    """PrepareGoods summary for admin orders list"""
+    prepare_sn: str
+    order_ids: str
+    order_count: int
+    delivery_type: int
+    shipping_type: int
+    prepare_status: Optional[int] = None
+    prepare_status_label: str
+    shop_id: Optional[int] = None
+    warehouse_id: Optional[int] = None
+    warehouse_name: Optional[str] = None
+    driver_id: Optional[int] = None
+    driver_name: Optional[str] = None
+    receiver_name: Optional[str] = None
+    receiver_phone: Optional[str] = None
+    receiver_address: Optional[str] = None
+    receiver_city: Optional[str] = None
+    receiver_province: Optional[str] = None
+    total_value: Optional[float] = None
+    create_time: datetime
+
+    class Config:
+        from_attributes = True

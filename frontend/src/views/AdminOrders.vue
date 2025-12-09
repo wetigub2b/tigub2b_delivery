@@ -28,10 +28,12 @@
         <div class="filter-controls">
           <select v-model="statusFilter" @change="applyFilters">
             <option value="">{{ $t('admin.orders.allStatus') }}</option>
-            <option value="0">{{ $t('admin.orders.pending') }}</option>
-            <option value="1">{{ $t('admin.orders.shipped') }}</option>
-            <option value="2">{{ $t('admin.orders.partialShipped') }}</option>
-            <option value="3">{{ $t('admin.orders.delivered') }}</option>
+            <option value="0">已备货</option>
+            <option value="1">司机已确认取货</option>
+            <option value="2">司机送达仓库</option>
+            <option value="3">仓库已收货</option>
+            <option value="6">司机已认领</option>
+            <option value="7">已送达</option>
           </select>
 
           <select v-model="driverFilter" @change="applyFilters">
@@ -47,7 +49,8 @@
         <table class="orders-table">
           <thead>
             <tr>
-              <th>{{ $t('admin.orders.orderNumber') }}</th>
+              <th>备货单号</th>
+              <th>订单数</th>
               <th>{{ $t('admin.orders.customer') }}</th>
               <th>{{ $t('admin.orders.driver') }}</th>
               <th>{{ $t('admin.orders.status') }}</th>
@@ -57,14 +60,17 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="order in orders" :key="order.order_sn" class="order-row">
+            <tr v-for="order in orders" :key="order.prepare_sn" class="order-row">
               <td>
-                <strong>{{ order.order_sn }}</strong>
+                <strong>{{ order.prepare_sn }}</strong>
+              </td>
+              <td>
+                <span class="order-count">{{ order.order_count }}</span>
               </td>
               <td>
                 <div class="customer-info">
-                  <strong>{{ order.receiver_name }}</strong>
-                  <small>{{ order.receiver_phone }}</small>
+                  <strong>{{ order.receiver_name || '-' }}</strong>
+                  <small>{{ order.receiver_phone || '-' }}</small>
                 </div>
               </td>
               <td>
@@ -76,14 +82,14 @@
                 </span>
               </td>
               <td>
-                <span class="status-badge" :class="getStatusClass(order.shipping_status)">
-                  {{ getStatusLabel(order.shipping_status) }}
+                <span class="status-badge" :class="getStatusClass(order.prepare_status)">
+                  {{ order.prepare_status_label }}
                 </span>
               </td>
               <td>
                 <div class="address-info">
-                  {{ order.receiver_address }}
-                  <small>{{ order.receiver_city }}, {{ order.receiver_province }}</small>
+                  {{ order.receiver_address || '-' }}
+                  <small v-if="order.receiver_city || order.receiver_province">{{ order.receiver_city }}, {{ order.receiver_province }}</small>
                 </div>
               </td>
               <td>
@@ -190,23 +196,17 @@ const applyFilters = () => {
   loadOrders();
 };
 
-const getStatusClass = (status: number) => {
+const getStatusClass = (status?: number) => {
   switch (status) {
-    case 0: return 'pending';
-    case 1: return 'shipped';
-    case 2: return 'partial';
-    case 3: return 'delivered';
+    case null:
+    case undefined: return 'pending';
+    case 0: return 'prepared';
+    case 1: return 'pickup';
+    case 2: return 'to-warehouse';
+    case 3: return 'warehouse-received';
+    case 6: return 'claimed';
+    case 7: return 'delivered';
     default: return 'unknown';
-  }
-};
-
-const getStatusLabel = (status: number) => {
-  switch (status) {
-    case 0: return t('admin.orders.pending');
-    case 1: return t('admin.orders.shipped');
-    case 2: return t('admin.orders.partialShipped');
-    case 3: return t('admin.orders.delivered');
-    default: return t('admin.orders.unknown');
   }
 };
 
@@ -412,10 +412,23 @@ onMounted(() => {
 }
 
 .status-badge.pending { background: var(--color-warning-light); color: var(--color-warning-dark); }
-.status-badge.shipped { background: var(--color-info-light); color: var(--color-info-dark); }
-.status-badge.partial { background: var(--color-warning-light); color: var(--color-warning-dark); }
+.status-badge.prepared { background: var(--color-info-light); color: var(--color-info-dark); }
+.status-badge.pickup { background: #e3f2fd; color: #1565c0; }
+.status-badge.to-warehouse { background: #fff3e0; color: #e65100; }
+.status-badge.warehouse-received { background: #e8f5e9; color: #2e7d32; }
+.status-badge.claimed { background: #f3e5f5; color: #7b1fa2; }
 .status-badge.delivered { background: var(--color-success-light); color: var(--color-success-dark); }
 .status-badge.unknown { background: var(--color-error-light); color: var(--color-error); }
+
+.order-count {
+  display: inline-block;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+}
 
 .action-buttons {
   display: flex;

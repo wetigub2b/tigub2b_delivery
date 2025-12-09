@@ -15,6 +15,7 @@ from app.models.order import Order
 from app.models.user import User
 from app.schemas.admin import (
     AdminDashboardStats,
+    AdminPrepareGoodsSummary,
     AlertActionRequest,
     BulkActionRequest,
     DispatchDriver,
@@ -30,7 +31,7 @@ from app.schemas.admin import (
     PerformanceAnalyticsRequest,
     PerformanceComparisonResponse
 )
-from app.schemas.order import OrderSummary
+from app.models.prepare_goods import PrepareGoods
 from app.services import order_service
 
 router = APIRouter()
@@ -41,7 +42,7 @@ async def get_dashboard_stats(
     session: AsyncSession = Depends(get_db_session),
     current_admin: User = Depends(get_current_admin)
 ) -> AdminDashboardStats:
-    """Get admin dashboard statistics"""
+    """Get admin dashboard statistics from tigu_prepare_goods table"""
 
     # Get driver statistics from tigu_driver table
     total_drivers_result = await session.execute(
@@ -54,22 +55,31 @@ async def get_dashboard_stats(
     )
     active_drivers = active_drivers_result.scalar() or 0
 
-    # Get order statistics
-    total_orders_result = await session.execute(select(func.count(Order.order_sn)))
+    # Get order statistics from tigu_prepare_goods table
+    total_orders_result = await session.execute(
+        select(func.count(PrepareGoods.id))
+    )
     total_orders = total_orders_result.scalar() or 0
 
+    # Pending: prepare_status is NULL or 0 (waiting to be prepared or just prepared)
     pending_orders_result = await session.execute(
-        select(func.count(Order.order_sn)).where(Order.shipping_status == 0)
+        select(func.count(PrepareGoods.id)).where(
+            (PrepareGoods.prepare_status.is_(None)) | (PrepareGoods.prepare_status == 0)
+        )
     )
     pending_orders = pending_orders_result.scalar() or 0
 
+    # In transit: prepare_status 1-6 (driver claimed, pickup, to warehouse, etc.)
     in_transit_orders_result = await session.execute(
-        select(func.count(Order.order_sn)).where(Order.shipping_status.in_([1, 2]))
+        select(func.count(PrepareGoods.id)).where(
+            PrepareGoods.prepare_status.in_([1, 2, 3, 4, 5, 6])
+        )
     )
     in_transit_orders = in_transit_orders_result.scalar() or 0
 
+    # Completed: prepare_status = 7 (delivered)
     completed_orders_result = await session.execute(
-        select(func.count(Order.order_sn)).where(Order.shipping_status == 3)
+        select(func.count(PrepareGoods.id)).where(PrepareGoods.prepare_status == 7)
     )
     completed_orders = completed_orders_result.scalar() or 0
 
@@ -955,24 +965,97 @@ async def log_driver_action(
     return {"message": "Driver action logged successfully"}
 
 
-@router.get("/orders", response_model=List[OrderSummary])
+# Prepare status labels for admin display
+PREPARE_STATUS_LABELS = {
+    None: "待备货",              # Pending Prepare
+    0: "已备货",                 # Prepared
+    1: "司机已确认取货",          # Driver Confirmed Pickup
+    2: "司机送达仓库",            # Driver to Warehouse
+    3: "仓库已收货",              # Warehouse Received
+    4: "司机配送用户",            # Driver to User
+    5: "仓库确认送达",            # Warehouse Confirmed Ready
+    6: "司机已认领",              # Driver Claimed
+    7: "已送达",                 # Delivery Complete
+}
+
+
+def _parse_order_ids(order_ids_str: str) -> List[int]:
+    """Parse comma-separated order IDs string."""
+    if not order_ids_str:
+        return []
+    return [int(oid.strip()) for oid in order_ids_str.split(',') if oid.strip().isdigit()]
+
+
+@router.get("/orders", response_model=List[AdminPrepareGoodsSummary])
 async def list_orders(
-    status: Optional[int] = Query(None, ge=0, le=3),
+    status: Optional[int] = Query(None, ge=0, le=7, description="Filter by prepare_status"),
     driver_id: Optional[int] = Query(None, ge=1),
     unassigned: bool = Query(False),
     search: Optional[str] = Query(None, min_length=1),
     limit: int = Query(100, ge=1, le=500),
     session: AsyncSession = Depends(get_db_session),
     current_admin: User = Depends(get_current_admin)
-) -> List[OrderSummary]:
-    """List orders for admin console with optional filtering."""
+) -> List[AdminPrepareGoodsSummary]:
+    """List prepare goods packages for admin console with optional filtering."""
+    from sqlalchemy.orm import selectinload
 
-    orders = await order_service.fetch_orders(
-        session=session,
-        status=status,
-        driver_id=driver_id,
-        unassigned=unassigned,
-        search=search,
-        limit=limit
+    stmt = (
+        select(PrepareGoods)
+        .options(
+            selectinload(PrepareGoods.warehouse),
+            selectinload(PrepareGoods.driver)
+        )
+        .order_by(desc(PrepareGoods.create_time))
+        .limit(limit)
     )
-    return orders
+
+    if status is not None:
+        stmt = stmt.where(PrepareGoods.prepare_status == status)
+
+    if driver_id is not None:
+        stmt = stmt.where(PrepareGoods.driver_id == driver_id)
+
+    if unassigned:
+        stmt = stmt.where(PrepareGoods.driver_id.is_(None))
+
+    if search:
+        from sqlalchemy import or_
+        pattern = f"%{search}%"
+        stmt = stmt.where(
+            or_(
+                PrepareGoods.prepare_sn.ilike(pattern),
+                PrepareGoods.receiver_name.ilike(pattern),
+                PrepareGoods.receiver_phone.ilike(pattern),
+                PrepareGoods.order_ids.ilike(pattern)
+            )
+        )
+
+    result = await session.execute(stmt)
+    packages = result.scalars().unique().all()
+
+    summaries = []
+    for pkg in packages:
+        order_ids = _parse_order_ids(pkg.order_ids)
+        summaries.append(AdminPrepareGoodsSummary(
+            prepare_sn=pkg.prepare_sn,
+            order_ids=pkg.order_ids,
+            order_count=len(order_ids),
+            delivery_type=pkg.delivery_type,
+            shipping_type=pkg.shipping_type,
+            prepare_status=pkg.prepare_status,
+            prepare_status_label=PREPARE_STATUS_LABELS.get(pkg.prepare_status, "Unknown"),
+            shop_id=pkg.shop_id,
+            warehouse_id=pkg.warehouse_id,
+            warehouse_name=pkg.warehouse.name if pkg.warehouse else None,
+            driver_id=pkg.driver_id,
+            driver_name=pkg.driver.name if pkg.driver else None,
+            receiver_name=pkg.receiver_name,
+            receiver_phone=pkg.receiver_phone,
+            receiver_address=pkg.receiver_address,
+            receiver_city=pkg.receiver_city,
+            receiver_province=pkg.receiver_province,
+            total_value=float(pkg.total_value) if pkg.total_value else None,
+            create_time=pkg.create_time
+        ))
+
+    return summaries

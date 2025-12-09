@@ -121,23 +121,27 @@ export interface AdminOrderItem {
   quantity: number;
 }
 
+// Updated to match tigu_prepare_goods table
 export interface AdminOrderSummary {
-  order_sn: string;
-  shipping_status: number;
-  order_status: number;
+  prepare_sn: string;
+  order_ids: string;
+  order_count: number;
+  delivery_type: number;
+  shipping_type: number;
+  prepare_status?: number;
+  prepare_status_label: string;
+  shop_id?: number;
+  warehouse_id?: number;
+  warehouse_name?: string;
   driver_id?: number;
   driver_name?: string;
-  receiver_name: string;
-  receiver_phone: string;
-  receiver_address: string;
+  receiver_name?: string;
+  receiver_phone?: string;
+  receiver_address?: string;
   receiver_city?: string;
   receiver_province?: string;
-  receiver_postal_code?: string;
-  shipping_status_label: string;
-  order_status_label: string;
+  total_value?: number;
   create_time: string;
-  pickup_location?: AdminWarehouseSnapshot;
-  items: AdminOrderItem[];
 }
 
 export interface BulkActionRequest {

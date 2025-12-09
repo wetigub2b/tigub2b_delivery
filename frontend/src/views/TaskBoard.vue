@@ -65,7 +65,7 @@
               <a class="address-link" @click.stop="openAddressMap(pkg.receiverAddress, 'receiver')">📍 {{ pkg.receiverAddress }}</a>
             </div>
           </div>
-          <div v-if="![2, 3].includes(pkg.prepareStatus)" class="package-footer">
+          <div v-if="![2, 3, 7].includes(pkg.prepareStatus)" class="package-footer">
             <button
               class="package-action-button"
               @click="handlePackageAction(pkg)"
@@ -193,7 +193,7 @@ const statuses = computed(() => {
     { key: 'pending_pickup', label: t('taskBoard.pendingPickup'), prepareStatus: 6 },
     { key: 'in_transit', label: t('taskBoard.inTransit'), prepareStatus: 1 },
     { key: 'warehouse', label: t('taskBoard.warehouse'), prepareStatus: 2 },
-    { key: 'completed', label: t('taskBoard.completed'), prepareStatus: 3 }
+    { key: 'completed', label: t('taskBoard.completed'), prepareStatus: 7 }
   );
   
   return tabs;

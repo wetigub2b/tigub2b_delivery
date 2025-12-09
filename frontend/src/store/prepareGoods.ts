@@ -27,7 +27,8 @@ const prepareStatusLabels: Record<number | string, string> = {
   3: 'Delivered Complete',
   4: 'Warehouse Shipped',
   5: 'Delivered',
-  6: 'Driver Claimed'
+  6: 'Driver Claimed',
+  7: 'Delivery Complete'
 };
 
 // Delivery type labels
@@ -340,9 +341,9 @@ export const usePrepareGoodsStore = defineStore('prepareGoods', {
         // Update local state - package status changes based on shipping type
         const pkg = this.driverPackages.find((pkg) => pkg.prepareSn === prepareSn);
         if (pkg) {
-          // shipping_type = 0 (Workflow 3): user → status 3 (已送达)
+          // shipping_type = 0 (Workflow 3): user → status 7 (已送达)
           // shipping_type = 1 (Workflow 4): warehouse → status 2 (司机送达仓库)
-          const newStatus = pkg.shippingType === 1 ? 2 : 3;
+          const newStatus = pkg.shippingType === 1 ? 2 : 7;
           pkg.prepareStatus = newStatus;
           pkg.prepareStatusLabel = prepareStatusLabels[newStatus] || 'Unknown';
         }

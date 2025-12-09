@@ -42,6 +42,7 @@ PREPARE_STATUS_LABELS_TO_USER = {
     4: "已送达",                 # Delivered
     5: "已送达",                 # Delivered
     6: "司机已认领",              # Driver Claimed
+    7: "已送达",                 # Delivery Complete
 }
 
 PREPARE_STATUS_LABELS_TO_WAREHOUSE = {
@@ -53,6 +54,7 @@ PREPARE_STATUS_LABELS_TO_WAREHOUSE = {
     4: "司机配送用户",            # Driver to User
     5: "仓库确认送达",            # Warehouse Confirmed Ready (for Workflow 5 pickup)
     6: "司机已认领",              # Driver Claimed
+    7: "已送达",                 # Delivery Complete
 }
 
 def get_prepare_status_label(status: Optional[int], shipping_type: int) -> str:
@@ -1081,8 +1083,8 @@ async def confirm_delivery(
     else:
         # To user workflow (Workflow 4)
         action_type = 4  # 司机送达用户 - Driver delivers to user (action_type=4)
-        new_status = 3  # 已送达 - Delivered to user (Workflow 4 complete)
-        order_shipping_status = 4  # Update tigu_order.shipping_status to 4 (司机送达用户)
+        new_status = 7  # 已送达 - Delivered to user (Workflow 4 complete)
+        order_shipping_status = 5  # Update tigu_order.shipping_status to 5 (司机送达用户)
 
     # Create OrderAction record for each order AND update tigu_order
     # Note: logistics_voucher_file should contain file ID from tigu_uploaded_files

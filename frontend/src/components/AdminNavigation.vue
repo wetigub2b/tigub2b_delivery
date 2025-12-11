@@ -56,6 +56,10 @@
 
       <div class="nav-actions">
         <LanguageSwitcher />
+        <button @click="handleReload" class="reload-button" :title="$t('navigation.reload')">
+          <span class="reload-icon">🔄</span>
+          {{ $t('navigation.reload') }}
+        </button>
         <button @click="logout" class="logout-button">
           <span class="logout-icon">🚪</span>
           {{ $t('admin.nav.logout') }}
@@ -99,6 +103,44 @@ const closeMobileMenu = () => {
 const logout = () => {
   adminStore.logout();
   router.push('/admin/login');
+};
+
+const handleReload = async () => {
+  try {
+    // Unregister all service workers
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (const registration of registrations) {
+        await registration.unregister();
+        console.log('Service worker unregistered:', registration.scope);
+      }
+    }
+
+    // Clear all caches
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      for (const cacheName of cacheNames) {
+        await caches.delete(cacheName);
+        console.log('Cache deleted:', cacheName);
+      }
+    }
+
+    // Clear localStorage cache-related items (keep auth tokens)
+    const keysToKeep = ['delivery_token', 'admin_token', 'admin_refresh_token'];
+    const allKeys = Object.keys(localStorage);
+    for (const key of allKeys) {
+      if (!keysToKeep.includes(key)) {
+        localStorage.removeItem(key);
+      }
+    }
+
+    console.log('Cache and service workers cleared, reloading...');
+  } catch (err) {
+    console.error('Error clearing cache:', err);
+  }
+
+  // Force reload from server (bypass cache)
+  window.location.reload();
 };
 </script>
 
@@ -205,6 +247,31 @@ const logout = () => {
 .logout-button:hover {
   color: var(--color-primary);
   border-color: var(--color-primary);
+}
+
+.reload-button {
+  background: transparent;
+  color: var(--color-black);
+  border: 1px solid var(--color-gray-light);
+  border-radius: var(--radius-full);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-md);
+  font-family: var(--font-family-base);
+  transition: all var(--transition-base);
+}
+
+.reload-button:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.reload-icon {
+  font-size: var(--font-size-md);
 }
 
 .logout-icon {

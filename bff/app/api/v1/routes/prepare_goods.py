@@ -579,15 +579,24 @@ async def get_prepare_package(
         for photo in photos_result.scalars().all()
     ]
     
-    # Fetch photos from order_action (action_type 0 and 5) for orders in this package
+    # Fetch photos from order_action for orders in this package
+    # For type=1 (Workflow 5 second leg from warehouse): show warehouse receipt photos (action_type=3)
+    # For type=0 or None (first leg from merchant): show shop preparation photos (action_type=0)
     if order_ids:
         from app.models.order_action import OrderAction
         
-        # Get order actions for action_type 0 (goods prepared) and 5 (delivery complete)
+        # Determine which action types to fetch based on package type
+        if prepare_goods.type == 1:
+            # Workflow 5 second leg: warehouse receipt photo (action_type=3)
+            action_types = [3, 5]
+        else:
+            # First leg from merchant: shop preparation photo (action_type=0)
+            action_types = [0, 5]
+        
         action_result = await session.execute(
             select(OrderAction)
             .where(OrderAction.order_id.in_(order_ids))
-            .where(OrderAction.action_type.in_([0, 5]))
+            .where(OrderAction.action_type.in_(action_types))
             .order_by(OrderAction.create_time.desc())
         )
         actions = action_result.scalars().all()

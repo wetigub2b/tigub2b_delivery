@@ -1,7 +1,7 @@
 <template>
   <div class="workflow-timeline">
     <div class="timeline-header">
-      <h4 class="timeline-title">{{ workflowLabel }}</h4>
+      <h4 class="timeline-title">{{ $t(workflowLabel) }}</h4>
       <div class="timeline-status">
         {{ currentStatusLabel }}
       </div>
@@ -80,7 +80,7 @@
         />
       </template>
 
-      <!-- Workflow 4: Driver → Warehouse → User (1,1) -->
+      <!-- Workflow 4: Driver → Warehouse (1,1) -->
       <template v-else-if="deliveryType === 1 && shippingType === 1">
         <WorkflowStep
           :completed="prepareStatus !== null && prepareStatus >= 0"
@@ -136,10 +136,10 @@ const props = defineProps<{
 const workflowLabel = computed(() => {
   const key = `${props.deliveryType},${props.shippingType}`;
   const workflows: Record<string, string> = {
-    '0,0': 'Workflow 1: Merchant → Warehouse → User',
-    '0,1': 'Workflow 2: Merchant → User',
-    '1,0': 'Workflow 3: Driver → User',
-    '1,1': 'Workflow 4: Driver → Warehouse → User'
+    '0,0': 'workflow.workflow1.title',
+    '0,1': 'workflow.workflow2.title',
+    '1,0': 'workflow.workflow3.title',
+    '1,1': 'workflow.workflow4.title'
   };
   return workflows[key] || 'Unknown Workflow';
 });

@@ -23,7 +23,7 @@
               </div>
               <div class="package-row">
                 <span class="package-label">{{ $t('taskBoard.workflow') }}:</span>
-                <span class="package-value">{{ packageData.workflowLabel }}</span>
+                <span class="package-value">{{ $t(packageData.workflowLabel) }}</span>
               </div>
               <div v-if="packageData.warehouseName" class="package-row">
                 <span class="package-label">{{ $t('taskBoard.warehouse') }}:</span>

@@ -232,6 +232,47 @@
     "title": "Delivery Location",
     "openInGoogleMaps": "Open in Google Maps"
   },
+  "workflow": {
+    "merchant": "Merchant",
+    "driver": "Driver",
+    "warehouse": "Warehouse",
+    "user": "User",
+    "deliveryType": "Delivery Type",
+    "shippingType": "Shipping Type",
+    "merchantSelf": "Merchant Self-Delivery",
+    "thirdParty": "Third Party Delivery",
+    "toWarehouse": "To Warehouse",
+    "toUser": "To User",
+    "workflow1": {
+      "title": "Merchant → Warehouse → User",
+      "description": "Merchant self-delivery to warehouse, then to user"
+    },
+    "workflow2": {
+      "title": "Merchant → User",
+      "description": "Merchant self-delivery directly to user"
+    },
+    "workflow3": {
+      "title": "Driver → User",
+      "description": "Third party driver delivers directly to user"
+    },
+    "workflow4": {
+      "title": "Driver → Warehouse",
+      "description": "Third party driver delivers to warehouse"
+    },
+    "workflow5": {
+      "title": "Warehouse → User",
+      "description": "Warehouse ships to user"
+    },
+    "steps": {
+      "goodsReady": "Goods Ready",
+      "merchantPickup": "Merchant Pickup",
+      "driverPickup": "Driver Pickup",
+      "arriveWarehouse": "Arrive Warehouse",
+      "warehouseReceived": "Warehouse Received",
+      "warehouseShips": "Warehouse Ships",
+      "delivered": "Delivered"
+    }
+  },
   "admin": {
     "title": "Admin Portal",
     "subtitle": "Delivery Management System",

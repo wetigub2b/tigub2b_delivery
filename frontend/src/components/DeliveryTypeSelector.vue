@@ -83,7 +83,7 @@
         </div>
       </div>
 
-      <!-- Workflow 4: Driver → Warehouse → User -->
+      <!-- Workflow 4: Driver → Warehouse -->
       <div
         class="workflow-card"
         :class="{ selected: isSelected(1, 1) }"
@@ -96,8 +96,6 @@
           <span class="path-step">{{ $t('workflow.driver') }}</span>
           <span class="path-arrow">→</span>
           <span class="path-step">{{ $t('workflow.warehouse') }}</span>
-          <span class="path-arrow">→</span>
-          <span class="path-step">{{ $t('workflow.user') }}</span>
         </div>
         <div class="workflow-details">
           <div class="detail-row">

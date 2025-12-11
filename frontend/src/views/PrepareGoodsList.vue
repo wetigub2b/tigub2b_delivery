@@ -55,8 +55,8 @@
           <div class="card-body">
             <div class="package-info">
               <div class="info-row">
-                <span class="info-label">{{ $t('workflow.label') }}:</span>
-                <span class="info-value">{{ pkg.workflowLabel }}</span>
+                <span class="info-label">{{ $t('taskBoard.workflow') }}:</span>
+                <span class="info-value">{{ $t(pkg.workflowLabel) }}</span>
               </div>
 
               <div class="info-row">

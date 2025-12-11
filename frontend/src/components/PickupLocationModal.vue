@@ -55,7 +55,7 @@
                     </button>
                   </div>
                   <div class="package-info-row">
-                    <span>🏷️ {{ pkg.workflowLabel }}</span>
+                    <span>🏷️ {{ $t(pkg.workflowLabel) }}</span>
                   </div>
                   <div v-if="pkg.totalValue" class="package-info-row">
                     <span>💰 {{ formatAmount(pkg.totalValue) }}</span>

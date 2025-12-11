@@ -48,15 +48,15 @@ function getWorkflowLabel(deliveryType: number, shippingType: number, prepareSta
   // Workflow 5: Warehouse → User (second leg delivery)
   // This is when prepare_status=5 and the package is ready for pickup from warehouse
   if (pickupType === 'warehouse' || (prepareStatus === 5 && shippingType === 1)) {
-    return 'Workflow 5: Warehouse → User';
+    return 'workflow.workflow5.title';
   }
 
   const key = `${deliveryType},${shippingType}`;
   const workflows: Record<string, string> = {
-    '0,0': 'Workflow 1: Merchant → Warehouse → User',
-    '0,1': 'Workflow 2: Merchant → User',
-    '1,0': 'Workflow 3: Driver → User',
-    '1,1': 'Workflow 4: Driver → Warehouse → User'
+    '0,0': 'workflow.workflow1.title',
+    '0,1': 'workflow.workflow2.title',
+    '1,0': 'workflow.workflow3.title',
+    '1,1': 'workflow.workflow4.title'
   };
   return workflows[key] || 'Unknown Workflow';
 }

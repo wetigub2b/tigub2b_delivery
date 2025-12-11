@@ -429,5 +429,46 @@
   "addressMap": {
     "title": "配送地点",
     "openInGoogleMaps": "在谷歌地图中打开"
+  },
+  "workflow": {
+    "merchant": "商家",
+    "driver": "司机",
+    "warehouse": "仓库",
+    "user": "用户",
+    "deliveryType": "配送类型",
+    "shippingType": "运输类型",
+    "merchantSelf": "商家自配送",
+    "thirdParty": "第三方配送",
+    "toWarehouse": "到仓库",
+    "toUser": "到用户",
+    "workflow1": {
+      "title": "商家 → 仓库 → 用户",
+      "description": "商家自配送到仓库，再送到用户"
+    },
+    "workflow2": {
+      "title": "商家 → 用户",
+      "description": "商家直接配送到用户"
+    },
+    "workflow3": {
+      "title": "司机 → 用户",
+      "description": "第三方司机直接配送到用户"
+    },
+    "workflow4": {
+      "title": "司机 → 仓库",
+      "description": "第三方司机配送到仓库"
+    },
+    "workflow5": {
+      "title": "仓库 → 用户",
+      "description": "仓库发货到用户"
+    },
+    "steps": {
+      "goodsReady": "货物准备",
+      "merchantPickup": "商家取货",
+      "driverPickup": "司机取货",
+      "arriveWarehouse": "到达仓库",
+      "warehouseReceived": "仓库已收货",
+      "warehouseShips": "仓库发货",
+      "delivered": "已送达"
+    }
   }
 }

@@ -40,8 +40,8 @@
 
             <div class="summary-grid">
               <div class="summary-item">
-                <span class="summary-label">{{ $t('workflow.label') }}:</span>
-                <span class="summary-value">{{ workflowLabel }}</span>
+                <span class="summary-label">{{ $t('taskBoard.workflow') }}:</span>
+                <span class="summary-value">{{ workflowLabel ? $t(workflowLabel) : '' }}</span>
               </div>
 
               <div class="summary-item">
@@ -91,6 +91,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import DeliveryTypeSelector from '@/components/DeliveryTypeSelector.vue';
 import OrderSelector from '@/components/OrderSelector.vue';
@@ -109,6 +110,8 @@ const selectedOrderIds = ref<number[]>([]);
 const isCreating = ref(false);
 const errorMessage = ref('');
 
+const { t } = useI18n();
+
 // Mock data - TODO: Replace with actual API calls
 const warehouses = ref([
   { id: 1, name: 'Warehouse A', address: '123 Main St' },
@@ -125,17 +128,17 @@ const workflowLabel = computed(() => {
   if (!workflowSelection.value) return '';
   const key = `${workflowSelection.value.deliveryType},${workflowSelection.value.shippingType}`;
   const workflows: Record<string, string> = {
-    '0,0': 'Workflow 1: Merchant → Warehouse → User',
-    '0,1': 'Workflow 2: Merchant → User',
-    '1,0': 'Workflow 3: Driver → User',
-    '1,1': 'Workflow 4: Driver → Warehouse → User'
+    '0,0': 'workflow.workflow1.title',
+    '0,1': 'workflow.workflow2.title',
+    '1,0': 'workflow.workflow3.title',
+    '1,1': 'workflow.workflow4.title'
   };
   return workflows[key] || '';
 });
 
 const deliveryTypeLabel = computed(() => {
-  if (workflowSelection.value?.deliveryType === 0) return 'Merchant Self-Delivery';
-  if (workflowSelection.value?.deliveryType === 1) return 'Third-Party Driver';
+  if (workflowSelection.value?.deliveryType === 0) return t('workflow.merchantSelf');
+  if (workflowSelection.value?.deliveryType === 1) return t('workflow.thirdParty');
   return '';
 });
 

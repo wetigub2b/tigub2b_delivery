@@ -77,7 +77,12 @@
     "submitDelivery": "Submit Delivery",
     "pickupAddress": "Pickup",
     "warehouseAddress": "Warehouse",
-    "receiverAddress": "Delivery"
+    "receiverAddress": "Delivery",
+    "earnings": "Earnings",
+    "packageSN": "Package SN",
+    "totalPackages": "Total Packages",
+    "totalEarnings": "Total Earnings",
+    "deliveryEarning": "Delivery Earning"
   },
   "routePlanner": {
     "title": "Route Planner",

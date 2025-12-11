@@ -77,7 +77,12 @@
     "submitDelivery": "提交送达",
     "pickupAddress": "取货地址",
     "warehouseAddress": "仓库地址",
-    "receiverAddress": "收货地址"
+    "receiverAddress": "收货地址",
+    "earnings": "收益",
+    "packageSN": "包裹编号",
+    "totalPackages": "总包裹数",
+    "totalEarnings": "总收益",
+    "deliveryEarning": "配送收益"
   },
   "routePlanner": {
     "title": "路线规划",

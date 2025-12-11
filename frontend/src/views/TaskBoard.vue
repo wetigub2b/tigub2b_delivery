@@ -22,8 +22,38 @@
     <!-- Map Tab -->
     <MapTab v-if="activeStatus === 'map' && features.mapTab" />
 
+    <!-- Earnings Tab -->
+    <section v-if="activeStatus === 'earnings'" class="earnings-section">
+      <div class="earnings-table-wrapper">
+        <table class="earnings-table">
+          <thead>
+            <tr>
+              <th>{{ $t('taskBoard.packageSN') }}</th>
+              <th>{{ $t('packageModal.totalValue') }}</th>
+              <th>{{ $t('taskBoard.deliveryEarning') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="pkg in earningsPackages" :key="pkg.prepareSn">
+              <td class="package-sn-cell">{{ pkg.prepareSn }}</td>
+              <td class="amount-cell">{{ formatAmount(pkg.totalValue || 0) }}</td>
+              <td class="amount-cell earning-cell">{{ formatAmount((pkg.totalValue || 0) * 0.1) }}</td>
+            </tr>
+          </tbody>
+          <tfoot v-if="earningsPackages.length > 0">
+            <tr class="total-row">
+              <td><strong>{{ $t('taskBoard.totalPackages') }}: {{ earningsPackages.length }}</strong></td>
+              <td></td>
+              <td class="total-earning"><strong>{{ $t('taskBoard.totalEarnings') }}: {{ formatAmount(totalEarnings) }}</strong></td>
+            </tr>
+          </tfoot>
+        </table>
+        <EmptyState v-if="earningsPackages.length === 0" :message="t('taskBoard.noPackages')" />
+      </div>
+    </section>
+
     <!-- Packages List (All Tabs) -->
-    <section v-if="activeStatus !== 'map' && filteredPackages.length" class="board__list">
+    <section v-if="activeStatus !== 'map' && activeStatus !== 'earnings' && filteredPackages.length" class="board__list">
       <div class="prepare-packages-grid">
         <div
           v-for="pkg in filteredPackages"
@@ -77,7 +107,7 @@
       </div>
     </section>
 
-    <EmptyState v-else-if="activeStatus !== 'map'" :message="t('taskBoard.noPackages')" />
+    <EmptyState v-else-if="activeStatus !== 'map' && activeStatus !== 'earnings'" :message="t('taskBoard.noPackages')" />
 
     <!-- Package Orders Modal -->
     <PackageOrdersModal
@@ -193,7 +223,8 @@ const statuses = computed(() => {
     { key: 'pending_pickup', label: t('taskBoard.pendingPickup'), prepareStatus: 6 },
     { key: 'in_transit', label: t('taskBoard.inTransit'), prepareStatus: 1 },
     { key: 'warehouse', label: t('taskBoard.warehouse'), prepareStatus: 2 },
-    { key: 'completed', label: t('taskBoard.completed'), prepareStatus: 7 }
+    { key: 'completed', label: t('taskBoard.completed'), prepareStatus: 7 },
+    { key: 'earnings', label: t('taskBoard.earnings'), prepareStatus: null }
   );
   
   return tabs;
@@ -208,7 +239,7 @@ onMounted(() => {
 // Filter packages by prepare_status based on active tab
 const filteredPackages = computed(() => {
   const currentTab = statuses.value.find(s => s.key === activeStatus.value);
-  if (!currentTab || currentTab.key === 'map') return [];
+  if (!currentTab || currentTab.key === 'map' || currentTab.key === 'earnings') return [];
 
   // For "Available" tab, use availablePackages (unassigned)
   // For other tabs, use driverPackages (assigned to this driver)
@@ -225,6 +256,20 @@ const filteredPackages = computed(() => {
     // Single status
     return allPackages.filter(pkg => pkg.prepareStatus === targetStatus);
   }
+});
+
+// Earnings packages - packages in warehouse (status=2) and completed (status=7)
+const earningsPackages = computed(() => {
+  return prepareGoodsStore.driverPackages.filter(
+    pkg => pkg.prepareStatus === 2 || pkg.prepareStatus === 7
+  );
+});
+
+// Total earnings calculation (10% of total value)
+const totalEarnings = computed(() => {
+  return earningsPackages.value.reduce((sum, pkg) => {
+    return sum + (pkg.totalValue || 0) * 0.1;
+  }, 0);
 });
 
 function getPackageActionLabel(status: number | null): string {
@@ -576,5 +621,123 @@ function cancelDeliveryProof() {
 .package-action-button--disabled:hover {
   background: var(--color-gray-light);
   border-color: var(--color-gray-light);
+}
+
+/* Earnings Table Styles */
+.earnings-section {
+  background: var(--color-white);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.earnings-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+.earnings-table {
+  width: 100%;
+  min-width: 320px;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  table-layout: auto;
+}
+
+.earnings-table thead {
+  background: var(--color-gray-light);
+}
+
+.earnings-table th {
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: left;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  border-bottom: 2px solid var(--color-gray-light);
+  white-space: nowrap;
+}
+
+.earnings-table td {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--color-gray-light);
+  color: var(--color-text-secondary);
+  text-align: left;
+}
+
+.earnings-table tbody tr:hover {
+  background: var(--color-gray-lighter);
+}
+
+.package-sn-cell {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  word-break: break-all;
+  max-width: 120px;
+}
+
+.amount-cell {
+  text-align: left;
+  font-family: monospace;
+  white-space: nowrap;
+}
+
+.earning-cell {
+  color: var(--color-success);
+  font-weight: var(--font-weight-semibold);
+}
+
+.earnings-table tfoot {
+  background: var(--color-primary-light);
+  font-weight: var(--font-weight-semibold);
+}
+
+.earnings-table tfoot td {
+  padding: var(--spacing-md) var(--spacing-md);
+  border-top: 2px solid var(--color-primary);
+  border-bottom: none;
+  text-align: left;
+}
+
+.total-row td {
+  color: var(--color-text-primary);
+}
+
+.total-earning {
+  text-align: left;
+  color: var(--color-success);
+  font-size: 1rem;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .earnings-section {
+    padding: var(--spacing-md);
+  }
+
+  .earnings-table {
+    font-size: 0.75rem;
+  }
+
+  .earnings-table th,
+  .earnings-table td {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  .package-sn-cell {
+    max-width: 80px;
+    font-size: 0.7rem;
+  }
+
+  .earnings-table tfoot td {
+    padding: var(--spacing-sm) var(--spacing-sm);
+    font-size: 0.75rem;
+  }
+
+  .total-earning {
+    font-size: 0.875rem;
+  }
 }
 </style>

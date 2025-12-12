@@ -24,6 +24,7 @@
         :show="showPickupModal"
         :mark="selectedMark"
         @close="closePickupModal"
+        @pickup-success="handlePickupSuccess"
       />
     </div>
   </div>
@@ -36,6 +37,10 @@ import axios from 'axios';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { mobileUtils } from '../utils/mobile';
 import PickupLocationModal from './PickupLocationModal.vue';
+
+const emit = defineEmits<{
+  'pickup-success': [];
+}>();
 
 const mapContainer = ref<HTMLDivElement | null>(null);
 const loading = ref(true);
@@ -94,6 +99,11 @@ function openPickupModal(mark: Mark) {
 function closePickupModal() {
   showPickupModal.value = false;
   selectedMark.value = null;
+}
+
+function handlePickupSuccess() {
+  closePickupModal();
+  emit('pickup-success');
 }
 
 function addMarkers(marks: Mark[]) {

@@ -20,7 +20,7 @@
     </nav>
 
     <!-- Map Tab -->
-    <MapTab v-if="activeStatus === 'map' && features.mapTab" />
+    <MapTab v-if="activeStatus === 'map' && features.mapTab" @pickup-success="handleMapPickupSuccess" />
 
     <!-- Earnings Tab -->
     <section v-if="activeStatus === 'earnings'" class="earnings-section">
@@ -320,11 +320,14 @@ async function confirmPickup() {
   isPickingUp.value = true;
   try {
     await prepareGoodsStore.pickupPackage(packageToPickup.value.prepareSn);
-    // Refresh available packages
+    // Refresh both available and driver packages
     await prepareGoodsStore.fetchAvailablePackages();
+    await prepareGoodsStore.fetchMyDriverPackages();
     // Close modal
     showPickupModal.value = false;
     packageToPickup.value = null;
+    // Switch to pending pickup tab
+    activeStatus.value = 'pending_pickup';
   } catch (error: any) {
     alert(`Error: ${error.response?.data?.detail || error.message}`);
   } finally {
@@ -335,6 +338,11 @@ async function confirmPickup() {
 function cancelPickup() {
   showPickupModal.value = false;
   packageToPickup.value = null;
+}
+
+function handleMapPickupSuccess() {
+  // Switch to pending pickup tab when pickup is successful from map
+  activeStatus.value = 'pending_pickup';
 }
 
 function openOrdersModal(pkg: any) {

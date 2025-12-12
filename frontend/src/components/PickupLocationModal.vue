@@ -146,6 +146,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   close: [];
+  'pickup-success': [];
 }>();
 
 const loading = ref(false);
@@ -200,8 +201,11 @@ async function handlePickup(pkg: any) {
   isPickingUp.value = true;
   try {
     await prepareGoodsStore.pickupPackage(pkg.prepareSn);
-    // Refresh available packages list (computed will auto-filter)
+    // Refresh both available and driver packages
     await prepareGoodsStore.fetchAvailablePackages();
+    await prepareGoodsStore.fetchMyDriverPackages();
+    // Emit success event to switch to pending pickup tab
+    emit('pickup-success');
   } catch (err: any) {
     alert(`Error: ${err.response?.data?.detail || err.message}`);
   } finally {

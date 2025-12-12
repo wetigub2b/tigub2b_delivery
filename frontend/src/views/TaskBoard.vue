@@ -63,7 +63,7 @@
           <div class="package-header">
             <span class="package-sn">{{ pkg.prepareSn }}</span>
             <span class="package-status" :class="`status-${pkg.prepareStatus}`">
-              {{ pkg.prepareStatusLabel }}
+              {{ t(getPrepareStatusI18nKey(pkg.prepareStatusLabel)) }}
             </span>
           </div>
           <div class="package-body">
@@ -184,6 +184,7 @@ import PreparePackageDeliveryModal from '@/components/PreparePackageDeliveryModa
 import MapTab from '@/components/MapTab.vue';
 import AddressMapModal from '@/components/AddressMapModal.vue';
 import features from '@/config/features';
+import { getPrepareStatusI18nKey } from '@/utils/i18n';
 
 const { t } = useI18n();
 const prepareGoodsStore = usePrepareGoodsStore();

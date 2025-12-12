@@ -429,7 +429,9 @@
     "driverToWarehouse": "司机送达仓库",
     "warehouseReceived": "仓库已收货",
     "delivered": "已送达",
-    "driverClaimed": "司机已认领"
+    "driverClaimed": "司机已认领",
+    "warehouseConfirmedReady": "仓库确认送达",
+    "unknown": "未知"
   },
   "addressMap": {
     "title": "配送地点",

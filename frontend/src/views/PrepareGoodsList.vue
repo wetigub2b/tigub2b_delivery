@@ -48,7 +48,7 @@
           <div class="card-header">
             <span class="package-sn">{{ pkg.prepareSn }}</span>
             <span class="package-status" :class="`status-${pkg.prepareStatus}`">
-              {{ pkg.prepareStatusLabel }}
+              {{ t(getPrepareStatusI18nKey(pkg.prepareStatusLabel)) }}
             </span>
           </div>
 
@@ -95,8 +95,11 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { usePrepareGoodsStore } from '@/store/prepareGoods';
+import { getPrepareStatusI18nKey } from '@/utils/i18n';
 
+const { t } = useI18n();
 const router = useRouter();
 const prepareGoodsStore = usePrepareGoodsStore();
 

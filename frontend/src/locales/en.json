@@ -228,10 +228,12 @@
     "prepared": "Prepared",
     "driverConfirmedPickup": "Driver Confirmed Pickup",
     "driverToUser": "Driver Delivering to User",
-    "driverToWarehouse": "Driver Delivered to Warehouse",
+    "driverToWarehouse": "Delivered to Warehouse",
     "warehouseReceived": "Warehouse Received",
     "delivered": "Delivered",
-    "driverClaimed": "Driver Claimed"
+    "driverClaimed": "Driver Claimed",
+    "warehouseConfirmedReady": "Warehouse Confirmed Ready",
+    "unknown": "Unknown"
   },
   "addressMap": {
     "title": "Delivery Location",

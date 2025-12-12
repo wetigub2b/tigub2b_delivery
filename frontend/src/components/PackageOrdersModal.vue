@@ -82,7 +82,7 @@
 
           <div class="modal-footer">
             <button class="modal-button modal-button--primary" @click="handleClose">
-              {{ $t('common.confirm') }}
+              {{ $t('common.ok') }}
             </button>
           </div>
         </div>

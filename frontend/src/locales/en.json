@@ -82,7 +82,12 @@
     "packageSN": "Package SN",
     "totalPackages": "Total Packages",
     "totalEarnings": "Total Earnings",
-    "deliveryEarning": "Delivery Earning"
+    "deliveryEarning": "Delivery Earning",
+    "settlement": "Settlement",
+    "settled": "Settled",
+    "pending": "Pending",
+    "subtotalSettled": "Subtotal (Settled)",
+    "subtotalPending": "Subtotal (Pending)"
   },
   "routePlanner": {
     "title": "Route Planner",

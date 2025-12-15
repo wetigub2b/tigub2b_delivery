@@ -137,4 +137,5 @@ class PrepareGoodsSummary(BaseModel):
     driver_name: Optional[str] = Field(default=None, alias="driverName")
     receiver_address: Optional[str] = Field(default=None, alias="receiverAddress")
     total_value: Optional[float] = Field(default=None, alias="totalValue")
+    settlement_status: Optional[int] = Field(default=0, alias="settlementStatus", description="Settlement status: 0=pending, 1=settled")
     create_time: datetime = Field(alias="createTime")

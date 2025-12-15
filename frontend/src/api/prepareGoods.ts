@@ -58,6 +58,7 @@ export interface PrepareGoodsSummaryDto {
   driverName: string | null;
   receiverAddress: string | null;
   totalValue: number | null;
+  settlementStatus: number | null;  // 0=pending, 1=settled
   createTime: string;
 }
 

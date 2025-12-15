@@ -158,6 +158,14 @@ class PrepareGoods(Base):
         comment="包裹总价值"
     )
 
+    # Settlement status for driver payment
+    settlement_status: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+        default=0,
+        comment="结算状态: 0=待结算, 1=已结算"
+    )
+
     # Warehouse (if applicable - shipping_type=1)
     warehouse_id: Mapped[int | None] = mapped_column(
         BIGINT(unsigned=True),

@@ -252,6 +252,7 @@ async def list_available_packages(
                 driver_name=None,  # Available packages have no driver assigned
                 receiver_address=pkg.receiver_address,
                 total_value=float(pkg.total_value) if pkg.total_value else None,
+                settlement_status=pkg.settlement_status,
                 create_time=pkg.create_time
             )
         )
@@ -315,6 +316,7 @@ async def list_my_driver_packages(
                 driver_name=pkg.driver.name if pkg.driver else None,
                 receiver_address=pkg.receiver_address,
                 total_value=float(pkg.total_value) if pkg.total_value else None,
+                settlement_status=pkg.settlement_status,
                 create_time=pkg.create_time
             )
         )
@@ -371,6 +373,7 @@ async def list_driver_packages(
                 driver_name=pkg.driver.name if pkg.driver else None,
                 receiver_address=pkg.receiver_address,
                 total_value=float(pkg.total_value) if pkg.total_value else None,
+                settlement_status=pkg.settlement_status,
                 create_time=pkg.create_time
             )
         )
@@ -428,6 +431,7 @@ async def list_shop_prepare_packages(
                 driver_name=pkg.driver.name if pkg.driver else None,
                 receiver_address=pkg.receiver_address,
                 total_value=float(pkg.total_value) if pkg.total_value else None,
+                settlement_status=pkg.settlement_status,
                 create_time=pkg.create_time
             )
         )
@@ -500,6 +504,7 @@ async def list_packages_by_location(
                 driver_name=None,  # Available packages have no driver assigned
                 receiver_address=pkg.receiver_address,
                 total_value=float(pkg.total_value) if pkg.total_value else None,
+                settlement_status=pkg.settlement_status,
                 create_time=pkg.create_time
             )
         )

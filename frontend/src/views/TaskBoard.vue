@@ -31,6 +31,7 @@
               <th>{{ $t('taskBoard.packageSN') }}</th>
               <th>{{ $t('packageModal.totalValue') }}</th>
               <th>{{ $t('taskBoard.deliveryEarning') }}</th>
+              <th>{{ $t('taskBoard.settlement') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -38,13 +39,25 @@
               <td class="package-sn-cell">{{ pkg.prepareSn }}</td>
               <td class="amount-cell">{{ formatAmount(pkg.totalValue || 0) }}</td>
               <td class="amount-cell earning-cell">{{ formatAmount((pkg.totalValue || 0) * 0.1) }}</td>
+              <td class="settlement-cell" :class="{ 'settlement-settled': pkg.settlementStatus === 1 }">
+                {{ pkg.settlementStatus === 1 ? $t('taskBoard.settled') : $t('taskBoard.pending') }}
+              </td>
             </tr>
           </tbody>
           <tfoot v-if="earningsPackages.length > 0">
+            <tr class="subtotal-row">
+              <td colspan="3" class="subtotal-label">{{ $t('taskBoard.subtotalSettled') }}</td>
+              <td class="subtotal-value settlement-settled">{{ formatAmount(settledEarnings) }}</td>
+            </tr>
+            <tr class="subtotal-row">
+              <td colspan="3" class="subtotal-label">{{ $t('taskBoard.subtotalPending') }}</td>
+              <td class="subtotal-value subtotal-pending">{{ formatAmount(pendingEarnings) }}</td>
+            </tr>
             <tr class="total-row">
               <td><strong>{{ $t('taskBoard.totalPackages') }}: {{ earningsPackages.length }}</strong></td>
               <td></td>
               <td class="total-earning"><strong>{{ $t('taskBoard.totalEarnings') }}: {{ formatAmount(totalEarnings) }}</strong></td>
+              <td></td>
             </tr>
           </tfoot>
         </table>
@@ -271,6 +284,20 @@ const totalEarnings = computed(() => {
   return earningsPackages.value.reduce((sum, pkg) => {
     return sum + (pkg.totalValue || 0) * 0.1;
   }, 0);
+});
+
+// Settled earnings subtotal (settlementStatus === 1)
+const settledEarnings = computed(() => {
+  return earningsPackages.value
+    .filter(pkg => pkg.settlementStatus === 1)
+    .reduce((sum, pkg) => sum + (pkg.totalValue || 0) * 0.1, 0);
+});
+
+// Pending earnings subtotal (settlementStatus === 0 or null)
+const pendingEarnings = computed(() => {
+  return earningsPackages.value
+    .filter(pkg => pkg.settlementStatus !== 1)
+    .reduce((sum, pkg) => sum + (pkg.totalValue || 0) * 0.1, 0);
 });
 
 function getPackageActionLabel(status: number | null): string {
@@ -696,6 +723,36 @@ function cancelDeliveryProof() {
 .earning-cell {
   color: var(--color-success);
   font-weight: var(--font-weight-semibold);
+}
+
+.settlement-cell {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-warning);
+}
+
+.settlement-settled {
+  color: var(--color-success);
+}
+
+.subtotal-row td {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--color-gray-light);
+  background: var(--color-gray-lighter);
+}
+
+.subtotal-label {
+  text-align: right;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.subtotal-value {
+  font-weight: var(--font-weight-semibold);
+  font-family: monospace;
+}
+
+.subtotal-pending {
+  color: var(--color-warning);
 }
 
 .earnings-table tfoot {

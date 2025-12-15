@@ -87,7 +87,8 @@
     "settled": "已结算",
     "pending": "待结算",
     "subtotalSettled": "小计（已结算）",
-    "subtotalPending": "小计（待结算）"
+    "subtotalPending": "小计（待结算）",
+    "deliveredTime": "送达时间"
   },
   "routePlanner": {
     "title": "路线规划",

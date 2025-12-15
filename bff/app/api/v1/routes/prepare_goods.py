@@ -253,7 +253,8 @@ async def list_available_packages(
                 receiver_address=pkg.receiver_address,
                 total_value=float(pkg.total_value) if pkg.total_value else None,
                 settlement_status=pkg.settlement_status,
-                create_time=pkg.create_time
+                create_time=pkg.create_time,
+                update_time=pkg.update_time
             )
         )
 
@@ -317,7 +318,8 @@ async def list_my_driver_packages(
                 receiver_address=pkg.receiver_address,
                 total_value=float(pkg.total_value) if pkg.total_value else None,
                 settlement_status=pkg.settlement_status,
-                create_time=pkg.create_time
+                create_time=pkg.create_time,
+                update_time=pkg.update_time
             )
         )
 
@@ -374,7 +376,8 @@ async def list_driver_packages(
                 receiver_address=pkg.receiver_address,
                 total_value=float(pkg.total_value) if pkg.total_value else None,
                 settlement_status=pkg.settlement_status,
-                create_time=pkg.create_time
+                create_time=pkg.create_time,
+                update_time=pkg.update_time
             )
         )
 
@@ -432,7 +435,8 @@ async def list_shop_prepare_packages(
                 receiver_address=pkg.receiver_address,
                 total_value=float(pkg.total_value) if pkg.total_value else None,
                 settlement_status=pkg.settlement_status,
-                create_time=pkg.create_time
+                create_time=pkg.create_time,
+                update_time=pkg.update_time
             )
         )
 
@@ -505,7 +509,8 @@ async def list_packages_by_location(
                 receiver_address=pkg.receiver_address,
                 total_value=float(pkg.total_value) if pkg.total_value else None,
                 settlement_status=pkg.settlement_status,
-                create_time=pkg.create_time
+                create_time=pkg.create_time,
+                update_time=pkg.update_time
             )
         )
 

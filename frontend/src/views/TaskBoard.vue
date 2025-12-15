@@ -107,6 +107,11 @@
               <span class="address-label">{{ $t('taskBoard.receiverAddress') }}:</span>
               <a class="address-link" @click.stop="openAddressMap(pkg.receiverAddress, 'receiver')">📍 {{ pkg.receiverAddress }}</a>
             </div>
+            <!-- Delivered Time (for Warehouse and Completed tabs) -->
+            <div v-if="pkg.updateTime && [2, 7].includes(pkg.prepareStatus)" class="package-info-row package-info-row--time">
+              <span class="time-label">🕐 {{ $t('taskBoard.deliveredTime') }}:</span>
+              <span class="time-value">{{ formatDateTime(pkg.updateTime) }}</span>
+            </div>
           </div>
           <div v-if="![2, 3, 7].includes(pkg.prepareStatus)" class="package-footer">
             <button
@@ -309,6 +314,18 @@ function getPackageActionLabel(status: number | null): string {
 
 function formatAmount(amount: number): string {
   return `$${amount.toFixed(2)}`;
+}
+
+function formatDateTime(dateString: string): string {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleString(undefined, {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 }
 
 function openAddressMap(address: string, _type?: string) {
@@ -596,6 +613,26 @@ function cancelDeliveryProof() {
 
 .address-link:hover {
   color: var(--color-primary-dark);
+}
+
+.package-info-row--time {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+  padding-top: var(--spacing-xs);
+  border-top: 1px dashed var(--color-gray-light);
+}
+
+.time-label {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+}
+
+.time-value {
+  color: var(--color-text-primary);
+  font-size: 0.8rem;
 }
 
 .package-info-row--with-action {

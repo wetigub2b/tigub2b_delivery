@@ -87,7 +87,8 @@
     "settled": "Settled",
     "pending": "Pending",
     "subtotalSettled": "Subtotal (Settled)",
-    "subtotalPending": "Subtotal (Pending)"
+    "subtotalPending": "Subtotal (Pending)",
+    "deliveredTime": "Delivered"
   },
   "routePlanner": {
     "title": "Route Planner",

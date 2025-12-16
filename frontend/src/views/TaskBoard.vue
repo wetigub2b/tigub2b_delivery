@@ -193,7 +193,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { usePrepareGoodsStore } from '@/store/prepareGoods';
@@ -232,6 +232,34 @@ const packageForDelivery = ref<any>(null);
 const showAddressMapModal = ref(false);
 const selectedAddress = ref<string | null>(null);
 
+// Polling for available packages (every 30 seconds)
+const POLLING_INTERVAL_MS = 30000;
+let pollingInterval: ReturnType<typeof setInterval> | null = null;
+
+const startPolling = () => {
+  stopPolling();
+  pollingInterval = setInterval(() => {
+    prepareGoodsStore.fetchAvailablePackages();
+  }, POLLING_INTERVAL_MS);
+};
+
+const stopPolling = () => {
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+    pollingInterval = null;
+  }
+};
+
+const handleVisibilityChange = () => {
+  if (document.hidden) {
+    stopPolling();
+  } else {
+    // Immediate fetch when returning + restart polling
+    prepareGoodsStore.fetchAvailablePackages();
+    startPolling();
+  }
+};
+
 const statuses = computed(() => {
   const tabs = [];
   
@@ -256,6 +284,16 @@ onMounted(() => {
   // Fetch both available (unassigned) and driver's assigned packages
   prepareGoodsStore.fetchAvailablePackages();
   prepareGoodsStore.fetchMyDriverPackages();
+
+  // Start polling for available packages
+  startPolling();
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+});
+
+onUnmounted(() => {
+  // Clean up polling and event listener
+  stopPolling();
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
 });
 
 // Filter packages by prepare_status based on active tab

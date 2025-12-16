@@ -108,9 +108,9 @@
               <a class="address-link" @click.stop="openAddressMap(pkg.receiverAddress, 'receiver')">📍 {{ pkg.receiverAddress }}</a>
             </div>
             <!-- Delivered Time (for Warehouse and Completed tabs) -->
-            <div v-if="pkg.updateTime && [2, 7].includes(pkg.prepareStatus)" class="package-info-row package-info-row--time">
+            <div v-if="pkg.actualArrivalTime && [2, 7].includes(pkg.prepareStatus)" class="package-info-row package-info-row--time">
               <span class="time-label">🕐 {{ $t('taskBoard.deliveredTime') }}:</span>
-              <span class="time-value">{{ formatDateTime(pkg.updateTime) }}</span>
+              <span class="time-value">{{ formatDateTime(pkg.actualArrivalTime) }}</span>
             </div>
           </div>
           <div v-if="![2, 3, 7].includes(pkg.prepareStatus)" class="package-footer">

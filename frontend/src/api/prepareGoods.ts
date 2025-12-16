@@ -60,7 +60,8 @@ export interface PrepareGoodsSummaryDto {
   totalValue: number | null;
   settlementStatus: number | null;  // 0=pending, 1=settled
   createTime: string;
-  updateTime: string | null;  // Last update time (delivery time)
+  updateTime: string | null;  // Last update time
+  actualArrivalTime: string | null;  // Actual delivery arrival time
 }
 
 export interface CreatePreparePackageRequest {

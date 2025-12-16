@@ -139,4 +139,5 @@ class PrepareGoodsSummary(BaseModel):
     total_value: Optional[float] = Field(default=None, alias="totalValue")
     settlement_status: Optional[int] = Field(default=0, alias="settlementStatus", description="Settlement status: 0=pending, 1=settled")
     create_time: datetime = Field(alias="createTime")
-    update_time: Optional[datetime] = Field(default=None, alias="updateTime", description="Last update time (delivery time)")
+    update_time: Optional[datetime] = Field(default=None, alias="updateTime", description="Last update time")
+    actual_arrival_time: Optional[datetime] = Field(default=None, alias="actualArrivalTime", description="Actual delivery arrival time")

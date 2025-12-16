@@ -193,7 +193,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { usePrepareGoodsStore } from '@/store/prepareGoods';
@@ -294,6 +294,20 @@ onUnmounted(() => {
   // Clean up polling and event listener
   stopPolling();
   document.removeEventListener('visibilitychange', handleVisibilityChange);
+});
+
+// Reload data when switching tabs
+watch(activeStatus, (newTab) => {
+  if (newTab === 'available') {
+    prepareGoodsStore.fetchAvailablePackages();
+  } else if (newTab === 'map') {
+    // Map tab needs both available and driver packages
+    prepareGoodsStore.fetchAvailablePackages();
+    prepareGoodsStore.fetchMyDriverPackages();
+  } else {
+    // Other tabs use driver packages (pending_pickup, in_transit, warehouse, completed, earnings)
+    prepareGoodsStore.fetchMyDriverPackages();
+  }
 });
 
 // Filter packages by prepare_status based on active tab

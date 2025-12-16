@@ -196,6 +196,12 @@ class PrepareGoods(Base):
         comment="更新时间"
     )
 
+    actual_arrival_time: Mapped[datetime | None] = mapped_column(
+        DateTime(),
+        nullable=True,
+        comment="实际送达时间"
+    )
+
     # Relationships
     items: Mapped[list[PrepareGoodsItem]] = relationship(
         "PrepareGoodsItem",

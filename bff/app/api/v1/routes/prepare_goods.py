@@ -1143,4 +1143,6 @@ async def confirm_delivery(
         new_status=new_status
     )
 
+    # Update actual_arrival_time for delivery completion
+    package.actual_arrival_time = datetime.now()
     await session.commit()

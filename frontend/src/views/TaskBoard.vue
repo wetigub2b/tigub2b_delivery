@@ -16,6 +16,9 @@
         @click="activeStatus = status.key"
       >
         {{ status.label }}
+        <span v-if="status.key === 'available' && availablePackagesCount > 0" class="board__filter-badge">
+          {{ availablePackagesCount }}
+        </span>
       </button>
     </nav>
 
@@ -305,6 +308,13 @@ const pendingEarnings = computed(() => {
     .reduce((sum, pkg) => sum + (pkg.totalValue || 0) * 0.1, 0);
 });
 
+// Count of available packages (status 0 or 5)
+const availablePackagesCount = computed(() => {
+  return prepareGoodsStore.availablePackages.filter(
+    pkg => pkg.prepareStatus === 0 || pkg.prepareStatus === 5
+  ).length;
+});
+
 function getPackageActionLabel(status: number | null): string {
   if (status === null || status === 0 || status === 5) return t('taskBoard.pickupPackage');
   if (status === 6) return t('taskBoard.confirmPickupButton');
@@ -516,6 +526,27 @@ function cancelDeliveryProof() {
   background: var(--color-primary-dark);
   color: var(--color-white);
   border-color: var(--color-primary-dark);
+}
+
+.board__filter-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: var(--spacing-xs);
+  background: var(--color-error);
+  color: var(--color-white);
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+}
+
+.board__filter--active .board__filter-badge {
+  background: var(--color-white);
+  color: var(--color-primary);
 }
 
 .board__list {

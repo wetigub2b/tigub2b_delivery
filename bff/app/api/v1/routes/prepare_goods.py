@@ -1150,4 +1150,8 @@ async def confirm_delivery(
 
     # Update actual_arrival_time for delivery completion
     package.actual_arrival_time = datetime.now()
+
+    # Increment driver's total_deliveries counter
+    driver.total_deliveries = (driver.total_deliveries or 0) + 1
+
     await session.commit()

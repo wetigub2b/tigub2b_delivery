@@ -28,8 +28,8 @@
         <div class="filter-controls">
           <select v-model="statusFilter" @change="applyFilters">
             <option value="">{{ $t('admin.drivers.allStatus') }}</option>
-            <option value="0">{{ $t('admin.drivers.active') }}</option>
-            <option value="1">{{ $t('admin.drivers.inactive') }}</option>
+            <option value="1">{{ $t('admin.drivers.active') }}</option>
+            <option value="0">{{ $t('admin.drivers.inactive') }}</option>
           </select>
 
           <select v-model="roleFilter" @change="applyFilters">
@@ -121,8 +121,8 @@
                 </span>
               </td>
               <td>
-                <span class="status-badge" :class="driver.status === '0' ? 'active' : 'inactive'">
-                  {{ driver.status === '0' ? $t('admin.drivers.active') : $t('admin.drivers.inactive') }}
+                <span class="status-badge" :class="driver.status === 1 || driver.status === '1' ? 'active' : 'inactive'">
+                  {{ driver.status === 1 || driver.status === '1' ? $t('admin.drivers.active') : $t('admin.drivers.inactive') }}
                 </span>
               </td>
               <td>
@@ -137,7 +137,7 @@
                     ✏️
                   </button>
                   <button
-                    v-if="driver.status === '1'"
+                    v-if="driver.status === 0 || driver.status === '0'"
                     @click="activateDriver(driver.id)"
                     class="action-btn success"
                     :title="$t('admin.drivers.activate')"

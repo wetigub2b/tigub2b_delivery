@@ -36,6 +36,7 @@
         </router-link>
 
         <router-link
+          v-if="featureFlags.adminDispatch"
           to="/admin/dispatch"
           class="nav-link"
           @click="closeMobileMenu"
@@ -45,6 +46,7 @@
         </router-link>
 
         <router-link
+          v-if="featureFlags.adminReports"
           to="/admin/reports"
           class="nav-link"
           @click="closeMobileMenu"
@@ -85,6 +87,7 @@ import { useRouter } from 'vue-router';
 import { useAdminStore } from '@/store/admin';
 import { useI18n } from '@/composables/useI18n';
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
+import featureFlags from '@/config/features';
 
 const { t } = useI18n();
 const router = useRouter();

@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import featureFlags from '@/config/features';
 
 // Check if user is authenticated
 function isAuthenticated(): boolean {
@@ -87,13 +88,13 @@ const router = createRouter({
       path: '/admin/dispatch',
       name: 'admin-dispatch',
       component: () => import('@/views/AdminDispatch.vue'),
-      meta: { requiresAdminAuth: true }
+      meta: { requiresAdminAuth: true, requiresFeature: 'adminDispatch' }
     },
     {
       path: '/admin/reports',
       name: 'admin-reports',
       component: () => import('@/views/AdminReports.vue'),
-      meta: { requiresAdminAuth: true }
+      meta: { requiresAdminAuth: true, requiresFeature: 'adminReports' }
     },
     // Redirect /admin to dashboard
     {
@@ -114,6 +115,14 @@ router.beforeEach((to, from, next) => {
     if (to.name === 'admin-login' && isAdminAuthenticated()) {
       next('/admin/dashboard');
       return;
+    }
+    // Check feature flag requirements
+    if (to.meta.requiresFeature) {
+      const featureName = to.meta.requiresFeature as keyof typeof featureFlags;
+      if (!featureFlags[featureName]) {
+        next('/admin/dashboard');
+        return;
+      }
     }
     next();
     return;

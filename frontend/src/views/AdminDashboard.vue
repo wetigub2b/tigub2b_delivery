@@ -77,12 +77,12 @@
             {{ $t('admin.dashboard.manageOrders') }}
           </router-link>
 
-          <router-link to="/admin/dispatch" class="action-button accent">
+          <router-link v-if="featureFlags.adminDispatch" to="/admin/dispatch" class="action-button accent">
             <span class="action-icon">🚀</span>
             {{ $t('admin.dashboard.dispatchOrders') }}
           </router-link>
 
-          <router-link to="/admin/reports" class="action-button info">
+          <router-link v-if="featureFlags.adminReports" to="/admin/reports" class="action-button info">
             <span class="action-icon">📊</span>
             {{ $t('admin.dashboard.viewReports') }}
           </router-link>
@@ -109,7 +109,7 @@
             </div>
           </div>
         </div>
-        <div v-if="criticalAlerts.length > 3" class="view-all-alerts">
+        <div v-if="criticalAlerts.length > 3 && featureFlags.adminReports" class="view-all-alerts">
           <router-link to="/admin/reports" class="view-all-link">
             View All {{ criticalAlerts.length }} Alerts →
           </router-link>
@@ -167,6 +167,7 @@ import { onMounted, computed } from 'vue';
 import { useAdminStore } from '@/store/admin';
 import { useI18n } from '@/composables/useI18n';
 import AdminNavigation from '@/components/AdminNavigation.vue';
+import featureFlags from '@/config/features';
 
 const { t } = useI18n();
 const adminStore = useAdminStore();

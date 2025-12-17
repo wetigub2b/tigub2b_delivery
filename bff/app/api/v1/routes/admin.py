@@ -625,6 +625,49 @@ async def assign_order_to_driver(
     return {"message": f"Order {order_sn} assigned to driver {driver.name}"}
 
 
+@router.post("/packages/{prepare_sn}/assign")
+async def assign_package_to_driver(
+    prepare_sn: str,
+    assignment: DriverAssignment,
+    session: AsyncSession = Depends(get_db_session),
+    current_admin: User = Depends(get_current_admin)
+) -> dict:
+    """Manually assign a prepare goods package to a specific driver"""
+
+    # Check if package exists
+    package_result = await session.execute(
+        select(PrepareGoods).where(PrepareGoods.prepare_sn == prepare_sn)
+    )
+    package = package_result.scalars().first()
+
+    if not package:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Package not found")
+
+    # Check if driver exists and is active
+    driver_result = await session.execute(
+        select(Driver).where(
+            Driver.id == assignment.driver_id,
+            Driver.status == 1
+        )
+    )
+    driver = driver_result.scalars().first()
+
+    if not driver:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Active driver not found")
+
+    # Assign package to driver and set status to 6 (司机已认领 - Driver claimed)
+    await session.execute(
+        update(PrepareGoods).where(PrepareGoods.prepare_sn == prepare_sn).values(
+            driver_id=assignment.driver_id,
+            prepare_status=6,
+            update_time=datetime.now()
+        )
+    )
+    await session.commit()
+
+    return {"message": f"Package {prepare_sn} assigned to driver {driver.name}"}
+
+
 @router.post("/orders/dispatch")
 async def dispatch_orders(
     dispatch_data: List[OrderDispatch],

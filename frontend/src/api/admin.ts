@@ -215,7 +215,7 @@ export async function bulkDriverAction(actionData: BulkActionRequest) {
 
 // Order assignment and dispatch
 export async function assignOrderToDriver(orderSn: string, driverId: number, notes?: string) {
-  await adminClient.post(`/admin/orders/${orderSn}/assign`, {
+  await adminClient.post(`/admin/packages/${orderSn}/assign`, {
     driver_id: driverId,
     order_sn: orderSn,
     notes

@@ -142,6 +142,63 @@
       :orderCount="selectedOrder.order_count"
       @close="closeDetailModal"
     />
+
+    <!-- Assign Driver Modal -->
+    <div v-if="showAssignModal" class="modal-overlay" @click.self="closeAssignModal">
+      <div class="assign-modal">
+        <div class="modal-header">
+          <h2>{{ assigningOrder?.driver_id ? $t('admin.orders.reassign') : $t('admin.orders.assign') }}</h2>
+          <button @click="closeAssignModal" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="order-info">
+            <p><strong>备货单号:</strong> {{ assigningOrder?.prepare_sn }}</p>
+            <p><strong>{{ $t('admin.orders.customer') }}:</strong> {{ assigningOrder?.receiver_name }}</p>
+            <p><strong>{{ $t('admin.orders.address') }}:</strong> {{ assigningOrder?.receiver_address }}</p>
+          </div>
+
+          <div class="form-group">
+            <label>{{ $t('admin.orders.selectDriver') }}</label>
+            <select v-model="selectedDriverId" class="driver-select">
+              <option value="">-- {{ $t('admin.orders.selectDriver') }} --</option>
+              <option
+                v-for="driver in availableDrivers"
+                :key="driver.driver_id"
+                :value="driver.driver_id"
+              >
+                {{ driver.name }} ({{ driver.nick_name }}) - {{ driver.phone }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>{{ $t('admin.orders.notes') }}</label>
+            <textarea
+              v-model="assignmentNotes"
+              :placeholder="$t('admin.orders.notesPlaceholder')"
+              rows="3"
+            ></textarea>
+          </div>
+
+          <div v-if="assignError" class="error-message">
+            {{ assignError }}
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="closeAssignModal" class="btn-cancel">
+            {{ $t('common.cancel') }}
+          </button>
+          <button
+            @click="confirmAssign"
+            :disabled="!selectedDriverId || isAssigning"
+            class="btn-confirm"
+          >
+            <span v-if="isAssigning">{{ $t('common.loading') }}...</span>
+            <span v-else>{{ $t('common.confirm') }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -150,7 +207,7 @@ import { ref, onMounted } from 'vue';
 import { useI18n } from '@/composables/useI18n';
 import AdminNavigation from '@/components/AdminNavigation.vue';
 import PackageOrdersModal from '@/components/PackageOrdersModal.vue';
-import { getAdminOrders, type AdminOrderSummary } from '@/api/admin';
+import { getAdminOrders, getDispatchDrivers, assignOrderToDriver, type AdminOrderSummary, type DispatchDriver } from '@/api/admin';
 
 const { t } = useI18n();
 
@@ -162,6 +219,15 @@ const isLoading = ref(false);
 const orders = ref<AdminOrderSummary[]>([]);
 const showDetailModal = ref(false);
 const selectedOrder = ref<AdminOrderSummary | null>(null);
+
+// Assignment modal state
+const showAssignModal = ref(false);
+const assigningOrder = ref<AdminOrderSummary | null>(null);
+const availableDrivers = ref<DispatchDriver[]>([]);
+const selectedDriverId = ref<number | ''>('');
+const assignmentNotes = ref('');
+const isAssigning = ref(false);
+const assignError = ref('');
 
 const buildQueryParams = () => {
   const params: Record<string, string | number | boolean> = {};
@@ -232,14 +298,59 @@ const closeDetailModal = () => {
   selectedOrder.value = null;
 };
 
+const loadDrivers = async () => {
+  try {
+    availableDrivers.value = await getDispatchDrivers();
+  } catch (error) {
+    console.error('Failed to load drivers:', error);
+    availableDrivers.value = [];
+  }
+};
+
+const openAssignModal = (order: AdminOrderSummary) => {
+  assigningOrder.value = order;
+  selectedDriverId.value = '';
+  assignmentNotes.value = '';
+  assignError.value = '';
+  showAssignModal.value = true;
+};
+
+const closeAssignModal = () => {
+  showAssignModal.value = false;
+  assigningOrder.value = null;
+  selectedDriverId.value = '';
+  assignmentNotes.value = '';
+  assignError.value = '';
+};
+
+const confirmAssign = async () => {
+  if (!assigningOrder.value || !selectedDriverId.value) return;
+
+  isAssigning.value = true;
+  assignError.value = '';
+
+  try {
+    await assignOrderToDriver(
+      assigningOrder.value.prepare_sn,
+      selectedDriverId.value as number,
+      assignmentNotes.value || undefined
+    );
+    closeAssignModal();
+    await loadOrders(); // Refresh the orders list
+  } catch (error: any) {
+    console.error('Failed to assign order:', error);
+    assignError.value = error.response?.data?.detail || t('admin.orders.assignFailed');
+  } finally {
+    isAssigning.value = false;
+  }
+};
+
 const assignOrder = (order: AdminOrderSummary) => {
-  console.log('Assign order:', order);
-  // Implement order assignment
+  openAssignModal(order);
 };
 
 const reassignOrder = (order: AdminOrderSummary) => {
-  console.log('Reassign order:', order);
-  // Implement order reassignment
+  openAssignModal(order);
 };
 
 const formatDate = (dateString?: string) => {
@@ -250,6 +361,7 @@ const formatDate = (dateString?: string) => {
 // Lifecycle
 onMounted(() => {
   loadOrders();
+  loadDrivers();
 });
 </script>
 
@@ -509,6 +621,164 @@ onMounted(() => {
   color: var(--color-text-secondary);
 }
 
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.assign-modal {
+  background: var(--color-white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--color-gray-light);
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  padding: 0;
+  line-height: 1;
+}
+
+.close-btn:hover {
+  color: var(--color-text-primary);
+}
+
+.modal-body {
+  padding: var(--spacing-lg);
+}
+
+.order-info {
+  background: var(--color-bg-lighter);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.order-info p {
+  margin: var(--spacing-xs) 0;
+  color: var(--color-text-primary);
+}
+
+.form-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.driver-select {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 2px solid var(--color-gray-light);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
+  background: var(--color-white);
+}
+
+.driver-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.form-group textarea {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 2px solid var(--color-gray-light);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
+  resize: vertical;
+  font-family: inherit;
+}
+
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.error-message {
+  color: var(--color-error);
+  background: var(--color-error-light);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  margin-top: var(--spacing-md);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-top: 1px solid var(--color-gray-light);
+}
+
+.btn-cancel {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: 2px solid var(--color-gray-light);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  cursor: pointer;
+  font-weight: var(--font-weight-medium);
+  transition: all var(--transition-base);
+}
+
+.btn-cancel:hover {
+  background: var(--color-bg-lighter);
+}
+
+.btn-confirm {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: var(--color-white);
+  cursor: pointer;
+  font-weight: var(--font-weight-semibold);
+  transition: all var(--transition-base);
+}
+
+.btn-confirm:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+}
+
+.btn-confirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 @media (max-width: 768px) {
   .orders-header {
     flex-direction: column;
@@ -531,6 +801,11 @@ onMounted(() => {
 
   .orders-table {
     min-width: 800px;
+  }
+
+  .assign-modal {
+    width: 95%;
+    max-height: 80vh;
   }
 }
 </style>

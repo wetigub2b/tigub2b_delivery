@@ -458,7 +458,11 @@
       "assign": "Assign",
       "reassign": "Reassign",
       "noOrders": "No Orders Found",
-      "noOrdersDesc": "There are no orders matching your criteria"
+      "noOrdersDesc": "There are no orders matching your criteria",
+      "selectDriver": "Select Driver",
+      "notes": "Notes",
+      "notesPlaceholder": "Add notes (optional)...",
+      "assignFailed": "Failed to assign order"
     },
     "dispatch": {
       "title": "Dispatch Management",

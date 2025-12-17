@@ -19,6 +19,8 @@ def _normalize_phone(phone: str) -> str:
 
 @router.post("/login", response_model=TokenResponse)
 async def login(payload: LoginRequest, session: AsyncSession = Depends(get_db_session)) -> TokenResponse:
+    from datetime import datetime
+
     phone = _normalize_phone(payload.phone)
     result = await session.execute(select(User).where(User.phonenumber == phone))
     user = result.scalars().first()
@@ -28,6 +30,10 @@ async def login(payload: LoginRequest, session: AsyncSession = Depends(get_db_se
     # TODO: integrate with OTP verification provider.
     if payload.code != "123456":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid OTP code")
+
+    # Update login date
+    user.login_date = datetime.now()
+    await session.commit()
 
     access_token = create_access_token(str(user.user_id), user.effective_role)
     refresh_token = create_refresh_token(str(user.user_id), user.effective_role)

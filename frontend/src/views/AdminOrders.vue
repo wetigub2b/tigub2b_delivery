@@ -133,6 +133,15 @@
         </div>
       </div>
     </div>
+
+    <!-- Package Detail Modal -->
+    <PackageOrdersModal
+      v-if="selectedOrder"
+      :show="showDetailModal"
+      :packageSn="selectedOrder.prepare_sn"
+      :orderCount="selectedOrder.order_count"
+      @close="closeDetailModal"
+    />
   </div>
 </template>
 
@@ -140,6 +149,7 @@
 import { ref, onMounted } from 'vue';
 import { useI18n } from '@/composables/useI18n';
 import AdminNavigation from '@/components/AdminNavigation.vue';
+import PackageOrdersModal from '@/components/PackageOrdersModal.vue';
 import { getAdminOrders, type AdminOrderSummary } from '@/api/admin';
 
 const { t } = useI18n();
@@ -150,6 +160,8 @@ const statusFilter = ref('');
 const driverFilter = ref('');
 const isLoading = ref(false);
 const orders = ref<AdminOrderSummary[]>([]);
+const showDetailModal = ref(false);
+const selectedOrder = ref<AdminOrderSummary | null>(null);
 
 const buildQueryParams = () => {
   const params: Record<string, string | number | boolean> = {};
@@ -211,8 +223,13 @@ const getStatusClass = (status?: number) => {
 };
 
 const viewOrder = (order: AdminOrderSummary) => {
-  console.log('View order:', order);
-  // Implement order detail view
+  selectedOrder.value = order;
+  showDetailModal.value = true;
+};
+
+const closeDetailModal = () => {
+  showDetailModal.value = false;
+  selectedOrder.value = null;
 };
 
 const assignOrder = (order: AdminOrderSummary) => {

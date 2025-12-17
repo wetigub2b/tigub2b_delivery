@@ -2,13 +2,22 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
+from enum import Enum as PyEnum
 
-from sqlalchemy import DateTime, Integer, Numeric, String, Text, SmallInteger
+from sqlalchemy import DateTime, Integer, Numeric, String, Text, SmallInteger, Enum, Boolean
 from sqlalchemy.dialects.mysql import BIGINT
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
 from app.db.base import Base
+
+
+class StripeStatus(str, PyEnum):
+    """Stripe Connect onboarding status"""
+    PENDING = "pending"
+    ONBOARDING = "onboarding"
+    VERIFIED = "verified"
+    RESTRICTED = "restricted"
 
 
 class Driver(Base):
@@ -26,6 +35,19 @@ class Driver(Base):
     rating: Mapped[Decimal] = mapped_column(Numeric(3, 2), default=Decimal("5.00"))
     total_deliveries: Mapped[int] = mapped_column(Integer, default=0)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Stripe Connect fields
+    stripe_account_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    stripe_status: Mapped[str | None] = mapped_column(
+        Enum('pending', 'onboarding', 'verified', 'restricted', name='stripe_status_enum'),
+        default='pending',
+        nullable=True
+    )
+    stripe_payouts_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    stripe_details_submitted: Mapped[bool] = mapped_column(Boolean, default=False)
+    stripe_onboarding_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    stripe_connected_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
@@ -36,3 +58,7 @@ class Driver(Base):
     @property
     def is_active(self) -> bool:
         return self.status == 1
+
+    @property
+    def can_receive_payouts(self) -> bool:
+        return self.stripe_payouts_enabled and self.stripe_status == 'verified'

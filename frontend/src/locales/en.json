@@ -45,7 +45,27 @@
     "rating": "Rating",
     "totalDeliveries": "Total Deliveries",
     "memberSince": "Member Since",
-    "updateSuccess": "Profile updated successfully"
+    "updateSuccess": "Profile updated successfully",
+    "paymentSetup": "Payment Setup",
+    "connectBankAccount": "Connect Bank Account",
+    "completeSetup": "Complete Setup",
+    "updatePaymentInfo": "Update Payment Info",
+    "paymentConnectedSince": "Connected since",
+    "paymentSetupComplete": "Payment setup completed successfully!",
+    "paymentSetupPending": "Payment setup in progress. Please complete all required steps.",
+    "stripeRefreshNeeded": "Your setup link has expired. Please click the button to continue.",
+    "paymentStatus": {
+      "pending": "Not Connected",
+      "onboarding": "Setup In Progress",
+      "verified": "Connected",
+      "restricted": "Action Required"
+    },
+    "paymentDescription": {
+      "pending": "Connect your bank account to receive payments for deliveries.",
+      "onboarding": "You've started the setup process. Click below to complete it.",
+      "verified": "Your bank account is connected and you can receive payments.",
+      "restricted": "Stripe needs additional information. Click below to update."
+    }
   },
   "taskBoard": {
     "title": "Task Board",
@@ -404,7 +424,17 @@
       "createSuccessTitle": "Driver Created Successfully",
       "createSuccessMessage": "The new driver account has been created and is now active. The driver can login using their phone number and password.",
       "updateSuccessTitle": "Driver Updated Successfully",
-      "updateSuccessMessage": "The driver information has been updated successfully."
+      "updateSuccessMessage": "The driver information has been updated successfully.",
+      "payment": "Payment",
+      "allPaymentStatus": "All Payment Status",
+      "paymentNotSet": "Not Set",
+      "paymentInProgress": "In Progress",
+      "paymentReady": "Ready",
+      "paymentRestricted": "Restricted",
+      "paymentInfo": "Payment Information",
+      "paymentStatus": "Payment Status",
+      "payoutsEnabled": "Payouts Enabled",
+      "paymentConnectedAt": "Connected At"
     },
     "orders": {
       "title": "Order Management",

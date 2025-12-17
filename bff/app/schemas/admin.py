@@ -55,6 +55,12 @@ class DriverResponse(DriverBase):
     role: str = "driver"  # Default role
     last_login: Optional[datetime] = None  # From sys_user if linked
 
+    # Stripe payment fields
+    stripe_status: Optional[str] = "pending"  # pending, onboarding, verified, restricted
+    stripe_payouts_enabled: bool = False
+    stripe_details_submitted: bool = False
+    stripe_connected_at: Optional[datetime] = None
+
     @property
     def is_active(self) -> bool:
         return self.status == 1

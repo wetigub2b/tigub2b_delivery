@@ -48,6 +48,18 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     python_bin: str = Field(default="python3", alias="PYTHON_BIN")
 
+    # Stripe Connect configuration
+    stripe_secret_key: Optional[str] = Field(default=None, alias="STRIPE_SECRET_KEY")
+    stripe_webhook_secret: Optional[str] = Field(default=None, alias="STRIPE_WEBHOOK_SECRET")
+    stripe_connect_return_url: str = Field(
+        default="http://localhost:5173/profile?stripe=complete",
+        alias="STRIPE_CONNECT_RETURN_URL"
+    )
+    stripe_connect_refresh_url: str = Field(
+        default="http://localhost:5173/profile?stripe=refresh",
+        alias="STRIPE_CONNECT_REFRESH_URL"
+    )
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

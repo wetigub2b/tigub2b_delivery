@@ -45,7 +45,27 @@
     "rating": "评分",
     "totalDeliveries": "总配送数",
     "memberSince": "注册时间",
-    "updateSuccess": "资料更新成功"
+    "updateSuccess": "资料更新成功",
+    "paymentSetup": "收款设置",
+    "connectBankAccount": "绑定银行账户",
+    "completeSetup": "完成设置",
+    "updatePaymentInfo": "更新收款信息",
+    "paymentConnectedSince": "绑定时间",
+    "paymentSetupComplete": "收款设置完成！",
+    "paymentSetupPending": "收款设置进行中，请完成所有必填步骤。",
+    "stripeRefreshNeeded": "您的设置链接已过期，请点击按钮继续。",
+    "paymentStatus": {
+      "pending": "未绑定",
+      "onboarding": "设置中",
+      "verified": "已绑定",
+      "restricted": "需要操作"
+    },
+    "paymentDescription": {
+      "pending": "绑定您的银行账户以接收配送收入。",
+      "onboarding": "您已开始设置流程，请点击下方按钮完成设置。",
+      "verified": "您的银行账户已绑定，可以接收收款。",
+      "restricted": "Stripe需要额外信息，请点击下方更新。"
+    }
   },
   "taskBoard": {
     "title": "任务看板",
@@ -250,7 +270,17 @@
       "createSuccessTitle": "司机创建成功",
       "createSuccessMessage": "新司机账户已创建并激活。司机现在可以使用手机号和密码登录。",
       "updateSuccessTitle": "司机更新成功",
-      "updateSuccessMessage": "司机信息已成功更新。"
+      "updateSuccessMessage": "司机信息已成功更新。",
+      "payment": "收款",
+      "allPaymentStatus": "所有收款状态",
+      "paymentNotSet": "未设置",
+      "paymentInProgress": "设置中",
+      "paymentReady": "已就绪",
+      "paymentRestricted": "受限",
+      "paymentInfo": "收款信息",
+      "paymentStatus": "收款状态",
+      "payoutsEnabled": "可收款",
+      "paymentConnectedAt": "绑定时间"
     },
     "orders": {
       "title": "订单管理",

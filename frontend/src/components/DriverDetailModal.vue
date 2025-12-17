@@ -66,6 +66,28 @@
           </div>
         </div>
 
+        <!-- Payment Status Section -->
+        <div class="detail-section payment-section">
+          <h3 class="section-title">{{ $t('admin.drivers.paymentInfo') }}</h3>
+
+          <div class="detail-row">
+            <span class="detail-label">{{ $t('admin.drivers.paymentStatus') }}</span>
+            <span class="payment-badge" :class="getPaymentStatusClass(driver.stripe_status)">
+              {{ getPaymentStatusIcon(driver.stripe_status) }} {{ getPaymentStatusText(driver.stripe_status) }}
+            </span>
+          </div>
+
+          <div class="detail-row" v-if="driver.stripe_payouts_enabled">
+            <span class="detail-label">{{ $t('admin.drivers.payoutsEnabled') }}</span>
+            <span class="detail-value">{{ driver.stripe_payouts_enabled ? t('common.yes') : t('common.no') }}</span>
+          </div>
+
+          <div class="detail-row" v-if="driver.stripe_connected_at">
+            <span class="detail-label">{{ $t('admin.drivers.paymentConnectedAt') }}</span>
+            <span class="detail-value">{{ formatDate(driver.stripe_connected_at) }}</span>
+          </div>
+        </div>
+
         <div class="modal-actions">
           <button @click="$emit('close')" class="btn-secondary">
             {{ $t('common.close') }}
@@ -105,6 +127,46 @@ const formatStatus = (status: string) => {
 const formatDate = (date: string | Date) => {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   return dateObj.toLocaleDateString();
+};
+
+// Payment status helper functions
+const getPaymentStatusClass = (stripeStatus: string | null | undefined): string => {
+  switch (stripeStatus) {
+    case 'verified':
+      return 'payment-verified';
+    case 'onboarding':
+      return 'payment-onboarding';
+    case 'restricted':
+      return 'payment-restricted';
+    default:
+      return 'payment-pending';
+  }
+};
+
+const getPaymentStatusIcon = (stripeStatus: string | null | undefined): string => {
+  switch (stripeStatus) {
+    case 'verified':
+      return '\u2705'; // checkmark
+    case 'onboarding':
+      return '\uD83D\uDD04'; // arrows
+    case 'restricted':
+      return '\u26A0\uFE0F'; // warning
+    default:
+      return '\u274C'; // x
+  }
+};
+
+const getPaymentStatusText = (stripeStatus: string | null | undefined): string => {
+  switch (stripeStatus) {
+    case 'verified':
+      return t('admin.drivers.paymentReady');
+    case 'onboarding':
+      return t('admin.drivers.paymentInProgress');
+    case 'restricted':
+      return t('admin.drivers.paymentRestricted');
+    default:
+      return t('admin.drivers.paymentNotSet');
+  }
 };
 </script>
 
@@ -218,6 +280,47 @@ const formatDate = (date: string | Date) => {
 .status-suspended {
   background: #fef3c7;
   color: #92400e;
+}
+
+/* Payment Section Styles */
+.payment-section {
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+  border-top: 2px solid var(--color-primary-light, #ffe0b2);
+}
+
+.section-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-gray-dark);
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.payment-badge {
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.payment-badge.payment-pending {
+  background: var(--color-gray-lighter, #f5f5f5);
+  color: var(--color-text-secondary);
+}
+
+.payment-badge.payment-onboarding {
+  background: var(--color-info-light, #e3f2fd);
+  color: var(--color-info-dark, #1565c0);
+}
+
+.payment-badge.payment-verified {
+  background: var(--color-success-light, #e8f5e9);
+  color: var(--color-success-dark, #2e7d32);
+}
+
+.payment-badge.payment-restricted {
+  background: var(--color-warning-light, #fff3e0);
+  color: var(--color-warning-dark, #e65100);
 }
 
 .modal-actions {

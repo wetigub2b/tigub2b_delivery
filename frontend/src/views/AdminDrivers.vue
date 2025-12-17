@@ -38,6 +38,14 @@
             <option value="admin">{{ $t('admin.drivers.admin') }}</option>
             <option value="super_admin">{{ $t('admin.drivers.superAdmin') }}</option>
           </select>
+
+          <select v-model="paymentFilter" @change="applyFilters">
+            <option value="">{{ $t('admin.drivers.allPaymentStatus') }}</option>
+            <option value="pending">{{ $t('admin.drivers.paymentNotSet') }}</option>
+            <option value="onboarding">{{ $t('admin.drivers.paymentInProgress') }}</option>
+            <option value="verified">{{ $t('admin.drivers.paymentReady') }}</option>
+            <option value="restricted">{{ $t('admin.drivers.paymentRestricted') }}</option>
+          </select>
         </div>
       </div>
 
@@ -86,6 +94,7 @@
               <th>{{ $t('admin.drivers.vehicle') }}</th>
               <th>{{ $t('admin.drivers.role') }}</th>
               <th>{{ $t('admin.drivers.status') }}</th>
+              <th>{{ $t('admin.drivers.payment') }}</th>
               <th>{{ $t('admin.drivers.lastLogin') }}</th>
               <th>{{ $t('admin.drivers.actions') }}</th>
             </tr>
@@ -123,6 +132,11 @@
               <td>
                 <span class="status-badge" :class="driver.status === 1 || driver.status === '1' ? 'active' : 'inactive'">
                   {{ driver.status === 1 || driver.status === '1' ? $t('admin.drivers.active') : $t('admin.drivers.inactive') }}
+                </span>
+              </td>
+              <td>
+                <span class="payment-badge" :class="getPaymentStatusClass(driver.stripe_status)">
+                  {{ getPaymentStatusIcon(driver.stripe_status) }} {{ getPaymentStatusText(driver.stripe_status) }}
                 </span>
               </td>
               <td>
@@ -221,6 +235,7 @@ const adminStore = useAdminStore();
 const searchQuery = ref('');
 const statusFilter = ref('');
 const roleFilter = ref('');
+const paymentFilter = ref('');
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
 const showDetailModal = ref(false);
@@ -229,8 +244,58 @@ const showSuccessModal = ref(false);
 const successTitle = ref('');
 const successMessage = ref('');
 
+// Payment status helper functions
+const getPaymentStatusClass = (stripeStatus: string | null | undefined): string => {
+  switch (stripeStatus) {
+    case 'verified':
+      return 'payment-verified';
+    case 'onboarding':
+      return 'payment-onboarding';
+    case 'restricted':
+      return 'payment-restricted';
+    default:
+      return 'payment-pending';
+  }
+};
+
+const getPaymentStatusIcon = (stripeStatus: string | null | undefined): string => {
+  switch (stripeStatus) {
+    case 'verified':
+      return '\u2705'; // checkmark
+    case 'onboarding':
+      return '\uD83D\uDD04'; // arrows
+    case 'restricted':
+      return '\u26A0\uFE0F'; // warning
+    default:
+      return '\u274C'; // x
+  }
+};
+
+const getPaymentStatusText = (stripeStatus: string | null | undefined): string => {
+  switch (stripeStatus) {
+    case 'verified':
+      return t('admin.drivers.paymentReady');
+    case 'onboarding':
+      return t('admin.drivers.paymentInProgress');
+    case 'restricted':
+      return t('admin.drivers.paymentRestricted');
+    default:
+      return t('admin.drivers.paymentNotSet');
+  }
+};
+
 // Computed
-const drivers = computed(() => adminStore.drivers);
+const drivers = computed(() => {
+  let result = adminStore.drivers;
+  // Filter by payment status (client-side since API doesn't support this filter yet)
+  if (paymentFilter.value) {
+    result = result.filter(driver => {
+      const status = driver.stripe_status || 'pending';
+      return status === paymentFilter.value;
+    });
+  }
+  return result;
+});
 const selectedDrivers = computed(() => adminStore.selectedDrivers);
 const hasSelectedDrivers = computed(() => adminStore.hasSelectedDrivers);
 const isLoading = computed(() => adminStore.isLoading);
@@ -629,6 +694,19 @@ onMounted(() => {
 
 .status-badge.active { background: var(--color-success-light); color: var(--color-success-dark); }
 .status-badge.inactive { background: var(--color-error-light); color: var(--color-error); }
+
+.payment-badge {
+  padding: var(--spacing-xxs) var(--spacing-xs);
+  border-radius: var(--radius-xs);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}
+
+.payment-badge.payment-pending { background: var(--color-gray-lighter, #f5f5f5); color: var(--color-text-secondary); }
+.payment-badge.payment-onboarding { background: var(--color-info-light, #e3f2fd); color: var(--color-info-dark, #1565c0); }
+.payment-badge.payment-verified { background: var(--color-success-light); color: var(--color-success-dark); }
+.payment-badge.payment-restricted { background: var(--color-warning-light, #fff3e0); color: var(--color-warning-dark, #e65100); }
 
 .action-buttons {
   display: flex;

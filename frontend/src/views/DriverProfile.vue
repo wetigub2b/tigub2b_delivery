@@ -40,6 +40,61 @@
         </div>
       </div>
 
+      <!-- Payment Setup Section -->
+      <div class="profile__section profile__payment">
+        <h3>{{ $t('profile.paymentSetup') }}</h3>
+        <div class="payment-status">
+          <div class="payment-status__indicator">
+            <span class="payment-status__badge" :class="paymentStatusClass">
+              {{ paymentStatusIcon }} {{ paymentStatusText }}
+            </span>
+          </div>
+          <p class="payment-status__description">{{ paymentStatusDescription }}</p>
+        </div>
+
+        <div v-if="stripeError" class="error-message">
+          {{ stripeError }}
+        </div>
+
+        <div class="payment-actions">
+          <!-- Not connected - show Connect button -->
+          <button
+            v-if="profile.stripe_status === 'pending' || !profile.stripe_status"
+            @click="initiateStripeConnect"
+            class="btn-stripe"
+            :disabled="isConnectingStripe"
+          >
+            {{ isConnectingStripe ? $t('common.loading') : $t('profile.connectBankAccount') }}
+          </button>
+
+          <!-- Onboarding in progress - show Continue button -->
+          <button
+            v-else-if="profile.stripe_status === 'onboarding'"
+            @click="continueStripeSetup"
+            class="btn-stripe btn-stripe--continue"
+            :disabled="isConnectingStripe"
+          >
+            {{ isConnectingStripe ? $t('common.loading') : $t('profile.completeSetup') }}
+          </button>
+
+          <!-- Restricted - show Update button -->
+          <button
+            v-else-if="profile.stripe_status === 'restricted'"
+            @click="continueStripeSetup"
+            class="btn-stripe btn-stripe--warning"
+            :disabled="isConnectingStripe"
+          >
+            {{ isConnectingStripe ? $t('common.loading') : $t('profile.updatePaymentInfo') }}
+          </button>
+
+          <!-- Verified - show connected info -->
+          <div v-else-if="profile.stripe_status === 'verified'" class="payment-connected">
+            <span class="payment-connected__text">{{ $t('profile.paymentConnectedSince') }}</span>
+            <span class="payment-connected__date">{{ formatDate(profile.stripe_connected_at) }}</span>
+          </div>
+        </div>
+      </div>
+
       <!-- Editable personal info section -->
       <div class="profile__section">
         <h3>{{ $t('profile.personalInfo') }}</h3>
@@ -127,11 +182,12 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue';
-import { RouterLink } from 'vue-router';
+import { computed, onMounted, reactive, ref } from 'vue';
+import { RouterLink, useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
+const route = useRoute();
 
 interface DriverProfile {
   id: number;
@@ -146,6 +202,10 @@ interface DriverProfile {
   rating: string;
   total_deliveries: number;
   created_at: string | null;
+  stripe_status: string | null;
+  stripe_payouts_enabled: boolean;
+  stripe_details_submitted: boolean;
+  stripe_connected_at: string | null;
 }
 
 const isLoading = ref(true);
@@ -153,6 +213,8 @@ const errorMessage = ref('');
 const submitError = ref('');
 const successMessage = ref('');
 const isSubmitting = ref(false);
+const isConnectingStripe = ref(false);
+const stripeError = ref('');
 
 const profile = ref<DriverProfile>({
   id: 0,
@@ -166,7 +228,64 @@ const profile = ref<DriverProfile>({
   status: 0,
   rating: '5.00',
   total_deliveries: 0,
-  created_at: null
+  created_at: null,
+  stripe_status: null,
+  stripe_payouts_enabled: false,
+  stripe_details_submitted: false,
+  stripe_connected_at: null
+});
+
+// Computed properties for payment status display
+const paymentStatusClass = computed(() => {
+  switch (profile.value.stripe_status) {
+    case 'verified':
+      return 'payment-status__badge--verified';
+    case 'onboarding':
+      return 'payment-status__badge--onboarding';
+    case 'restricted':
+      return 'payment-status__badge--restricted';
+    default:
+      return 'payment-status__badge--pending';
+  }
+});
+
+const paymentStatusIcon = computed(() => {
+  switch (profile.value.stripe_status) {
+    case 'verified':
+      return '\u2705'; // checkmark
+    case 'onboarding':
+      return '\uD83D\uDD04'; // arrows
+    case 'restricted':
+      return '\u26A0\uFE0F'; // warning
+    default:
+      return '\u274C'; // x
+  }
+});
+
+const paymentStatusText = computed(() => {
+  switch (profile.value.stripe_status) {
+    case 'verified':
+      return t('profile.paymentStatus.verified');
+    case 'onboarding':
+      return t('profile.paymentStatus.onboarding');
+    case 'restricted':
+      return t('profile.paymentStatus.restricted');
+    default:
+      return t('profile.paymentStatus.pending');
+  }
+});
+
+const paymentStatusDescription = computed(() => {
+  switch (profile.value.stripe_status) {
+    case 'verified':
+      return t('profile.paymentDescription.verified');
+    case 'onboarding':
+      return t('profile.paymentDescription.onboarding');
+    case 'restricted':
+      return t('profile.paymentDescription.restricted');
+    default:
+      return t('profile.paymentDescription.pending');
+  }
 });
 
 const form = reactive({
@@ -265,8 +384,110 @@ const handleSubmit = async () => {
   }
 };
 
-onMounted(() => {
-  fetchProfile();
+// Stripe Connect methods
+const initiateStripeConnect = async () => {
+  isConnectingStripe.value = true;
+  stripeError.value = '';
+
+  try {
+    const token = localStorage.getItem('delivery_token');
+    const response = await fetch('/api/driver/stripe/connect', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to initiate payment setup');
+    }
+
+    const data = await response.json();
+
+    // Redirect to Stripe onboarding
+    window.location.href = data.onboarding_url;
+
+  } catch (error: any) {
+    stripeError.value = error.message || t('errors.unknownError');
+  } finally {
+    isConnectingStripe.value = false;
+  }
+};
+
+const continueStripeSetup = async () => {
+  isConnectingStripe.value = true;
+  stripeError.value = '';
+
+  try {
+    const token = localStorage.getItem('delivery_token');
+    const response = await fetch('/api/driver/stripe/refresh-link', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to get setup link');
+    }
+
+    const data = await response.json();
+
+    // Redirect to Stripe onboarding
+    window.location.href = data.onboarding_url;
+
+  } catch (error: any) {
+    stripeError.value = error.message || t('errors.unknownError');
+  } finally {
+    isConnectingStripe.value = false;
+  }
+};
+
+const checkStripeStatus = async () => {
+  try {
+    const token = localStorage.getItem('delivery_token');
+    const response = await fetch('/api/driver/stripe/status', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      profile.value.stripe_status = data.stripe_status;
+      profile.value.stripe_payouts_enabled = data.stripe_payouts_enabled;
+      profile.value.stripe_details_submitted = data.stripe_details_submitted;
+      profile.value.stripe_connected_at = data.stripe_connected_at;
+    }
+  } catch (error) {
+    console.error('Failed to check Stripe status:', error);
+  }
+};
+
+onMounted(async () => {
+  await fetchProfile();
+
+  // Check if returning from Stripe
+  const stripeParam = route.query.stripe;
+  if (stripeParam === 'complete') {
+    // Refresh status after returning from Stripe
+    await checkStripeStatus();
+    if (profile.value.stripe_status === 'verified') {
+      successMessage.value = t('profile.paymentSetupComplete');
+    } else if (profile.value.stripe_status === 'onboarding') {
+      successMessage.value = t('profile.paymentSetupPending');
+    }
+    // Clear the query param
+    window.history.replaceState({}, '', '/profile');
+  } else if (stripeParam === 'refresh') {
+    // Link expired, show message
+    stripeError.value = t('profile.stripeRefreshNeeded');
+    window.history.replaceState({}, '', '/profile');
+  }
 });
 </script>
 
@@ -485,5 +706,132 @@ onMounted(() => {
   .profile__readonly {
     grid-template-columns: 1fr;
   }
+}
+
+/* Payment Section Styles */
+.profile__payment {
+  border: 2px solid var(--color-primary-light, #ffe0b2);
+  background: linear-gradient(135deg, var(--color-white) 0%, var(--color-bg-lighter, #fafafa) 100%);
+}
+
+.payment-status {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.payment-status__indicator {
+  display: flex;
+  align-items: center;
+}
+
+.payment-status__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.payment-status__badge--pending {
+  background: var(--color-gray-lighter, #f5f5f5);
+  color: var(--color-text-secondary);
+}
+
+.payment-status__badge--onboarding {
+  background: var(--color-info-light, #e3f2fd);
+  color: var(--color-info-dark, #1565c0);
+}
+
+.payment-status__badge--verified {
+  background: var(--color-success-light, #e8f5e9);
+  color: var(--color-success-dark, #2e7d32);
+}
+
+.payment-status__badge--restricted {
+  background: var(--color-warning-light, #fff3e0);
+  color: var(--color-warning-dark, #e65100);
+}
+
+.payment-status__description {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.payment-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.btn-stripe {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  border: none;
+  background: linear-gradient(135deg, #635bff 0%, #7c3aed 100%);
+  color: var(--color-white);
+  box-shadow: 0 2px 8px rgba(99, 91, 255, 0.3);
+}
+
+.btn-stripe:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 91, 255, 0.4);
+}
+
+.btn-stripe:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-stripe--continue {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.btn-stripe--continue:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.btn-stripe--warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+.btn-stripe--warning:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+.payment-connected {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md);
+  background: var(--color-success-light, #e8f5e9);
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--color-success);
+}
+
+.payment-connected__text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.payment-connected__date {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-success-dark, #2e7d32);
 }
 </style>

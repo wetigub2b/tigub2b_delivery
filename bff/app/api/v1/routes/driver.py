@@ -40,7 +40,11 @@ async def get_driver_profile(
         status=driver.status,
         rating=driver.rating,
         total_deliveries=driver.total_deliveries,
-        created_at=driver.created_at
+        created_at=driver.created_at,
+        stripe_status=driver.stripe_status or "pending",
+        stripe_payouts_enabled=driver.stripe_payouts_enabled or False,
+        stripe_details_submitted=driver.stripe_details_submitted or False,
+        stripe_connected_at=driver.stripe_connected_at
     )
 
 
@@ -93,5 +97,9 @@ async def update_driver_profile(
         status=driver.status,
         rating=driver.rating,
         total_deliveries=driver.total_deliveries,
-        created_at=driver.created_at
+        created_at=driver.created_at,
+        stripe_status=driver.stripe_status or "pending",
+        stripe_payouts_enabled=driver.stripe_payouts_enabled or False,
+        stripe_details_submitted=driver.stripe_details_submitted or False,
+        stripe_connected_at=driver.stripe_connected_at
     )

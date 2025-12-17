@@ -30,10 +30,22 @@
   "navigation": {
     "taskBoard": "任务看板",
     "routePlanner": "路线规划",
+    "profile": "个人资料",
     "orders": "订单",
     "login": "登录",
     "logout": "退出",
     "reload": "刷新"
+  },
+  "profile": {
+    "title": "我的资料",
+    "description": "查看和更新您的个人资料",
+    "accountInfo": "账户信息",
+    "personalInfo": "个人信息",
+    "vehicleInfo": "车辆信息",
+    "rating": "评分",
+    "totalDeliveries": "总配送数",
+    "memberSince": "注册时间",
+    "updateSuccess": "资料更新成功"
   },
   "taskBoard": {
     "title": "任务看板",

@@ -7,11 +7,11 @@
         <span class="nav__title">Tigu Delivery</span>
       </router-link>
 
-      <!-- User Info (Center) -->
-      <div class="nav__user" v-if="ordersStore.currentUserPhone">
+      <!-- User Info (Center) - Clickable to go to profile -->
+      <router-link to="/profile" class="nav__user" v-if="ordersStore.currentUserPhone">
         <span class="nav__user-icon">👤</span>
         <span class="nav__user-phone">{{ ordersStore.currentUserPhone }}</span>
-      </div>
+      </router-link>
 
       <!-- Navigation Links -->
       <div class="nav__links">
@@ -29,6 +29,13 @@
           :class="{ 'nav__link--active': $route.name === 'route-planner' }"
         >
           🗺️ {{ $t('navigation.routePlanner') }}
+        </router-link>
+        <router-link
+          to="/profile"
+          class="nav__link"
+          :class="{ 'nav__link--active': $route.name === 'driver-profile' }"
+        >
+          👤 {{ $t('navigation.profile') }}
         </router-link>
         <button
           class="nav__reload"
@@ -63,10 +70,10 @@
       class="nav__mobile-menu"
       :class="{ 'nav__mobile-menu--open': showMobileMenu }"
     >
-      <div class="nav__mobile-user" v-if="ordersStore.currentUserPhone">
+      <router-link to="/profile" class="nav__mobile-user" v-if="ordersStore.currentUserPhone" @click="closeMobileMenu">
         <span class="nav__mobile-user-icon">👤</span>
         <span class="nav__mobile-user-phone">{{ ordersStore.currentUserPhone }}</span>
-      </div>
+      </router-link>
       <router-link
         to="/"
         class="nav__mobile-link"
@@ -81,6 +88,13 @@
         @click="closeMobileMenu"
       >
         🗺️ {{ $t('navigation.routePlanner') }}
+      </router-link>
+      <router-link
+        to="/profile"
+        class="nav__mobile-link"
+        @click="closeMobileMenu"
+      >
+        👤 {{ $t('navigation.profile') }}
       </router-link>
       <button
         class="nav__mobile-link nav__mobile-reload"
@@ -229,6 +243,14 @@ router.afterEach(() => {
   flex: 1;
   justify-content: center;
   max-width: 300px;
+  text-decoration: none;
+  transition: all var(--transition-base);
+  cursor: pointer;
+}
+
+.nav__user:hover {
+  background: var(--color-gray-light);
+  color: var(--color-primary);
 }
 
 .nav__user-icon {
@@ -423,6 +445,13 @@ router.afterEach(() => {
   margin-bottom: var(--spacing-md);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
+  text-decoration: none;
+  transition: all var(--transition-base);
+}
+
+.nav__mobile-user:hover {
+  background: var(--color-gray-light);
+  color: var(--color-primary);
 }
 
 .nav__mobile-user-icon {

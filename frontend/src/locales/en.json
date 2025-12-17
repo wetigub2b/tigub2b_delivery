@@ -30,10 +30,22 @@
   "navigation": {
     "taskBoard": "Task Board",
     "routePlanner": "Route Planner",
+    "profile": "Profile",
     "orders": "Orders",
     "login": "Login",
     "logout": "Logout",
     "reload": "Reload"
+  },
+  "profile": {
+    "title": "My Profile",
+    "description": "View and update your profile information",
+    "accountInfo": "Account Information",
+    "personalInfo": "Personal Information",
+    "vehicleInfo": "Vehicle Information",
+    "rating": "Rating",
+    "totalDeliveries": "Total Deliveries",
+    "memberSince": "Member Since",
+    "updateSuccess": "Profile updated successfully"
   },
   "taskBoard": {
     "title": "Task Board",

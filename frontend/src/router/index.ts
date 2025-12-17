@@ -35,6 +35,12 @@ const router = createRouter({
       component: () => import('@/views/RoutePlanner.vue'),
       meta: { requiresAuth: true }
     },
+    {
+      path: '/profile',
+      name: 'driver-profile',
+      component: () => import('@/views/DriverProfile.vue'),
+      meta: { requiresAuth: true }
+    },
     // Prepare Goods routes (for Merchants)
     {
       path: '/prepare-goods',

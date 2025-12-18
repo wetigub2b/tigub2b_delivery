@@ -1048,6 +1048,7 @@ async def list_orders(
             selectinload(PrepareGoods.warehouse),
             selectinload(PrepareGoods.driver)
         )
+        .where(PrepareGoods.delivery_type != 0)  # Exclude merchant self-delivery
         .order_by(desc(PrepareGoods.create_time))
         .limit(limit)
     )

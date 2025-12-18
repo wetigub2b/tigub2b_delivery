@@ -18,6 +18,7 @@ client.interceptors.response.use(
   error => {
     if (error.response?.status === 401) {
       localStorage.removeItem('delivery_token');
+      localStorage.removeItem('user_phone');
       window.location.href = '/login';
     }
     return Promise.reject(error);

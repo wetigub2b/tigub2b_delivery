@@ -96,6 +96,12 @@ const router = createRouter({
       component: () => import('@/views/AdminReports.vue'),
       meta: { requiresAdminAuth: true, requiresFeature: 'adminReports' }
     },
+    {
+      path: '/admin/notifications',
+      name: 'admin-notifications',
+      component: () => import('@/views/AdminNotifications.vue'),
+      meta: { requiresAdminAuth: true }
+    },
     // Redirect /admin to dashboard
     {
       path: '/admin',

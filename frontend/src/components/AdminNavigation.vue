@@ -54,6 +54,15 @@
           <span class="nav-icon">📈</span>
           {{ $t('admin.nav.reports') }}
         </router-link>
+
+        <router-link
+          to="/admin/notifications"
+          class="nav-link"
+          @click="closeMobileMenu"
+        >
+          <span class="nav-icon">🔔</span>
+          {{ $t('admin.nav.notifications') }}
+        </router-link>
       </div>
 
       <div class="nav-actions">

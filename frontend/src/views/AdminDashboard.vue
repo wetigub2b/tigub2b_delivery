@@ -86,6 +86,11 @@
             <span class="action-icon">📊</span>
             {{ $t('admin.dashboard.viewReports') }}
           </router-link>
+
+          <router-link to="/admin/notifications" class="action-button notify">
+            <span class="action-icon">🔔</span>
+            {{ $t('admin.dashboard.sendNotifications') }}
+          </router-link>
         </div>
       </div>
 
@@ -407,6 +412,7 @@ onMounted(() => {
 .action-button.secondary { background: var(--color-text-secondary); }
 .action-button.accent { background: var(--color-warning); }
 .action-button.info { background: var(--color-info); }
+.action-button.notify { background: var(--color-success); }
 
 .action-button:hover {
   transform: translateY(-2px);

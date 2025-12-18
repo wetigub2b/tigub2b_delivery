@@ -37,6 +37,7 @@
         >
           👤 {{ $t('navigation.profile') }}
         </router-link>
+        <NotificationBell />
         <button
           class="nav__reload"
           @click="handleReload"
@@ -96,6 +97,9 @@
       >
         👤 {{ $t('navigation.profile') }}
       </router-link>
+      <div class="nav__mobile-notifications">
+        <NotificationBell />
+      </div>
       <button
         class="nav__mobile-link nav__mobile-reload"
         @click="handleReload"
@@ -120,6 +124,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useOrdersStore } from '@/store/orders';
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
+import NotificationBell from '@/components/NotificationBell.vue';
 import features from '@/config/features';
 
 const showMobileMenu = ref(false);
@@ -460,6 +465,14 @@ router.afterEach(() => {
 
 .nav__mobile-user-phone {
   flex: 1;
+}
+
+.nav__mobile-notifications {
+  padding: var(--spacing-md) 0;
+  border-bottom: 1px solid var(--color-gray-lighter);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
 }
 
 .nav__mobile-language {

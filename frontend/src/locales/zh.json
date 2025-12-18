@@ -182,6 +182,7 @@
       "orders": "订单管理",
       "dispatch": "派单管理",
       "reports": "报告",
+      "notifications": "通知",
       "logout": "退出登录"
     },
     "dashboard": {
@@ -200,6 +201,7 @@
       "manageOrders": "管理订单",
       "dispatchOrders": "派发订单",
       "viewReports": "查看报告",
+      "sendNotifications": "发送通知",
       "recentActivity": "最近活动",
       "justNow": "刚刚",
       "systemStatus": "系统运行正常"
@@ -374,6 +376,33 @@
       "exportPDF": "导出PDF",
       "exportExcel": "导出Excel",
       "exportCSV": "导出CSV"
+    },
+    "notifications": {
+      "title": "通知管理",
+      "sendNotification": "发送通知",
+      "recipients": "接收人",
+      "allDrivers": "所有活跃司机",
+      "selectedDrivers": "选定的司机",
+      "singleDriver": "单个司机",
+      "selectDrivers": "选择司机",
+      "notificationTitle": "标题",
+      "titlePlaceholder": "输入通知标题...",
+      "message": "消息内容",
+      "messagePlaceholder": "输入通知消息...",
+      "priority": "优先级",
+      "priorityLow": "低",
+      "priorityNormal": "普通",
+      "priorityHigh": "高",
+      "priorityUrgent": "紧急",
+      "send": "发送通知",
+      "sending": "发送中...",
+      "sendSuccess": "已向 {count} 位司机发送通知",
+      "sendError": "发送通知失败",
+      "loadDriversError": "加载司机列表失败",
+      "howItWorks": "工作原理",
+      "info1": "通知会立即显示在司机的手机应用上",
+      "info2": "高优先级通知会触发声音提醒",
+      "info3": "司机可以在通知中心查看所有通知"
     }
   },
   "login": {

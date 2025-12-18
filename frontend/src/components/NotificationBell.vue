@@ -105,11 +105,13 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNotificationStore } from '@/store/notifications';
+import { useOrdersStore } from '@/store/orders';
 import { storeToRefs } from 'pinia';
 import type { Notification, NotificationType } from '@/lib/supabase';
 
 const router = useRouter();
 const notificationStore = useNotificationStore();
+const ordersStore = useOrdersStore();
 const {
   recentNotifications: notifications,
   unreadCount,
@@ -120,6 +122,7 @@ const {
 
 const isOpen = ref(false);
 const bellRef = ref<HTMLElement | null>(null);
+const hasRequestedPermission = ref(false);
 
 const hasUrgent = computed(() => urgentNotifications.value.length > 0);
 
@@ -157,6 +160,11 @@ function toggleDropdown() {
   isOpen.value = !isOpen.value;
   if (isOpen.value) {
     notificationStore.fetchNotifications({ limit: 20 });
+    // Request browser notification permission on first interaction
+    if (!hasRequestedPermission.value) {
+      hasRequestedPermission.value = true;
+      notificationStore.requestNotificationPermission();
+    }
   }
 }
 
@@ -194,7 +202,11 @@ function handleClickOutside(event: MouseEvent) {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
-  notificationStore.requestNotificationPermission();
+  // Fetch notifications on mount if user is logged in
+  if (ordersStore.currentUserPhone) {
+    notificationStore.fetchNotifications({ limit: 20 });
+    notificationStore.subscribeToRealtime();
+  }
 });
 
 onUnmounted(() => {

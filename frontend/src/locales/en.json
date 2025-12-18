@@ -352,6 +352,7 @@
       "orders": "Orders",
       "dispatch": "Dispatch",
       "reports": "Reports",
+      "notifications": "Notifications",
       "logout": "Logout"
     },
     "dashboard": {
@@ -370,6 +371,7 @@
       "manageOrders": "Manage Orders",
       "dispatchOrders": "Dispatch Orders",
       "viewReports": "View Reports",
+      "sendNotifications": "Send Notifications",
       "recentActivity": "Recent Activity",
       "justNow": "Just now",
       "systemStatus": "System operating normally"
@@ -544,6 +546,33 @@
       "exportPDF": "Export PDF",
       "exportExcel": "Export Excel",
       "exportCSV": "Export CSV"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "sendNotification": "Send Notification",
+      "recipients": "Recipients",
+      "allDrivers": "All Active Drivers",
+      "selectedDrivers": "Selected Drivers",
+      "singleDriver": "Single Driver",
+      "selectDrivers": "Select Drivers",
+      "notificationTitle": "Title",
+      "titlePlaceholder": "Enter notification title...",
+      "message": "Message",
+      "messagePlaceholder": "Enter your notification message...",
+      "priority": "Priority",
+      "priorityLow": "Low",
+      "priorityNormal": "Normal",
+      "priorityHigh": "High",
+      "priorityUrgent": "Urgent",
+      "send": "Send Notification",
+      "sending": "Sending...",
+      "sendSuccess": "Notification sent to {count} driver(s)",
+      "sendError": "Failed to send notification",
+      "loadDriversError": "Failed to load drivers",
+      "howItWorks": "How It Works",
+      "info1": "Notifications appear instantly on drivers' mobile app",
+      "info2": "High priority notifications trigger sound alerts",
+      "info3": "Drivers can view all notifications in their notification center"
     }
   }
 }

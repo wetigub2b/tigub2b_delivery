@@ -82,7 +82,7 @@ class MobileUtilsImpl implements MobileUtils {
     if (this.isNative) {
       const coordinates = await Geolocation.getCurrentPosition({
         enableHighAccuracy: true,
-        timeout: 10000
+        timeout: 15000
       });
       return {
         latitude: coordinates.coords.latitude,
@@ -98,7 +98,7 @@ class MobileUtilsImpl implements MobileUtils {
             });
           },
           reject,
-          { enableHighAccuracy: true, timeout: 10000 }
+          { enableHighAccuracy: true, timeout: 30000, maximumAge: 60000 }
         );
       });
     }

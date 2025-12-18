@@ -261,7 +261,7 @@ async function startLocationTracking() {
             locationError.value = 'Location request timed out. Please try again.';
           }
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+        { enableHighAccuracy: true, timeout: 30000, maximumAge: 60000 }
       );
     }
   } catch (err: any) {

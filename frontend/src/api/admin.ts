@@ -416,3 +416,42 @@ export async function getAdminPackageDetail(prepareSn: string) {
   const { data } = await adminClient.get<AdminPackageDetail>(`/admin/packages/${prepareSn}`);
   return data;
 }
+
+// Notification types
+export interface BroadcastNotificationRequest {
+  title: string;
+  message: string;
+  priority?: 'low' | 'normal' | 'high' | 'urgent';
+  driver_ids?: number[];
+}
+
+export interface SingleNotificationRequest {
+  title: string;
+  message: string;
+  priority?: 'low' | 'normal' | 'high' | 'urgent';
+  notification_type?: string;
+  order_sn?: string;
+  action_url?: string;
+}
+
+export interface NotificationResponse {
+  success: boolean;
+  count: number;
+  message: string;
+}
+
+// Notification API functions
+export async function broadcastNotification(payload: BroadcastNotificationRequest) {
+  const { data } = await adminClient.post<NotificationResponse>('/notifications/broadcast', payload);
+  return data;
+}
+
+export async function sendDriverNotification(driverId: number, payload: SingleNotificationRequest) {
+  const { data } = await adminClient.post<NotificationResponse>(`/notifications/driver/${driverId}`, payload);
+  return data;
+}
+
+export async function sendUrgentAlert(driverId: number, payload: SingleNotificationRequest) {
+  const { data } = await adminClient.post<NotificationResponse>(`/notifications/alert/${driverId}`, payload);
+  return data;
+}

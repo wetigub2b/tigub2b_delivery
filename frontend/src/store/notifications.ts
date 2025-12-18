@@ -2,7 +2,6 @@ import { defineStore } from 'pinia';
 import { ref, computed, watch } from 'vue';
 import supabase, { type Notification, type NotificationType } from '@/lib/supabase';
 import { useOrdersStore } from '@/store/orders';
-import type { RealtimeChannel } from '@supabase/supabase-js';
 
 export const useNotificationStore = defineStore('notifications', () => {
   // State
@@ -12,8 +11,9 @@ export const useNotificationStore = defineStore('notifications', () => {
   const isConnected = ref(false);
   const lastFetchedAt = ref<Date | null>(null);
 
-  // Private
-  let realtimeChannel: RealtimeChannel | null = null;
+  // Private - polling interval
+  let pollingInterval: ReturnType<typeof setInterval> | null = null;
+  const POLLING_INTERVAL_MS = 30000; // Poll every 30 seconds
 
   // Computed
   const unreadCount = computed(() =>
@@ -203,84 +203,63 @@ export const useNotificationStore = defineStore('notifications', () => {
     }
   }
 
-  function subscribeToRealtime() {
-    if (!supabase) {
-      console.warn('Supabase not configured, skipping realtime subscription');
-      return;
-    }
-
+  function startPolling() {
     const ordersStore = useOrdersStore();
     const driverPhone = ordersStore.currentUserPhone;
 
     if (!driverPhone) {
-      console.warn('No driver phone available for realtime subscription');
+      console.warn('No driver phone available for polling');
       return;
     }
 
-    // Unsubscribe from existing channel if any
-    unsubscribeFromRealtime();
+    // Stop existing polling
+    stopPolling();
 
-    // Subscribe to notifications for this driver
-    realtimeChannel = supabase
-      .channel(`notifications:${driverPhone}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `driver_phone=eq.${driverPhone}`
-        },
-        (payload) => {
-          const newNotification = payload.new as Notification;
+    // Mark as connected (polling mode)
+    isConnected.value = true;
 
-          // Add to beginning of list
-          notifications.value.unshift(newNotification);
+    // Initial fetch
+    fetchNotifications();
 
-          // Show notification alert
-          showNotificationAlert(newNotification);
-
-          // Play notification sound for urgent/high priority
-          if (newNotification.priority === 'urgent' || newNotification.priority === 'high') {
-            playNotificationSound();
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'notifications',
-          filter: `driver_phone=eq.${driverPhone}`
-        },
-        (payload) => {
-          const updatedNotification = payload.new as Notification;
-          const index = notifications.value.findIndex(n => n.id === updatedNotification.id);
-
-          if (index !== -1) {
-            if (updatedNotification.is_dismissed) {
-              // Remove dismissed notifications
-              notifications.value.splice(index, 1);
-            } else {
-              // Update the notification
-              notifications.value[index] = updatedNotification;
+    // Start polling interval
+    pollingInterval = setInterval(async () => {
+      const currentPhone = ordersStore.currentUserPhone;
+      if (currentPhone) {
+        const previousCount = notifications.value.filter(n => !n.is_read).length;
+        await fetchNotifications();
+        const newCount = notifications.value.filter(n => !n.is_read).length;
+        
+        // If we have new unread notifications, show alert for the newest one
+        if (newCount > previousCount && notifications.value.length > 0) {
+          const newestNotification = notifications.value[0];
+          if (!newestNotification.is_read) {
+            showNotificationAlert(newestNotification);
+            if (newestNotification.priority === 'urgent' || newestNotification.priority === 'high') {
+              playNotificationSound();
             }
           }
         }
-      )
-      .subscribe((status) => {
-        isConnected.value = status === 'SUBSCRIBED';
-        console.log('Realtime subscription status:', status);
-      });
+      }
+    }, POLLING_INTERVAL_MS);
+
+    console.log('Notification polling started');
+  }
+
+  function stopPolling() {
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      pollingInterval = null;
+    }
+    isConnected.value = false;
+  }
+
+  // Keep subscribeToRealtime as alias for startPolling for backward compatibility
+  function subscribeToRealtime() {
+    startPolling();
   }
 
   function unsubscribeFromRealtime() {
-    if (realtimeChannel && supabase) {
-      supabase.removeChannel(realtimeChannel);
-      realtimeChannel = null;
-      isConnected.value = false;
-    }
+    stopPolling();
   }
 
   function showNotificationAlert(notification: Notification) {
@@ -320,20 +299,19 @@ export const useNotificationStore = defineStore('notifications', () => {
   }
 
   function cleanup() {
-    unsubscribeFromRealtime();
+    stopPolling();
     notifications.value = [];
     error.value = null;
     lastFetchedAt.value = null;
   }
 
-  // Initialize realtime when user phone changes
+  // Initialize polling when user phone changes
   const ordersStore = useOrdersStore();
   watch(
     () => ordersStore.currentUserPhone,
     (newPhone, oldPhone) => {
       if (newPhone && newPhone !== oldPhone) {
-        fetchNotifications();
-        subscribeToRealtime();
+        startPolling();
       } else if (!newPhone) {
         cleanup();
       }
@@ -364,6 +342,8 @@ export const useNotificationStore = defineStore('notifications', () => {
     clearAllNotifications,
     subscribeToRealtime,
     unsubscribeFromRealtime,
+    startPolling,
+    stopPolling,
     requestNotificationPermission,
     cleanup
   };

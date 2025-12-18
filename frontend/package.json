@@ -16,6 +16,7 @@
     "mobile:ios:dev": "npm run mobile:build && npx cap run ios --livereload --external"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
     "@capacitor/android": "^7.4.3",
     "@capacitor/app": "^7.1.0",
     "@capacitor/camera": "^7.0.2",

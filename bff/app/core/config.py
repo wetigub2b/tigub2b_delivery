@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     python_bin: str = Field(default="python3", alias="PYTHON_BIN")
 
+    # Supabase configuration
+    supabase_url: Optional[str] = Field(default=None, alias="SUPABASE_URL")
+    supabase_service_role_key: Optional[str] = Field(default=None, alias="SUPABASE_SERVICE_ROLE_KEY")
+
     # Stripe Connect configuration
     stripe_secret_key: Optional[str] = Field(default=None, alias="STRIPE_SECRET_KEY")
     stripe_webhook_secret: Optional[str] = Field(default=None, alias="STRIPE_WEBHOOK_SECRET")

@@ -217,6 +217,22 @@
     "english": "English",
     "chinese": "中文"
   },
+  "notifications": {
+    "title": "Notifications",
+    "label": "Notifications ({count} unread)",
+    "empty": "No notifications",
+    "markAllRead": "Mark all read",
+    "clearAll": "Clear all",
+    "dismiss": "Dismiss",
+    "connected": "Live updates active",
+    "disconnected": "Reconnecting...",
+    "orderAssigned": "New order assigned",
+    "orderStatusChange": "Order status updated",
+    "orderPickupReady": "Order ready for pickup",
+    "orderUrgent": "Urgent: Action required",
+    "systemAlert": "System alert",
+    "systemAnnouncement": "Announcement"
+  },
   "orderCard": {
     "pickup": "Pickup:",
     "dropOff": "Drop-off:",

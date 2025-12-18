@@ -108,14 +108,6 @@
                   >
                     👤
                   </button>
-                  <button
-                    v-if="order.driver_id"
-                    @click="reassignOrder(order)"
-                    class="action-btn reassign"
-                    :title="$t('admin.orders.reassign')"
-                  >
-                    🔄
-                  </button>
                 </div>
               </td>
             </tr>
@@ -140,6 +132,7 @@
       :show="showDetailModal"
       :packageSn="selectedOrder.prepare_sn"
       :orderCount="selectedOrder.order_count"
+      :isAdmin="true"
       @close="closeDetailModal"
     />
 
@@ -147,7 +140,7 @@
     <div v-if="showAssignModal" class="modal-overlay" @click.self="closeAssignModal">
       <div class="assign-modal">
         <div class="modal-header">
-          <h2>{{ assigningOrder?.driver_id ? $t('admin.orders.reassign') : $t('admin.orders.assign') }}</h2>
+          <h2>{{ $t('admin.orders.assign') }}</h2>
           <button @click="closeAssignModal" class="close-btn">&times;</button>
         </div>
         <div class="modal-body">
@@ -346,10 +339,6 @@ const confirmAssign = async () => {
 };
 
 const assignOrder = (order: AdminOrderSummary) => {
-  openAssignModal(order);
-};
-
-const reassignOrder = (order: AdminOrderSummary) => {
   openAssignModal(order);
 };
 
@@ -580,7 +569,6 @@ onMounted(() => {
 
 .action-btn.view:hover { background: var(--color-info-light); }
 .action-btn.assign:hover { background: var(--color-success-light); }
-.action-btn.reassign:hover { background: var(--color-warning-light); }
 
 .loading-overlay {
   position: absolute;

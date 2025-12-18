@@ -380,3 +380,39 @@ export async function logDriverAction(params: {
 }) {
   await adminClient.post('/admin/performance/log', null, { params });
 }
+
+// Package detail types for admin
+export interface AdminUploadedFile {
+  id: number;
+  fileName: string;
+  fileUrl: string;
+  fileType: string;
+  fileSize: number;
+  uploaderName: string | null;
+  createTime: string;
+}
+
+export interface AdminPackageDetail {
+  id: number;
+  prepareSn: string;
+  orderIds: string;
+  deliveryType: number;
+  shippingType: number;
+  prepareStatus: number | null;
+  shopId: number;
+  warehouseId: number | null;
+  driverId: number | null;
+  createTime: string;
+  updateTime: string | null;
+  warehouseName: string | null;
+  driverName: string | null;
+  receiverAddress: string | null;
+  totalValue: number | null;
+  orderSerialNumbers: string[];
+  pickupPhotos: AdminUploadedFile[];
+}
+
+export async function getAdminPackageDetail(prepareSn: string) {
+  const { data } = await adminClient.get<AdminPackageDetail>(`/admin/packages/${prepareSn}`);
+  return data;
+}

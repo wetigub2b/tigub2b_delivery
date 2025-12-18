@@ -55,16 +55,19 @@ async def get_dashboard_stats(
     )
     active_drivers = active_drivers_result.scalar() or 0
 
-    # Get order statistics from tigu_prepare_goods table
+    # Get order statistics from tigu_prepare_goods table (exclude merchant self-delivery)
     total_orders_result = await session.execute(
-        select(func.count(PrepareGoods.id))
+        select(func.count(PrepareGoods.id)).where(PrepareGoods.delivery_type != 0)
     )
     total_orders = total_orders_result.scalar() or 0
 
     # Pending: prepare_status is NULL or 0 (waiting to be prepared or just prepared)
     pending_orders_result = await session.execute(
         select(func.count(PrepareGoods.id)).where(
-            (PrepareGoods.prepare_status.is_(None)) | (PrepareGoods.prepare_status == 0)
+            and_(
+                PrepareGoods.delivery_type != 0,
+                (PrepareGoods.prepare_status.is_(None)) | (PrepareGoods.prepare_status == 0)
+            )
         )
     )
     pending_orders = pending_orders_result.scalar() or 0
@@ -72,14 +75,22 @@ async def get_dashboard_stats(
     # In transit: prepare_status 1-6 (driver claimed, pickup, to warehouse, etc.)
     in_transit_orders_result = await session.execute(
         select(func.count(PrepareGoods.id)).where(
-            PrepareGoods.prepare_status.in_([1, 2, 3, 4, 5, 6])
+            and_(
+                PrepareGoods.delivery_type != 0,
+                PrepareGoods.prepare_status.in_([1, 2, 3, 4, 5, 6])
+            )
         )
     )
     in_transit_orders = in_transit_orders_result.scalar() or 0
 
     # Completed: prepare_status = 7 (delivered)
     completed_orders_result = await session.execute(
-        select(func.count(PrepareGoods.id)).where(PrepareGoods.prepare_status == 7)
+        select(func.count(PrepareGoods.id)).where(
+            and_(
+                PrepareGoods.delivery_type != 0,
+                PrepareGoods.prepare_status == 7
+            )
+        )
     )
     completed_orders = completed_orders_result.scalar() or 0
 
@@ -1008,6 +1019,11 @@ async def log_driver_action(
     return {"message": "Driver action logged successfully"}
 
 
+from app.schemas.prepare_goods import PrepareGoodsDetailResponse, PrepareGoodsItemSchema, UploadedFileSchema
+from app.services import prepare_goods_service
+from app.utils import parse_order_id_list
+
+
 # Prepare status labels for admin display
 PREPARE_STATUS_LABELS = {
     None: "待备货",              # Pending Prepare
@@ -1103,3 +1119,140 @@ async def list_orders(
         ))
 
     return summaries
+
+
+@router.get("/packages/{prepare_sn}", response_model=PrepareGoodsDetailResponse, response_model_by_alias=True)
+async def get_package_detail(
+    prepare_sn: str,
+    session: AsyncSession = Depends(get_db_session),
+    current_admin: User = Depends(get_current_admin)
+) -> PrepareGoodsDetailResponse:
+    """
+    Get prepare package detail by serial number (admin access).
+
+    Args:
+        prepare_sn: Prepare goods serial number
+        session: Database session
+        current_admin: Authenticated admin user
+
+    Returns:
+        PrepareGoods package with items and photos
+
+    Raises:
+        HTTPException 404: Package not found
+    """
+    from app.models.order import UploadedFile
+
+    prepare_goods = await prepare_goods_service.get_prepare_package(session, prepare_sn)
+
+    if not prepare_goods:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Prepare package not found: {prepare_sn}"
+        )
+
+    # Build response with items
+    items = [
+        PrepareGoodsItemSchema(
+            prepare_id=item.prepare_id,
+            order_item_id=item.order_item_id,
+            product_id=item.product_id,
+            sku_id=item.sku_id,
+            quantity=item.quantity
+        )
+        for item in prepare_goods.items
+    ]
+
+    # Fetch order serial numbers
+    order_ids = parse_order_id_list(prepare_goods.order_ids)
+    order_serial_numbers = []
+    if order_ids:
+        result = await session.execute(
+            select(Order.order_sn).where(Order.id.in_(order_ids))
+        )
+        order_serial_numbers = [row[0] for row in result.fetchall()]
+
+    # Fetch pickup photos from prepare_good
+    photos_result = await session.execute(
+        select(UploadedFile)
+        .where(UploadedFile.biz_type == "prepare_good")
+        .where(UploadedFile.biz_id == prepare_goods.id)
+        .order_by(UploadedFile.create_time.desc())
+    )
+    pickup_photos = [
+        UploadedFileSchema(
+            id=photo.id,
+            file_name=photo.file_name,
+            file_url=photo.file_url,
+            file_type=photo.file_type,
+            file_size=photo.file_size,
+            uploader_name=photo.uploader_name,
+            create_time=photo.create_time
+        )
+        for photo in photos_result.scalars().all()
+    ]
+
+    # Fetch photos from order_action for orders in this package
+    if order_ids:
+        from app.models.order_action import OrderAction
+
+        # Determine which action types to fetch based on package type
+        if prepare_goods.type == 1:
+            action_types = [3, 5]
+        else:
+            action_types = [0, 5]
+
+        action_result = await session.execute(
+            select(OrderAction)
+            .where(OrderAction.order_id.in_(order_ids))
+            .where(OrderAction.action_type.in_(action_types))
+            .order_by(OrderAction.create_time.desc())
+        )
+        actions = action_result.scalars().all()
+
+        # Extract file IDs from logistics_voucher_file
+        action_file_ids = []
+        for action in actions:
+            if action.logistics_voucher_file:
+                file_ids = [int(fid.strip()) for fid in action.logistics_voucher_file.split(',') if fid.strip().isdigit()]
+                action_file_ids.extend(file_ids)
+
+        if action_file_ids:
+            action_photos_result = await session.execute(
+                select(UploadedFile)
+                .where(UploadedFile.id.in_(action_file_ids))
+            )
+            action_photos = [
+                UploadedFileSchema(
+                    id=photo.id,
+                    file_name=photo.file_name,
+                    file_url=photo.file_url,
+                    file_type=photo.file_type,
+                    file_size=photo.file_size,
+                    uploader_name=photo.uploader_name,
+                    create_time=photo.create_time
+                )
+                for photo in action_photos_result.scalars().all()
+            ]
+            pickup_photos.extend(action_photos)
+
+    return PrepareGoodsDetailResponse(
+        id=prepare_goods.id,
+        prepare_sn=prepare_goods.prepare_sn,
+        order_ids=prepare_goods.order_ids,
+        delivery_type=prepare_goods.delivery_type,
+        shipping_type=prepare_goods.shipping_type,
+        prepare_status=prepare_goods.prepare_status,
+        shop_id=prepare_goods.shop_id,
+        warehouse_id=prepare_goods.warehouse_id,
+        driver_id=prepare_goods.driver_id,
+        create_time=prepare_goods.create_time,
+        update_time=prepare_goods.update_time,
+        items=items,
+        warehouse_name=prepare_goods.warehouse.name if prepare_goods.warehouse else None,
+        driver_name=prepare_goods.driver.name if prepare_goods.driver else None,
+        receiver_address=prepare_goods.receiver_address,
+        total_value=float(prepare_goods.total_value) if prepare_goods.total_value else None,
+        order_serial_numbers=order_serial_numbers,
+        pickup_photos=pickup_photos
+    )

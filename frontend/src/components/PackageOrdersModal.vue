@@ -94,12 +94,14 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { usePrepareGoodsStore } from '@/store/prepareGoods';
+import { getAdminPackageDetail, type AdminUploadedFile } from '@/api/admin';
 import AddressMapModal from '@/components/AddressMapModal.vue';
 
 const props = defineProps<{
   show: boolean;
   packageSn: string;
   orderCount: number;
+  isAdmin?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -108,11 +110,13 @@ const emit = defineEmits<{
 
 import type { UploadedFileDto } from '@/api/prepareGoods';
 
+type PhotoType = UploadedFileDto | AdminUploadedFile;
+
 const prepareGoodsStore = usePrepareGoodsStore();
 const orderSerialNumbers = ref<string[]>([]);
 const receiverAddress = ref<string | null>(null);
 const totalValue = ref<number | null>(null);
-const pickupPhotos = ref<UploadedFileDto[]>([]);
+const pickupPhotos = ref<PhotoType[]>([]);
 const isLoading = ref(false);
 
 // Fetch package details when modal opens
@@ -131,17 +135,34 @@ watch(() => props.show, async (newValue) => {
 async function fetchPackageDetails() {
   isLoading.value = true;
   try {
-    const detail = await prepareGoodsStore.fetchPackageDetail(props.packageSn);
-    if (detail) {
-      orderSerialNumbers.value = detail.orderSerialNumbers || [];
-      receiverAddress.value = detail.receiverAddress || null;
-      totalValue.value = detail.totalValue || null;
-      pickupPhotos.value = detail.pickupPhotos || [];
+    if (props.isAdmin) {
+      // Use admin API for admin context
+      const detail = await getAdminPackageDetail(props.packageSn);
+      if (detail) {
+        orderSerialNumbers.value = detail.orderSerialNumbers || [];
+        receiverAddress.value = detail.receiverAddress || null;
+        totalValue.value = detail.totalValue || null;
+        pickupPhotos.value = detail.pickupPhotos || [];
+      } else {
+        orderSerialNumbers.value = [];
+        receiverAddress.value = null;
+        totalValue.value = null;
+        pickupPhotos.value = [];
+      }
     } else {
-      orderSerialNumbers.value = [];
-      receiverAddress.value = null;
-      totalValue.value = null;
-      pickupPhotos.value = [];
+      // Use driver API for driver context
+      const detail = await prepareGoodsStore.fetchPackageDetail(props.packageSn);
+      if (detail) {
+        orderSerialNumbers.value = detail.orderSerialNumbers || [];
+        receiverAddress.value = detail.receiverAddress || null;
+        totalValue.value = detail.totalValue || null;
+        pickupPhotos.value = detail.pickupPhotos || [];
+      } else {
+        orderSerialNumbers.value = [];
+        receiverAddress.value = null;
+        totalValue.value = null;
+        pickupPhotos.value = [];
+      }
     }
   } catch (error) {
     console.error('Failed to fetch package details:', error);

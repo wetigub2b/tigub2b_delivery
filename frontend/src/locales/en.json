@@ -231,7 +231,13 @@
     "orderPickupReady": "Order ready for pickup",
     "orderUrgent": "Urgent: Action required",
     "systemAlert": "System alert",
-    "systemAnnouncement": "Announcement"
+    "systemAnnouncement": "Announcement",
+    "time": {
+      "justNow": "Just now",
+      "minutesAgo": "{minutes}m ago",
+      "hoursAgo": "{hours}h ago",
+      "daysAgo": "{days}d ago"
+    }
   },
   "orderCard": {
     "pickup": "Pickup:",

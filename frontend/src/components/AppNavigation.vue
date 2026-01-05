@@ -54,6 +54,17 @@
         </button>
       </div>
 
+      <!-- Mobile Notification Indicator (outside hamburger) -->
+      <div class="nav__mobile-notification-indicator" v-if="mobileNotificationCount > 0">
+        <span class="nav__mobile-notification-icon">🔔</span>
+        <span
+          class="nav__mobile-notification-badge"
+          :class="{ 'nav__mobile-notification-badge--urgent': hasUrgentNotification }"
+        >
+          {{ mobileNotificationCount > 99 ? '99+' : mobileNotificationCount }}
+        </span>
+      </div>
+
       <!-- Mobile Menu Button -->
       <button
         class="nav__mobile-toggle"
@@ -120,9 +131,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useOrdersStore } from '@/store/orders';
+import { useNotificationStore } from '@/store/notifications';
+import { storeToRefs } from 'pinia';
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
 import NotificationBell from '@/components/NotificationBell.vue';
 import features from '@/config/features';
@@ -130,6 +143,12 @@ import features from '@/config/features';
 const showMobileMenu = ref(false);
 const router = useRouter();
 const ordersStore = useOrdersStore();
+const notificationStore = useNotificationStore();
+
+const { unreadCount, urgentNotifications } = storeToRefs(notificationStore);
+
+const mobileNotificationCount = computed(() => unreadCount.value);
+const hasUrgentNotification = computed(() => urgentNotifications.value.length > 0);
 
 const toggleMobileMenu = () => {
   showMobileMenu.value = !showMobileMenu.value;
@@ -360,6 +379,45 @@ router.afterEach(() => {
   padding: var(--spacing-sm);
 }
 
+/* Mobile Notification Indicator */
+.nav__mobile-notification-indicator {
+  display: none;
+  position: relative;
+  padding: var(--spacing-sm);
+  font-size: 1.25rem;
+}
+
+.nav__mobile-notification-icon {
+  display: block;
+}
+
+.nav__mobile-notification-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: #1976d2;
+  color: white;
+  font-size: 0.6rem;
+  font-weight: 600;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+}
+
+.nav__mobile-notification-badge--urgent {
+  background: #d32f2f;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
 .nav__mobile-toggle span {
   width: 24px;
   height: 2px;
@@ -506,6 +564,10 @@ router.afterEach(() => {
 
   .nav__mobile-toggle {
     display: flex;
+  }
+
+  .nav__mobile-notification-indicator {
+    display: block;
   }
 
   .nav__title {

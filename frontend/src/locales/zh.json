@@ -458,6 +458,28 @@
     "english": "English",
     "chinese": "中文"
   },
+  "notifications": {
+    "title": "通知",
+    "label": "通知 ({count} 未读)",
+    "empty": "暂无通知",
+    "markAllRead": "全部已读",
+    "clearAll": "清空全部",
+    "dismiss": "关闭",
+    "connected": "实时更新已连接",
+    "disconnected": "重新连接中...",
+    "orderAssigned": "新订单已分配",
+    "orderStatusChange": "订单状态已更新",
+    "orderPickupReady": "订单已准备好取货",
+    "orderUrgent": "紧急：需要处理",
+    "systemAlert": "系统提醒",
+    "systemAnnouncement": "公告",
+    "time": {
+      "justNow": "刚刚",
+      "minutesAgo": "{minutes}分钟前",
+      "hoursAgo": "{hours}小时前",
+      "daysAgo": "{days}天前"
+    }
+  },
   "orderCard": {
     "pickup": "取货：",
     "dropOff": "送达：",

@@ -6,6 +6,7 @@
       :aria-label="$t('notifications.label', { count: unreadCount })"
     >
       <span class="notification-bell__icon">🔔</span>
+      <span class="notification-bell__text">{{ $t('notifications.title') }}</span>
       <span
         v-if="unreadCount > 0"
         class="notification-bell__badge"
@@ -107,8 +108,10 @@ import { useRouter } from 'vue-router';
 import { useNotificationStore } from '@/store/notifications';
 import { useOrdersStore } from '@/store/orders';
 import { storeToRefs } from 'pinia';
+import { useI18n } from '@/composables/useI18n';
 import type { Notification, NotificationType } from '@/lib/supabase';
 
+const { t } = useI18n();
 const router = useRouter();
 const notificationStore = useNotificationStore();
 const ordersStore = useOrdersStore();
@@ -148,10 +151,10 @@ function formatTime(dateString: string): string {
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
 
-  if (minutes < 1) return 'Just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 7) return `${days}d ago`;
+  if (minutes < 1) return t('notifications.time.justNow');
+  if (minutes < 60) return t('notifications.time.minutesAgo', { minutes });
+  if (hours < 24) return t('notifications.time.hoursAgo', { hours });
+  if (days < 7) return t('notifications.time.daysAgo', { days });
 
   return date.toLocaleDateString();
 }
@@ -223,13 +226,14 @@ onUnmounted(() => {
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 8px;
+  padding: 8px 12px;
   position: relative;
-  font-size: 1.25rem;
+  font-size: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  gap: 6px;
+  border-radius: 20px;
   transition: background 0.2s ease;
 }
 
@@ -237,10 +241,13 @@ onUnmounted(() => {
   background: rgba(0, 0, 0, 0.05);
 }
 
+.notification-bell__text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #333;
+}
+
 .notification-bell__badge {
-  position: absolute;
-  top: 2px;
-  right: 2px;
   background: #1976d2;
   color: white;
   font-size: 0.65rem;

@@ -54,6 +54,7 @@
     "paymentSetupComplete": "Payment setup completed successfully!",
     "paymentSetupPending": "Payment setup in progress. Please complete all required steps.",
     "stripeRefreshNeeded": "Your setup link has expired. Please click the button to continue.",
+    "stripeAccountCleared": "Your previous payment setup was invalid and has been cleared. Please start the setup process again.",
     "paymentStatus": {
       "pending": "Not Connected",
       "onboarding": "Setup In Progress",

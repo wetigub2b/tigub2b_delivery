@@ -157,6 +157,16 @@ async def refresh_stripe_link(
             stripe_account_id=result["stripe_account_id"]
         )
 
+    except ValueError as e:
+        # Handle invalid or non-existent Stripe account
+        stripe_service = StripeService(session)
+        await stripe_service.clear_invalid_stripe_account(driver)
+
+        raise HTTPException(
+            status_code=status.HTTP_410_GONE,
+            detail=f"{str(e)} Your previous setup has been cleared. Please start the payment setup process again."
+        )
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

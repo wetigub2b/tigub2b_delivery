@@ -35,6 +35,23 @@ class StripeService:
         )
         return result.scalars().first()
 
+    async def clear_invalid_stripe_account(self, driver: Driver) -> None:
+        """
+        Clear invalid Stripe account data from driver record.
+        Used when a Stripe account ID in the database no longer exists in Stripe.
+        """
+        logger.warning(
+            f"Clearing invalid Stripe account {driver.stripe_account_id} for driver {driver.id}"
+        )
+        driver.stripe_account_id = None
+        driver.stripe_status = "pending"
+        driver.stripe_payouts_enabled = False
+        driver.stripe_details_submitted = False
+        driver.stripe_onboarding_url = None
+        driver.stripe_connected_at = None
+        await self.session.commit()
+        logger.info(f"Cleared Stripe data for driver {driver.id}")
+
     async def create_connect_account(self, driver: Driver) -> dict:
         """
         Create a Stripe Connect Express account for a driver.
@@ -95,6 +112,19 @@ class StripeService:
             raise ValueError("Stripe is not configured. Please set STRIPE_SECRET_KEY.")
 
         try:
+            # First verify the account exists
+            try:
+                account = stripe.Account.retrieve(stripe_account_id)
+                logger.info(f"Verified Stripe account {stripe_account_id} exists")
+            except stripe.error.PermissionError as e:
+                # Account exists but we don't have permission - this is a different issue
+                logger.error(f"Permission error accessing account {stripe_account_id}: {e}")
+                raise ValueError(f"Cannot access Stripe account. The account may belong to a different platform.")
+            except stripe.error.InvalidRequestError as e:
+                # Account doesn't exist or is invalid
+                logger.error(f"Invalid Stripe account {stripe_account_id}: {e}")
+                raise ValueError(f"Stripe account does not exist or is not connected to your platform. Please restart the payment setup process.")
+
             account_link = stripe.AccountLink.create(
                 account=stripe_account_id,
                 refresh_url=settings.stripe_connect_refresh_url,
@@ -107,6 +137,9 @@ class StripeService:
                 "onboarding_url": account_link.url,
             }
 
+        except ValueError:
+            # Re-raise our custom ValueError messages
+            raise
         except stripe.error.StripeError as e:
             logger.error(f"Stripe error creating account link: {e}")
             raise
@@ -164,6 +197,20 @@ class StripeService:
                 "stripe_connected_at": driver.stripe_connected_at,
                 "can_receive_payouts": driver.stripe_payouts_enabled and driver.stripe_status == "verified",
                 "requirements_due": requirements_due,
+            }
+
+        except stripe.error.InvalidRequestError as e:
+            # Account doesn't exist - clear invalid data and return pending status
+            logger.warning(f"Invalid Stripe account {driver.stripe_account_id}: {e}")
+            await self.clear_invalid_stripe_account(driver)
+
+            return {
+                "stripe_status": "pending",
+                "stripe_payouts_enabled": False,
+                "stripe_details_submitted": False,
+                "stripe_connected_at": None,
+                "can_receive_payouts": False,
+                "requirements_due": None,
             }
 
         except stripe.error.StripeError as e:

@@ -432,6 +432,14 @@ const continueStripeSetup = async () => {
 
     if (!response.ok) {
       const error = await response.json();
+
+      // If account was cleared (410 Gone), refresh the profile to show updated status
+      if (response.status === 410) {
+        stripeError.value = error.detail || t('profile.stripeAccountCleared');
+        await fetchProfile();
+        return;
+      }
+
       throw new Error(error.detail || 'Failed to get setup link');
     }
 

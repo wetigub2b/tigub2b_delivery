@@ -1,6 +1,7 @@
 from app.models.delivery_proof import DeliveryProof
 from app.models.driver import Driver
 from app.models.driver_performance import DriverAlert, DriverPerformance, DriverPerformanceLog
+from app.models.notification import Notification
 from app.models.order import Order, OrderItem, UploadedFile, Warehouse
 from app.models.order_action import OrderAction
 from app.models.prepare_goods import PrepareGoods, PrepareGoodsItem
@@ -19,5 +20,6 @@ __all__ = [
     "PrepareGoodsItem",
     "UploadedFile",
     "Warehouse",
-    "User"
+    "User",
+    "Notification"
 ]

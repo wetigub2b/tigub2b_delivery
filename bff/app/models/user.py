@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from sqlalchemy import DateTime, String, Text, Boolean, Enum
-from sqlalchemy.dialects.mysql import BIGINT
+from sqlalchemy import BigInteger
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
@@ -13,8 +13,8 @@ class User(Base):
     __tablename__ = "sys_user"
 
     # Match the actual database schema
-    user_id: Mapped[int] = mapped_column(BIGINT(unsigned=True), primary_key=True)
-    dept_id: Mapped[int | None] = mapped_column(BIGINT, nullable=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    dept_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     user_name: Mapped[str] = mapped_column(String(100))
     nick_name: Mapped[str] = mapped_column(String(500))
     user_type: Mapped[str | None] = mapped_column(String(2), nullable=True)
@@ -37,7 +37,7 @@ class User(Base):
     update_time: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     remark: Mapped[str | None] = mapped_column(String(500), nullable=True)
     invite_code: Mapped[str | None] = mapped_column(String(16), nullable=True)
-    inviter_user_id: Mapped[int | None] = mapped_column(BIGINT, nullable=True)
+    inviter_user_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
 
     @property
     def is_active(self) -> bool:

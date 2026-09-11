@@ -1,5 +1,8 @@
 # MySQL Marks Table Migration Guide
 
+> **Historical note:** the default DB is now SQLite (`bff/data/delivery.db`).
+> `tigu_driver_marks` is created by `bff/init_sqlite.py`. Below is the legacy MySQL path.
+
 ## Overview
 This migration creates the `tigu_driver_marks` table in your existing MySQL database for storing map markers. This replaces the Supabase solution with a simpler, integrated MySQL approach.
 

@@ -165,12 +165,16 @@ BFF_PORT=9000
 SECRET_KEY=<your-secret-key>
 ACCESS_TOKEN_EXPIRE_MINUTES=60
 REFRESH_TOKEN_EXPIRE_MINUTES=10080
-DATABASE_URL=mysql+asyncmy://user:pass@localhost:3307/tigu_b2b
+DATABASE_URL=sqlite+aiosqlite:///./data/delivery.db
 REDIS_URL=redis://localhost:6379/0
 ALLOWED_ORIGINS=https://stgdelivery.wetigu.com,https://testdelivery.wetigu.com
 GOOGLE_MAPS_API_KEY=<your-google-maps-key>
 LOG_LEVEL=INFO
 ```
+
+> SQLite is the default. MySQL only via explicit override:
+> `DATABASE_URL=mysql+asyncmy://user:pass@localhost:3306/tigu_b2b`.
+> Init SQLite with `cd bff && DATABASE_URL="sqlite+aiosqlite:///./data/delivery.db" ./.venv/bin/python init_sqlite.py`.
 
 ### Frontend (.env.production)
 

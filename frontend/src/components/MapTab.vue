@@ -10,7 +10,7 @@
     </div>
     <div v-if="locationError" class="location-warning">
       <p>⚠️ {{ locationError }}</p>
-      <button @click="startLocationTracking" class="retry-button">Enable Location</button>
+      <button @click="retryLocationTracking" class="retry-button">Enable Location</button>
     </div>
     <div v-if="!loading && !error" class="map-controls">
       <button @click="centerOnDriver" class="control-button" :disabled="!driverMarker">
@@ -51,6 +51,7 @@ let markers: mapboxgl.Marker[] = [];
 let driverMarker: mapboxgl.Marker | null = null;
 let watchId: number | null = null;
 let refreshInterval: ReturnType<typeof setInterval> | null = null;
+let trackingStarted = false;
 
 // Modal state
 const showPickupModal = ref(false);
@@ -63,6 +64,12 @@ const REFRESH_INTERVAL_MS = 30000; // Refresh markers every 30 seconds
 const GTA_CENTER: [number, number] = [-79.3832, 43.6532]; // Toronto coordinates
 const INITIAL_ZOOM = 5; // Initial zoomed out view to see all locations
 const DRIVER_ZOOM = 8; // Zoomed in view when centering on driver
+const MIN_ACCURACY_M = 100; // Ignore fixes worse than this
+
+function isAccurate(accuracy?: number | null): boolean {
+  // Missing accuracy (older providers) -> allow, otherwise require <= MIN_ACCURACY_M
+  return accuracy == null || accuracy <= MIN_ACCURACY_M;
+}
 
 interface Mark {
   id: number;
@@ -206,27 +213,45 @@ function updateDriverLocation(longitude: number, latitude: number) {
 }
 
 async function startLocationTracking() {
+  if (trackingStarted) return;
+  trackingStarted = true;
   try {
     console.log('Starting location tracking...');
     locationError.value = null;
     
     const position = await mobileUtils.getCurrentPosition();
     console.log('Got initial position:', position);
-    updateDriverLocation(position.longitude, position.latitude);
-    
-    if (map) {
-      map.flyTo({
-        center: [position.longitude, position.latitude],
-        zoom: DRIVER_ZOOM,
-        duration: 1500
-      });
+    // Desktop IP fallback (accuracy >=5km, e.g. Moncton vs Mississauga) is
+    // misleading — never show it as the 🚗 driver pin.
+    const isIpFallback = (position.accuracy ?? 0) >= 5000;
+    if (isIpFallback) {
+      console.warn(`Ignoring IP fallback fix (${position.latitude},${position.longitude})`);
+      if (map) {
+        map.flyTo({ center: GTA_CENTER, zoom: INITIAL_ZOOM, duration: 1000 });
+      }
+      locationError.value = 'Desktop location unavailable (no GPS/WiFi fix) — showing Toronto area. Use Chrome with Location allowed + WiFi on (no VPN) for a Mississauga fix.';
+    } else {
+      // Always show best GPS/WiFi fix; center close when accurate.
+      updateDriverLocation(position.longitude, position.latitude);
+      if (map) {
+        const accurate = isAccurate(position.accuracy);
+        map.flyTo({
+          center: [position.longitude, position.latitude],
+          zoom: accurate ? DRIVER_ZOOM : 10,
+          duration: 1500
+        });
+        if (!accurate) {
+          console.warn(`Coarse initial fix (±${Math.round(position.accuracy ?? 0)}m)`);
+          locationError.value = `Approximate location (±${Math.round(position.accuracy ?? 0)}m). Move outdoors for better accuracy.`;
+        }
+      }
     }
 
     if (mobileUtils.isNative) {
       console.log('Using native geolocation');
       const { Geolocation } = await import('@capacitor/geolocation');
       watchId = await Geolocation.watchPosition(
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 },
+        { enableHighAccuracy: true, timeout: 20000, maximumAge: 10000 },
         (position, err) => {
           if (err) {
             console.error('Location watch error:', err);
@@ -253,25 +278,36 @@ async function startLocationTracking() {
         },
         (err) => {
           console.error('Location watch error:', err.code, err.message);
+          // Don't spam timeout errors: watch keeps retrying on its own.
           if (err.code === 1) {
             locationError.value = 'Location permission denied. Please enable location access in your browser.';
-          } else if (err.code === 2) {
+          } else if (err.code === 2 && !driverMarker) {
             locationError.value = 'Location unavailable. Please check your device settings.';
-          } else if (err.code === 3) {
-            locationError.value = 'Location request timed out. Please try again.';
           }
         },
-        { enableHighAccuracy: true, timeout: 30000, maximumAge: 60000 }
+        { enableHighAccuracy: true, timeout: 20000, maximumAge: 10000 }
       );
     }
   } catch (err: any) {
     console.error('Error getting driver location:', err);
     console.error('Error details:', err.message, err.code);
-    locationError.value = err.message || 'Failed to get location. Please check browser permissions.';
+    // TIMEOUT here means even coarse fallback failed: keep map usable, allow manual retry.
+    if (err?.code === 1) {
+      locationError.value = 'Location permission denied. Please enable location access in your browser.';
+    } else {
+      locationError.value = 'Could not get location. Tap Enable Location to retry when you have signal.';
+    }
+    // Keep trackingStarted=true so map idle doesn't auto-loop; manual retry resets it.
   }
 }
 
+function retryLocationTracking() {
+  trackingStarted = false;
+  startLocationTracking();
+}
+
 function stopLocationTracking() {
+  trackingStarted = false;
   if (watchId !== null) {
     if (mobileUtils.isNative) {
       import('@capacitor/geolocation').then(({ Geolocation }) => {
@@ -353,8 +389,8 @@ async function initMap() {
 
     // Wait for map to be fully rendered (idle) before adding driver location
     map.on('idle', async () => {
-      // Only start tracking once, when map is truly ready
-      if (!driverMarker && !watchId) {
+      // Start once only: manual "Enable Location" button retries via trackingStarted=false
+      if (!trackingStarted && !driverMarker && !watchId) {
         console.log('Map is idle and ready for driver marker');
         await startLocationTracking();
       }

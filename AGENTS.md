@@ -1,8 +1,8 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- `frontend/` holds the Vue 3 delivery client (Vite, Pinia, Google Maps integrations); see `frontend/README.md` for feature specs.
-- `bff/` contains the FastAPI layer bridging the client with MySQL, Redis, and external services; design notes live in `bff/README.md`.
+- `frontend/` holds the Vue 3 delivery client (Vite, Pinia, Mapbox/Google Maps integrations); see `frontend/README.md` for feature specs.
+- `bff/` contains the FastAPI layer bridging the client with SQLite (default), optional Redis, and external services; design notes live in `bff/README.md`.
 - Shared assets (design docs, scripts) belong at the repo root; create language-specific subfolders as needed (e.g., `scripts/python/`).
 
 ## Build, Test, and Development Commands
@@ -20,20 +20,21 @@
 
 ## Testing Guidelines
 - Favor Vitest component tests for complex interaction states (maps, offline queues) and Cypress e2e smoke flows.
-- BFF tests cover Pydantic schemas, service functions, and route contracts with async `pytest` fixtures.
-- Provide seed factories for critical tables (`tigu_order`, `tigu_order_item`, `tigu_user_address`) to mirror delivery scenarios.
+- BFF tests cover Pydantic schemas, service functions, and route contracts with async `pytest` fixtures (in-memory SQLite).
+- Provide seed factories for critical tables (`tigu_order`, `tigu_order_item`, `tigu_notification`) to mirror delivery scenarios.
 - Aim for 80% line coverage, with explicit justification if lower.
 
 ## Commit & Pull Request Guidelines
 - Follow Conventional Commits (`feat:`, `fix:`, `docs:`); scope by module (`feat(frontend): add proof upload`).
-- Keep commits focused; include schema or command references when touching MySQL entities (`refs tigu_order.shipping_status`).
+- Keep commits focused; include schema or command references when touching DB entities (`refs tigu_order.shipping_status`).
 - PRs must state purpose, testing evidence, screenshots/GIFs for UI, and affected API endpoints; link Jira/GitHub issues.
 - Request review from both frontend and backend maintainers when changes cross the boundary.
 
 ## Security & Configuration Tips
 - Never commit secrets; rely on `.env.local` (frontend) and `.env` (BFF) ignored by Git.
-- Restrict BFF credentials to read/write accounts scoped to `tigu_b2b`; rotate keys quarterly.
-- Validate all status transitions against `sys_dict_data` enumerations to prevent invalid delivery states.
-## mysql data base
-- use database tigu_b2b
-- use sudo mysql command to investigate the mysql database data
+- Supabase is decommissioned; notifications live in SQLite (`tigu_notification`). Do not add new Supabase dependencies.
+- Validate all status transitions against documented enumerations to prevent invalid delivery states.
+## database
+- Default DB is SQLite file `bff/data/delivery.db` (`DATABASE_URL=sqlite+aiosqlite:///./data/delivery.db`); init/seed via `cd bff && DATABASE_URL="sqlite+aiosqlite:///./data/delivery.db" ./.venv/bin/python init_sqlite.py`
+- Inspect via `sqlite3 bff/data/delivery.db "SELECT ... FROM sys_user;"`
+- Legacy MySQL (`tigu_b2b`) only via explicit `DATABASE_URL=mysql+asyncmy://...` override

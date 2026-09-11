@@ -1,5 +1,7 @@
 # Map Tab Quick Reference
 
+> **Current state:** markers come from the BFF (`GET /marks`); no Supabase keys needed.
+
 ## Quick Enable/Disable
 
 ### Enable (Default)

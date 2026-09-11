@@ -16,7 +16,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, Text
-from sqlalchemy.dialects.mysql import BIGINT
+from sqlalchemy import BigInteger
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -52,7 +52,7 @@ class PrepareGoods(Base):
     __tablename__ = "tigu_prepare_goods"
 
     id: Mapped[int] = mapped_column(
-        BIGINT(unsigned=True),
+        BigInteger,
         primary_key=True,
         comment="备货单ID"
     )
@@ -104,7 +104,7 @@ class PrepareGoods(Base):
 
     # Merchant info
     shop_id: Mapped[int] = mapped_column(
-        BIGINT(unsigned=True),
+        BigInteger,
         index=True,
         comment="商家ID"
     )
@@ -168,7 +168,7 @@ class PrepareGoods(Base):
 
     # Warehouse (if applicable - shipping_type=1)
     warehouse_id: Mapped[int | None] = mapped_column(
-        BIGINT(unsigned=True),
+        BigInteger,
         ForeignKey("tigu_warehouse.id"),
         nullable=True,
         index=True,
@@ -177,7 +177,7 @@ class PrepareGoods(Base):
 
     # Driver (if third-party delivery - delivery_type=1)
     driver_id: Mapped[int | None] = mapped_column(
-        BIGINT(unsigned=True),
+        BigInteger,
         ForeignKey("tigu_driver.id"),
         nullable=True,
         index=True,
@@ -240,20 +240,20 @@ class PrepareGoodsItem(Base):
     __tablename__ = "tigu_prepare_goods_item"
 
     id: Mapped[int] = mapped_column(
-        BIGINT(unsigned=True),
+        BigInteger,
         primary_key=True,
         comment="备货明细ID"
     )
 
     prepare_id: Mapped[int] = mapped_column(
-        BIGINT(unsigned=True),
+        BigInteger,
         ForeignKey("tigu_prepare_goods.id"),
         index=True,
         comment="备货单ID"
     )
 
     order_item_id: Mapped[int] = mapped_column(
-        BIGINT(unsigned=True),
+        BigInteger,
         ForeignKey("tigu_order_item.id"),
         index=True,
         comment="订单明细ID"
@@ -261,12 +261,12 @@ class PrepareGoodsItem(Base):
 
     # Item details (denormalized for performance)
     product_id: Mapped[int] = mapped_column(
-        BIGINT(unsigned=True),
+        BigInteger,
         comment="商品ID"
     )
 
     sku_id: Mapped[int] = mapped_column(
-        BIGINT(unsigned=True),
+        BigInteger,
         comment="SKU ID"
     )
 

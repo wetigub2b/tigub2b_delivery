@@ -1,38 +1,17 @@
 """
-Notification service for creating and broadcasting notifications via Supabase.
+Notification service backed by local DB (tigu_notification).
+Replaces the former Supabase implementation.
 """
 from __future__ import annotations
 
-import logging
+from datetime import datetime
 from enum import Enum
 from typing import Any
 
-from supabase import create_client, Client
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import get_settings
-
-logger = logging.getLogger(__name__)
-
-settings = get_settings()
-
-# Supabase client singleton
-_supabase_client: Client | None = None
-
-
-def get_supabase() -> Client | None:
-    """Get or create Supabase client singleton."""
-    global _supabase_client
-
-    if _supabase_client is None:
-        if settings.supabase_url and settings.supabase_service_role_key:
-            _supabase_client = create_client(
-                settings.supabase_url,
-                settings.supabase_service_role_key
-            )
-        else:
-            logger.warning("Supabase not configured. Notifications will be disabled.")
-
-    return _supabase_client
+from app.models.notification import Notification
 
 
 class NotificationType(str, Enum):
@@ -51,7 +30,28 @@ class NotificationPriority(str, Enum):
     URGENT = "urgent"
 
 
+def to_dict(n: Notification) -> dict:
+    return {
+        "id": n.id,
+        "driver_id": n.driver_id,
+        "driver_phone": n.driver_phone,
+        "type": n.type,
+        "title": n.title,
+        "message": n.message,
+        "priority": n.priority,
+        "order_sn": n.order_sn,
+        "action_url": n.action_url,
+        "metadata": n.extra_metadata or {},
+        "is_read": n.is_read,
+        "read_at": n.read_at.isoformat() if n.read_at else None,
+        "is_dismissed": n.is_dismissed,
+        "dismissed_at": n.dismissed_at.isoformat() if n.dismissed_at else None,
+        "created_at": n.created_at.isoformat() if n.created_at else None,
+    }
+
+
 async def create_notification(
+    session: AsyncSession,
     driver_id: int,
     driver_phone: str,
     notification_type: NotificationType,
@@ -60,67 +60,35 @@ async def create_notification(
     priority: NotificationPriority = NotificationPriority.NORMAL,
     order_sn: str | None = None,
     action_url: str | None = None,
-    metadata: dict[str, Any] | None = None
+    metadata: dict[str, Any] | None = None,
 ) -> dict | None:
-    """
-    Create a new notification for a driver.
-
-    Args:
-        driver_id: Driver's ID from MySQL database
-        driver_phone: Driver's phone number (used for RLS matching)
-        notification_type: Type of notification
-        title: Notification title
-        message: Notification message body
-        priority: Priority level (low, normal, high, urgent)
-        order_sn: Related order serial number (optional)
-        action_url: Deep link URL for notification click (optional)
-        metadata: Additional JSON metadata (optional)
-
-    Returns:
-        Created notification dict or None if failed
-    """
-    supabase = get_supabase()
-    if not supabase:
-        logger.warning("Cannot create notification: Supabase not configured")
-        return None
-
-    notification_data = {
-        "driver_id": driver_id,
-        "driver_phone": driver_phone,
-        "type": notification_type.value,
-        "title": title,
-        "message": message,
-        "priority": priority.value,
-        "order_sn": order_sn,
-        "action_url": action_url,
-        "metadata": metadata or {},
-    }
-
-    try:
-        result = supabase.table("notifications").insert(notification_data).execute()
-
-        if result.data:
-            logger.info(
-                f"Created notification for driver {driver_id}: {notification_type.value}"
-            )
-            return result.data[0]
-
-        return None
-
-    except Exception as e:
-        logger.error(f"Failed to create notification: {e}")
-        return None
+    n = Notification(
+        driver_id=driver_id,
+        driver_phone=driver_phone,
+        type=notification_type.value,
+        title=title,
+        message=message,
+        priority=priority.value,
+        order_sn=order_sn,
+        action_url=action_url,
+        extra_metadata=metadata or {},
+    )
+    session.add(n)
+    await session.commit()
+    await session.refresh(n)
+    return to_dict(n)
 
 
 async def create_order_assigned_notification(
+    session: AsyncSession,
     driver_id: int,
     driver_phone: str,
     order_sn: str,
     receiver_name: str,
-    receiver_address: str
+    receiver_address: str,
 ) -> dict | None:
-    """Create notification when a new order is assigned to driver."""
     return await create_notification(
+        session,
         driver_id=driver_id,
         driver_phone=driver_phone,
         notification_type=NotificationType.ORDER_ASSIGNED,
@@ -129,23 +97,21 @@ async def create_order_assigned_notification(
         priority=NotificationPriority.HIGH,
         order_sn=order_sn,
         action_url=f"/order/{order_sn}",
-        metadata={
-            "receiver_name": receiver_name,
-            "receiver_address": receiver_address
-        }
+        metadata={"receiver_name": receiver_name, "receiver_address": receiver_address},
     )
 
 
 async def create_order_status_notification(
+    session: AsyncSession,
     driver_id: int,
     driver_phone: str,
     order_sn: str,
     old_status: int,
     new_status: int,
-    status_label: str
+    status_label: str,
 ) -> dict | None:
-    """Create notification when order status changes."""
     return await create_notification(
+        session,
         driver_id=driver_id,
         driver_phone=driver_phone,
         notification_type=NotificationType.ORDER_STATUS_CHANGE,
@@ -154,21 +120,19 @@ async def create_order_status_notification(
         priority=NotificationPriority.NORMAL,
         order_sn=order_sn,
         action_url=f"/order/{order_sn}",
-        metadata={
-            "old_status": old_status,
-            "new_status": new_status
-        }
+        metadata={"old_status": old_status, "new_status": new_status},
     )
 
 
 async def create_pickup_ready_notification(
+    session: AsyncSession,
     driver_id: int,
     driver_phone: str,
     order_sn: str,
-    pickup_location: str
+    pickup_location: str,
 ) -> dict | None:
-    """Create notification when order is ready for pickup."""
     return await create_notification(
+        session,
         driver_id=driver_id,
         driver_phone=driver_phone,
         notification_type=NotificationType.ORDER_PICKUP_READY,
@@ -177,21 +141,20 @@ async def create_pickup_ready_notification(
         priority=NotificationPriority.HIGH,
         order_sn=order_sn,
         action_url=f"/order/{order_sn}",
-        metadata={
-            "pickup_location": pickup_location
-        }
+        metadata={"pickup_location": pickup_location},
     )
 
 
 async def create_urgent_notification(
+    session: AsyncSession,
     driver_id: int,
     driver_phone: str,
     title: str,
     message: str,
-    order_sn: str | None = None
+    order_sn: str | None = None,
 ) -> dict | None:
-    """Create urgent notification requiring immediate attention."""
     return await create_notification(
+        session,
         driver_id=driver_id,
         driver_phone=driver_phone,
         notification_type=NotificationType.ORDER_URGENT,
@@ -199,73 +162,119 @@ async def create_urgent_notification(
         message=message,
         priority=NotificationPriority.URGENT,
         order_sn=order_sn,
-        action_url=f"/order/{order_sn}" if order_sn else None
+        action_url=f"/order/{order_sn}" if order_sn else None,
     )
 
 
 async def create_system_announcement(
+    session: AsyncSession,
     driver_id: int,
     driver_phone: str,
     title: str,
-    message: str
+    message: str,
 ) -> dict | None:
-    """Create system-wide announcement notification."""
     return await create_notification(
+        session,
         driver_id=driver_id,
         driver_phone=driver_phone,
         notification_type=NotificationType.SYSTEM_ANNOUNCEMENT,
         title=title,
         message=message,
-        priority=NotificationPriority.LOW
+        priority=NotificationPriority.LOW,
     )
 
 
 async def broadcast_notification(
+    session: AsyncSession,
     driver_ids: list[tuple[int, str]],
     notification_type: NotificationType,
     title: str,
     message: str,
     priority: NotificationPriority = NotificationPriority.NORMAL,
-    metadata: dict[str, Any] | None = None
+    metadata: dict[str, Any] | None = None,
 ) -> int:
-    """
-    Broadcast notification to multiple drivers.
-
-    Args:
-        driver_ids: List of (driver_id, driver_phone) tuples
-        notification_type: Type of notification
-        title: Notification title
-        message: Notification message
-        priority: Priority level
-        metadata: Additional metadata
-
-    Returns:
-        Number of successfully created notifications
-    """
-    supabase = get_supabase()
-    if not supabase:
-        logger.warning("Cannot broadcast: Supabase not configured")
-        return 0
-
-    notifications = [
-        {
-            "driver_id": driver_id,
-            "driver_phone": driver_phone,
-            "type": notification_type.value,
-            "title": title,
-            "message": message,
-            "priority": priority.value,
-            "metadata": metadata or {}
-        }
+    rows = [
+        Notification(
+            driver_id=driver_id,
+            driver_phone=driver_phone,
+            type=notification_type.value,
+            title=title,
+            message=message,
+            priority=priority.value,
+            extra_metadata=metadata or {},
+        )
         for driver_id, driver_phone in driver_ids
     ]
+    session.add_all(rows)
+    await session.commit()
+    return len(rows)
 
-    try:
-        result = supabase.table("notifications").insert(notifications).execute()
-        count = len(result.data) if result.data else 0
-        logger.info(f"Broadcast notification to {count} drivers")
-        return count
 
-    except Exception as e:
-        logger.error(f"Failed to broadcast notification: {e}")
-        return 0
+async def list_driver_notifications(
+    session: AsyncSession,
+    driver_phone: str,
+    limit: int = 100,
+    unread_only: bool = False,
+) -> list[dict]:
+    stmt = (
+        select(Notification)
+        .where(Notification.driver_phone == driver_phone, Notification.is_dismissed == False)  # noqa: E712
+        .order_by(Notification.created_at.desc(), Notification.id.desc())
+        .limit(limit)
+    )
+    if unread_only:
+        stmt = stmt.where(Notification.is_read == False)  # noqa: E712
+    result = await session.execute(stmt)
+    return [to_dict(n) for n in result.scalars().all()]
+
+
+async def mark_read(session: AsyncSession, notification_id: int, driver_phone: str) -> bool:
+    stmt = select(Notification).where(
+        Notification.id == notification_id, Notification.driver_phone == driver_phone
+    )
+    n = (await session.execute(stmt)).scalar_one_or_none()
+    if not n:
+        return False
+    n.is_read = True
+    n.read_at = datetime.now()
+    await session.commit()
+    return True
+
+
+async def mark_all_read(session: AsyncSession, driver_phone: str) -> int:
+    stmt = select(Notification).where(
+        Notification.driver_phone == driver_phone, Notification.is_read == False  # noqa: E712
+    )
+    rows = (await session.execute(stmt)).scalars().all()
+    now = datetime.now()
+    for n in rows:
+        n.is_read = True
+        n.read_at = now
+    await session.commit()
+    return len(rows)
+
+
+async def dismiss(session: AsyncSession, notification_id: int, driver_phone: str) -> bool:
+    stmt = select(Notification).where(
+        Notification.id == notification_id, Notification.driver_phone == driver_phone
+    )
+    n = (await session.execute(stmt)).scalar_one_or_none()
+    if not n:
+        return False
+    n.is_dismissed = True
+    n.dismissed_at = datetime.now()
+    await session.commit()
+    return True
+
+
+async def clear_all(session: AsyncSession, driver_phone: str) -> int:
+    stmt = select(Notification).where(
+        Notification.driver_phone == driver_phone, Notification.is_dismissed == False  # noqa: E712
+    )
+    rows = (await session.execute(stmt)).scalars().all()
+    now = datetime.now()
+    for n in rows:
+        n.is_dismissed = True
+        n.dismissed_at = now
+    await session.commit()
+    return len(rows)

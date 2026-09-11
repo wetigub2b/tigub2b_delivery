@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, Text
-from sqlalchemy.dialects.mysql import BIGINT
+from sqlalchemy import BigInteger
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
@@ -20,8 +20,8 @@ class DriverPerformance(Base):
     """Driver performance tracking and analytics"""
     __tablename__ = "driver_performance"
 
-    id: Mapped[int] = mapped_column(BIGINT(unsigned=True), primary_key=True)
-    driver_id: Mapped[int] = mapped_column(BIGINT(unsigned=True), ForeignKey("sys_user.user_id"), index=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    driver_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("sys_user.user_id"), index=True)
     period_start: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     period_end: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
@@ -56,9 +56,9 @@ class DriverPerformanceLog(Base):
     """Detailed log of individual driver actions for performance tracking"""
     __tablename__ = "driver_performance_log"
 
-    id: Mapped[int] = mapped_column(BIGINT(unsigned=True), primary_key=True)
-    driver_id: Mapped[int] = mapped_column(BIGINT(unsigned=True), ForeignKey("sys_user.user_id"), index=True)
-    order_id: Mapped[int | None] = mapped_column(BIGINT(unsigned=True), ForeignKey("tigu_order.id"), nullable=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    driver_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("sys_user.user_id"), index=True)
+    order_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("tigu_order.id"), nullable=True)
 
     action_type: Mapped[str] = mapped_column(String(50))  # pickup, delivery, route_start, route_end, break_start, break_end
     action_timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True))
@@ -87,8 +87,8 @@ class DriverAlert(Base):
     """Alerts and notifications for driver performance issues"""
     __tablename__ = "driver_alert"
 
-    id: Mapped[int] = mapped_column(BIGINT(unsigned=True), primary_key=True)
-    driver_id: Mapped[int] = mapped_column(BIGINT(unsigned=True), ForeignKey("sys_user.user_id"), index=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    driver_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("sys_user.user_id"), index=True)
 
     alert_type: Mapped[str] = mapped_column(String(50))  # performance_drop, late_delivery, customer_complaint, efficiency_low
     severity: Mapped[str] = mapped_column(String(20))  # low, medium, high, critical

@@ -18,7 +18,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String
-from sqlalchemy.dialects.mysql import BIGINT
+from sqlalchemy import BigInteger
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -63,14 +63,14 @@ class OrderAction(Base):
 
     # Snowflake ID for distributed system (generated externally)
     id: Mapped[int] = mapped_column(
-        BIGINT(unsigned=True),
+        BigInteger,
         primary_key=True,
         comment="雪花算法ID"
     )
 
     # Order reference
     order_id: Mapped[int] = mapped_column(
-        BIGINT(unsigned=True),
+        BigInteger,
         ForeignKey("tigu_order.id"),
         index=True,
         comment="订单ID"

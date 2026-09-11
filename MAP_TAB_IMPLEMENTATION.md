@@ -1,5 +1,8 @@
 # Map Tab Implementation Summary
 
+> **Current state:** markers are fetched from the BFF (`GET /marks`, SQLite
+> `tigu_driver_marks`), not Supabase. Supabase references below are historical.
+
 ## Overview
 Successfully implemented a Mapbox-powered map tab for the driver's dashboard with the following features:
 - **First tab position**: Map tab appears as the first tab when enabled

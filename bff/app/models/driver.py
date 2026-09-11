@@ -5,7 +5,7 @@ from decimal import Decimal
 from enum import Enum as PyEnum
 
 from sqlalchemy import DateTime, Integer, Numeric, String, Text, SmallInteger, Enum, Boolean
-from sqlalchemy.dialects.mysql import BIGINT
+from sqlalchemy import BigInteger
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
@@ -23,7 +23,7 @@ class StripeStatus(str, PyEnum):
 class Driver(Base):
     __tablename__ = "tigu_driver"
 
-    id: Mapped[int] = mapped_column(BIGINT(unsigned=True), primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(100))
     phone: Mapped[str] = mapped_column(String(20), unique=True, index=True)
     email: Mapped[str | None] = mapped_column(String(100), nullable=True)

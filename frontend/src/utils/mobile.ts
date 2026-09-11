@@ -17,7 +17,7 @@ export interface MobileUtils {
   showKeyboard(): Promise<void>;
   hideKeyboard(): Promise<void>;
   getNetworkStatus(): Promise<{ connected: boolean; connectionType: string }>;
-  getCurrentPosition(): Promise<{ latitude: number; longitude: number }>;
+  getCurrentPosition(): Promise<{ latitude: number; longitude: number; accuracy?: number }>;
   onAppStateChange(callback: (state: { isActive: boolean }) => void): void;
 }
 
@@ -78,29 +78,74 @@ class MobileUtilsImpl implements MobileUtils {
     };
   }
 
-  async getCurrentPosition(): Promise<{ latitude: number; longitude: number }> {
+  async getCurrentPosition(): Promise<{ latitude: number; longitude: number; accuracy?: number }> {
     if (this.isNative) {
-      const coordinates = await Geolocation.getCurrentPosition({
-        enableHighAccuracy: true,
-        timeout: 15000
-      });
-      return {
-        latitude: coordinates.coords.latitude,
-        longitude: coordinates.coords.longitude
-      };
+      try {
+        const coordinates = await Geolocation.getCurrentPosition({
+          enableHighAccuracy: true,
+          timeout: 20000,
+          maximumAge: 10000
+        });
+        return {
+          latitude: coordinates.coords.latitude,
+          longitude: coordinates.coords.longitude,
+          accuracy: coordinates.coords.accuracy
+        };
+      } catch {
+        // Fallback to low-accuracy / cached fix instead of timing out indoors
+        const coordinates = await Geolocation.getCurrentPosition({
+          enableHighAccuracy: false,
+          timeout: 20000,
+          maximumAge: 60000
+        });
+        return {
+          latitude: coordinates.coords.latitude,
+          longitude: coordinates.coords.longitude,
+          accuracy: coordinates.coords.accuracy
+        };
+      }
     } else {
-      return new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            resolve({
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude
-            });
-          },
-          reject,
-          { enableHighAccuracy: true, timeout: 30000, maximumAge: 60000 }
-        );
-      });
+      const request = (opts: PositionOptions) =>
+        new Promise<{ latitude: number; longitude: number; accuracy?: number }>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              resolve({
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                accuracy: position.coords.accuracy
+              });
+            },
+            reject,
+            opts
+          );
+        });
+      try {
+        return await request({ enableHighAccuracy: true, timeout: 20000, maximumAge: 10000 });
+      } catch {
+        try {
+          // Fallback to coarse fix (WiFi/IP) so we show something instead of TIMEOUT
+          return await request({ enableHighAccuracy: false, timeout: 20000, maximumAge: 60000 });
+        } catch {
+          // Desktop Linux / no location provider: last resort IP geolocation (city-level)
+          return await this.getIpPosition();
+        }
+      }
+    }
+  }
+
+  private async getIpPosition(): Promise<{ latitude: number; longitude: number; accuracy?: number }> {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 8000);
+    try {
+      const res = await fetch('https://ipapi.co/json/', { signal: ctrl.signal });
+      if (!res.ok) throw new Error(`IP lookup ${res.status}`);
+      const data = await res.json();
+      const latitude = Number(data.latitude);
+      const longitude = Number(data.longitude);
+      if (!isFinite(latitude) || !isFinite(longitude)) throw new Error('Bad IP coords');
+      return { latitude, longitude, accuracy: 10000 };
+    } finally {
+      clearTimeout(timer);
     }
   }
 

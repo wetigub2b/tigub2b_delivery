@@ -120,7 +120,7 @@ sudo systemctl reload nginx
 ```bash
 BFF_PORT=9000
 API_V1_PREFIX=/api
-DATABASE_URL=mysql+asyncmy://user:pass@localhost:3307/tigu_b2b
+DATABASE_URL=sqlite+aiosqlite:///./data/delivery.db
 REDIS_URL=redis://localhost:6379/0
 ALLOWED_ORIGINS=https://stgdelivery.wetigu.com
 ```

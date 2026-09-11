@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed, watch } from 'vue';
-import supabase, { type Notification, type NotificationType } from '@/lib/supabase';
+import client from '@/api/client';
+import type { Notification, NotificationType } from '@/lib/notifications';
 import { useOrdersStore } from '@/store/orders';
 
 export const useNotificationStore = defineStore('notifications', () => {
@@ -55,13 +56,8 @@ export const useNotificationStore = defineStore('notifications', () => {
     return grouped;
   });
 
-  // Actions
+  // Actions — backed by local BFF (SQLite), no Supabase.
   async function fetchNotifications(params?: { limit?: number; offset?: number; unreadOnly?: boolean }) {
-    if (!supabase) {
-      console.warn('Supabase not configured');
-      return;
-    }
-
     const ordersStore = useOrdersStore();
     const driverPhone = ordersStore.currentUserPhone;
 
@@ -74,23 +70,12 @@ export const useNotificationStore = defineStore('notifications', () => {
     error.value = null;
 
     try {
-      let query = supabase
-        .from('notifications')
-        .select('*')
-        .eq('driver_phone', driverPhone)
-        .eq('is_dismissed', false)
-        .order('created_at', { ascending: false })
-        .limit(params?.limit || 100);
+      const { data } = await client.get<{ notifications: Notification[] }>(
+        '/notifications/mine',
+        { params: { limit: params?.limit || 100, unread_only: params?.unreadOnly || false } }
+      );
 
-      if (params?.unreadOnly) {
-        query = query.eq('is_read', false);
-      }
-
-      const { data, error: fetchError } = await query;
-
-      if (fetchError) throw fetchError;
-
-      notifications.value = data || [];
+      notifications.value = data.notifications || [];
       lastFetchedAt.value = new Date();
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to fetch notifications';
@@ -100,19 +85,9 @@ export const useNotificationStore = defineStore('notifications', () => {
     }
   }
 
-  async function markAsRead(notificationId: string) {
-    if (!supabase) return;
-
+  async function markAsRead(notificationId: number) {
     try {
-      const { error: updateError } = await supabase
-        .from('notifications')
-        .update({
-          is_read: true,
-          read_at: new Date().toISOString()
-        })
-        .eq('id', notificationId);
-
-      if (updateError) throw updateError;
+      await client.post(`/notifications/mine/${notificationId}/read`);
 
       // Update local state
       const notification = notifications.value.find(n => n.id === notificationId);
@@ -126,24 +101,13 @@ export const useNotificationStore = defineStore('notifications', () => {
   }
 
   async function markAllAsRead() {
-    if (!supabase) return;
-
     const ordersStore = useOrdersStore();
     const driverPhone = ordersStore.currentUserPhone;
 
     if (!driverPhone) return;
 
     try {
-      const { error: updateError } = await supabase
-        .from('notifications')
-        .update({
-          is_read: true,
-          read_at: new Date().toISOString()
-        })
-        .eq('driver_phone', driverPhone)
-        .eq('is_read', false);
-
-      if (updateError) throw updateError;
+      await client.post('/notifications/mine/read-all');
 
       // Update local state
       notifications.value.forEach(n => {
@@ -157,19 +121,9 @@ export const useNotificationStore = defineStore('notifications', () => {
     }
   }
 
-  async function dismissNotification(notificationId: string) {
-    if (!supabase) return;
-
+  async function dismissNotification(notificationId: number) {
     try {
-      const { error: updateError } = await supabase
-        .from('notifications')
-        .update({
-          is_dismissed: true,
-          dismissed_at: new Date().toISOString()
-        })
-        .eq('id', notificationId);
-
-      if (updateError) throw updateError;
+      await client.post(`/notifications/mine/${notificationId}/dismiss`);
 
       // Remove from local state
       notifications.value = notifications.value.filter(n => n.id !== notificationId);
@@ -179,23 +133,13 @@ export const useNotificationStore = defineStore('notifications', () => {
   }
 
   async function clearAllNotifications() {
-    if (!supabase) return;
-
     const ordersStore = useOrdersStore();
     const driverPhone = ordersStore.currentUserPhone;
 
     if (!driverPhone) return;
 
     try {
-      const { error: updateError } = await supabase
-        .from('notifications')
-        .update({
-          is_dismissed: true,
-          dismissed_at: new Date().toISOString()
-        })
-        .eq('driver_phone', driverPhone);
-
-      if (updateError) throw updateError;
+      await client.post('/notifications/mine/clear');
 
       notifications.value = [];
     } catch (err) {
@@ -228,7 +172,7 @@ export const useNotificationStore = defineStore('notifications', () => {
         const previousCount = notifications.value.filter(n => !n.is_read).length;
         await fetchNotifications();
         const newCount = notifications.value.filter(n => !n.is_read).length;
-        
+
         // If we have new unread notifications, show alert for the newest one
         if (newCount > previousCount && notifications.value.length > 0) {
           const newestNotification = notifications.value[0];
@@ -268,7 +212,7 @@ export const useNotificationStore = defineStore('notifications', () => {
       new window.Notification(notification.title, {
         body: notification.message,
         icon: '/favicon.svg',
-        tag: notification.id
+        tag: String(notification.id)
       });
     }
 

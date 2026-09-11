@@ -1,5 +1,9 @@
 # Supabase Setup Guide
 
+> **DEPRECATED — Supabase is decommissioned.** Notifications now live in SQLite
+> (`tigu_notification`, see `NOTIFICATION.md`) and map marks come from the BFF
+> (`GET /marks`). This guide is kept for historical reference only.
+
 ## Getting Your Supabase Credentials
 
 ### Step 1: Sign Up for Supabase

@@ -93,6 +93,11 @@ class Settings(BaseSettings):
             return _normalize_origins(self.allowed_origins)
         return list(self.allowed_origins)
 
+    @property
+    def is_sqlite(self) -> bool:
+        url = self.database_url or ""
+        return url.startswith("sqlite")
+
 
 @lru_cache
 def get_settings() -> Settings:

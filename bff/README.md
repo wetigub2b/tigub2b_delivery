@@ -1,32 +1,35 @@
 # Delivery BFF (FastAPI)
 
 ## Purpose
-Bridges Vue delivery client with core `tigu_b2b` services, enforcing auth, data shaping, and integration with maps/geocoding.
+Bridges Vue delivery client with core delivery services, enforcing auth, data shaping, and integration with maps/geocoding.
 
 ## Tech Stack
 - FastAPI + Uvicorn
-- SQLAlchemy 2.0 (async) with MySQL connector
-- Redis for session tokens, order assignment cache
-- Pydantic models mirroring `tigu_order`, `tigu_order_item`, `tigu_user_address`, `tigu_warehouse`
-- HTTPX for upstream calls (payments, notifications)
+- SQLAlchemy 2.0 (async) with **SQLite** (`aiosqlite`) by default; MySQL (`asyncmy`) still supported via `DATABASE_URL`
+- Redis for session tokens / driver locations (**optional** — in-memory fallback when unreachable)
+- Pydantic models mirroring `tigu_order`, `tigu_order_item`, `tigu_warehouse`
+- HTTPX for upstream calls (payments)
 
 ## Key Modules
-- `auth`: OAuth2 password flow (driver login via `sys_user` with role `driver`), refresh tokens
+- `auth`: driver login via `sys_user` (phone + OTP `123456`), admin login (username + password), refresh tokens
 - `orders`:
-  - `GET /orders/assigned` – list active tasks (status `1/2` and shipping status `<3`)
-  - `POST /orders/{id}/accept`
+  - `GET /orders/{order_sn}` – order detail
   - `POST /orders/{id}/status` – update `shipping_status`, log event trail
-  - `POST /orders/{id}/proof` – upload POD images to object storage, link into `tigu_uploaded_files`
-- `navigation`:
-  - `POST /routes/optimize` – call Google Directions API, persist plan snapshot
-  - `PATCH /routes/{id}/location` – live GPS ticks for dispatcher dashboard (future)
+- `prepare_goods`: merchant preparation workflow (`/prepare-goods/*`)
+- `routes`:
+  - `POST /routes/optimize` – route plan
+  - `PATCH /routes/{id}/location` – live GPS ticks (stored in Redis w/ in-memory fallback)
 - `warehouses`: `GET /warehouses/active` for pickup site selection
-- `notifications`: push to FCM/websocket hub for urgent tasks
+- `marks`: `GET /marks` – pickup location pins from `tigu_driver_marks`
+- `notifications`: local-DB notifications (`tigu_notification`) — see `NOTIFICATION.md`
+  - Admin: `POST /notifications/broadcast`, `POST /notifications/driver/{id}`, `POST /notifications/alert/{id}`
+  - Driver: `GET /notifications/mine`, `POST /notifications/mine/{id}/read|dismiss`, `/mine/read-all`, `/mine/clear`
 
 ## Data Access
-- Use read/write replicas if available; default pool size 10
-- Soft map dictionary values using `sys_dict_data` for localization
-- Store driver geo updates in Redis TTL 15m for real-time map overlays
+- Default DB: SQLite file `bff/data/delivery.db` (`DATABASE_URL=sqlite+aiosqlite:///./data/delivery.db`)
+- Portable column types (`BigInteger`/`Integer`) work on both SQLite and MySQL
+- Auto-increment PKs use `Integer` (SQLite `rowid`); snowflake-ID tables keep `BigInteger`
+- Store driver geo updates in Redis (TTL 15m) with in-memory fallback
 
 ## Folder Layout
 ```
@@ -40,21 +43,24 @@ bff/
     models/
     schemas/
     services/
-    workers/
   tests/
     integration/
     unit/
+  init_sqlite.py   # create tables + seed admin/driver/warehouse/marks
+  data/
+    delivery.db    # SQLite file (gitignored)
 ```
 
 ## Local Development
-- `pip install -r requirements.txt`
-- `uvicorn app.main:app --reload`
+- `pip install -r requirements.txt` (from `bff/`)
+- `DATABASE_URL="sqlite+aiosqlite:///./data/delivery.db" ./​.venv/bin/python init_sqlite.py` – create + seed
+- `uvicorn app.main:app --reload --port 9000` (or `bash ../deploy_backend.sh`)
 - `.env` sample
-  - `DATABASE_URL=mysql+asyncmy://user:pass@localhost:3306/tigu_b2b`
-  - `REDIS_URL=redis://localhost:6379/0`
+  - `DATABASE_URL=sqlite+aiosqlite:///./data/delivery.db`
+  - `REDIS_URL=redis://localhost:6379/0` (optional)
   - `GOOGLE_MAPS_API_KEY=...`
+- Seed accounts: admin `admin/admin123`, driver `15888888888/123456`
 
 ## Observability & Ops
-- Structured logging (JSON) with request ID bridging client telemetry
-- Healthcheck: `GET /health` verifying DB and maps token
-- Background task to reconcile `tigu_order` shipping state with upstream ERP every 5 min
+- Structured logging with request ID bridging client telemetry
+- Healthcheck: `GET /health` verifying DB and Redis

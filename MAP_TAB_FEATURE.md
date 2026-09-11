@@ -1,5 +1,8 @@
 # Map Tab Feature
 
+> **Current state:** markers are fetched from the BFF (`GET /marks`, SQLite
+> `tigu_driver_marks`), not Supabase. Supabase references below are historical.
+
 ## Overview
 The Map Tab feature adds a Mapbox-powered map view to the driver's dashboard, displaying markers fetched from Supabase. This feature is designed to be easily toggled on/off via environment variables.
 

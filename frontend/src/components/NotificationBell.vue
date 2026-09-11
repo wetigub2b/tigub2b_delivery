@@ -109,7 +109,7 @@ import { useNotificationStore } from '@/store/notifications';
 import { useOrdersStore } from '@/store/orders';
 import { storeToRefs } from 'pinia';
 import { useI18n } from '@/composables/useI18n';
-import type { Notification, NotificationType } from '@/lib/supabase';
+import type { Notification, NotificationType } from '@/lib/notifications';
 
 const { t } = useI18n();
 const router = useRouter();

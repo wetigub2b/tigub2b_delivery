@@ -83,6 +83,7 @@ async def broadcast_notification(
 
     # Broadcast notification
     count = await notification_service.broadcast_notification(
+        session,
         driver_ids=drivers,
         notification_type=NotificationType.SYSTEM_ANNOUNCEMENT,
         title=payload.title,
@@ -127,6 +128,7 @@ async def send_driver_notification(
         notification_type = NotificationType.SYSTEM_ANNOUNCEMENT
 
     notification = await notification_service.create_notification(
+        session,
         driver_id=driver.id,
         driver_phone=driver.phone,
         notification_type=notification_type,
@@ -163,6 +165,7 @@ async def send_urgent_alert(
         )
 
     notification = await notification_service.create_urgent_notification(
+        session,
         driver_id=driver.id,
         driver_phone=driver.phone,
         title=payload.title,
@@ -175,3 +178,67 @@ async def send_urgent_alert(
         count=1 if notification else 0,
         message="Urgent alert sent" if notification else "Failed to send alert"
     )
+
+
+def _driver_phone(user: User) -> str:
+    if not user.phonenumber:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current user has no phone number",
+        )
+    return user.phonenumber
+
+
+@router.get("/mine")
+async def list_mine(
+    current_user: Annotated[User, Depends(deps.get_current_user)],
+    session: Annotated[AsyncSession, Depends(deps.get_db_session)],
+    limit: int = 100,
+    unread_only: bool = False,
+) -> dict:
+    items = await notification_service.list_driver_notifications(
+        session, _driver_phone(current_user), limit=min(limit, 200), unread_only=unread_only
+    )
+    return {"notifications": items, "total": len(items)}
+
+
+@router.post("/mine/{notification_id}/read")
+async def mark_mine_read(
+    notification_id: int,
+    current_user: Annotated[User, Depends(deps.get_current_user)],
+    session: Annotated[AsyncSession, Depends(deps.get_db_session)],
+) -> dict:
+    ok = await notification_service.mark_read(session, notification_id, _driver_phone(current_user))
+    if not ok:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found")
+    return {"success": True}
+
+
+@router.post("/mine/read-all")
+async def mark_mine_all_read(
+    current_user: Annotated[User, Depends(deps.get_current_user)],
+    session: Annotated[AsyncSession, Depends(deps.get_db_session)],
+) -> dict:
+    count = await notification_service.mark_all_read(session, _driver_phone(current_user))
+    return {"success": True, "count": count}
+
+
+@router.post("/mine/{notification_id}/dismiss")
+async def dismiss_mine(
+    notification_id: int,
+    current_user: Annotated[User, Depends(deps.get_current_user)],
+    session: Annotated[AsyncSession, Depends(deps.get_db_session)],
+) -> dict:
+    ok = await notification_service.dismiss(session, notification_id, _driver_phone(current_user))
+    if not ok:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found")
+    return {"success": True}
+
+
+@router.post("/mine/clear")
+async def clear_mine(
+    current_user: Annotated[User, Depends(deps.get_current_user)],
+    session: Annotated[AsyncSession, Depends(deps.get_db_session)],
+) -> dict:
+    count = await notification_service.clear_all(session, _driver_phone(current_user))
+    return {"success": True, "count": count}

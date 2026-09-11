@@ -1,5 +1,9 @@
 # MySQL Marks Implementation - Summary
 
+> **Historical note:** the default DB is now SQLite (`bff/data/delivery.db`).
+> Marks live in `tigu_driver_marks` (created by `bff/init_sqlite.py`); MySQL applies
+> only with an explicit `DATABASE_URL=mysql+asyncmy://...` override.
+
 ## ✅ COMPLETED: MySQL-Based Map Markers
 
 Successfully migrated from Supabase to MySQL for map markers storage.

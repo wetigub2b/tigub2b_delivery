@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from sqlalchemy import JSON, DateTime, ForeignKey, Integer, Numeric, String
-from sqlalchemy.dialects.mysql import BIGINT
+from sqlalchemy import BigInteger
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -36,7 +36,7 @@ class UploadedFile(Base):
     __tablename__ = "tigu_uploaded_files"
 
     id: Mapped[int] = mapped_column(
-        BIGINT(unsigned=True),
+        BigInteger,
         primary_key=True,
         comment="文件ID (雪花算法)"
     )
@@ -57,7 +57,7 @@ class UploadedFile(Base):
     )
 
     file_size: Mapped[int] = mapped_column(
-        BIGINT(unsigned=True),
+        BigInteger,
         comment="文件大小（字节）"
     )
 
@@ -69,14 +69,14 @@ class UploadedFile(Base):
     )
 
     biz_id: Mapped[int | None] = mapped_column(
-        BIGINT(unsigned=True),
+        BigInteger,
         nullable=True,
         index=True,
         comment="业务表主键ID"
     )
 
     uploader_id: Mapped[int | None] = mapped_column(
-        BIGINT(unsigned=True),
+        BigInteger,
         nullable=True,
         comment="上传人ID"
     )
@@ -137,10 +137,10 @@ class UploadedFile(Base):
 class Order(Base):
     __tablename__ = "tigu_order"
 
-    id: Mapped[int] = mapped_column(BIGINT(unsigned=True), primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     order_sn: Mapped[str] = mapped_column(String(64), unique=True, index=True)
-    user_id: Mapped[int] = mapped_column(BIGINT(unsigned=True), index=True)
-    shop_id: Mapped[int] = mapped_column(BIGINT(unsigned=True))
+    user_id: Mapped[int] = mapped_column(BigInteger, index=True)
+    shop_id: Mapped[int] = mapped_column(BigInteger)
 
     # Amount fields
     total_amount: Mapped[Decimal] = mapped_column(Numeric(15, 2), default=0)
@@ -168,8 +168,8 @@ class Order(Base):
     receiver_address: Mapped[str] = mapped_column(String(256))
     receiver_postal_code: Mapped[str | None] = mapped_column(String(16), nullable=True)
     logistics_order_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    warehouse_id: Mapped[int | None] = mapped_column(BIGINT, ForeignKey("tigu_warehouse.id"))
-    driver_id: Mapped[int | None] = mapped_column(BIGINT(unsigned=True), ForeignKey("tigu_driver.id"), nullable=True)
+    warehouse_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("tigu_warehouse.id"))
+    driver_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("tigu_driver.id"), nullable=True)
 
     # Workflow timestamp fields
     shipping_time: Mapped[datetime | None] = mapped_column(
@@ -222,10 +222,10 @@ class Order(Base):
 class OrderItem(Base):
     __tablename__ = "tigu_order_item"
 
-    id: Mapped[int] = mapped_column(BIGINT(unsigned=True), primary_key=True)
-    order_id: Mapped[int] = mapped_column(BIGINT(unsigned=True), ForeignKey("tigu_order.id"), index=True)
-    product_id: Mapped[int] = mapped_column(BIGINT(unsigned=True))
-    sku_id: Mapped[int] = mapped_column(BIGINT(unsigned=True))
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    order_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("tigu_order.id"), index=True)
+    product_id: Mapped[int] = mapped_column(BigInteger)
+    sku_id: Mapped[int] = mapped_column(BigInteger)
     product_name: Mapped[dict | str] = mapped_column(JSON)
     sku_name: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     sku_code: Mapped[str | None] = mapped_column(String(50))
@@ -238,7 +238,7 @@ class OrderItem(Base):
 class Warehouse(Base):
     __tablename__ = "tigu_warehouse"
 
-    id: Mapped[int] = mapped_column(BIGINT, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     code: Mapped[str] = mapped_column(String(32), unique=True)
     name: Mapped[str] = mapped_column(String(2000))
     contact_person: Mapped[str] = mapped_column(String(50))
@@ -259,6 +259,6 @@ class Shop(Base):
     """Shop/Merchant model for pickup address lookup."""
     __tablename__ = "tigu_shop"
 
-    id: Mapped[int] = mapped_column(BIGINT(unsigned=True), primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     name: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     shop_info: Mapped[str | None] = mapped_column(String(255), nullable=True)

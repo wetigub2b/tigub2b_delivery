@@ -2,13 +2,18 @@
 
 ## Overview
 
-Real-time notification system for the Tigu B2B Delivery platform using **Supabase** for storage and real-time delivery.
+Local notification system for the Tigu B2B Delivery platform backed by **SQLite**
+(`tigu_notification`). No Supabase — the BFF owns writes and reads; the driver app
+polls the BFF.
 
 **Features:**
-- Real-time in-app notifications via Supabase Realtime
+- Driver notifications polled from BFF every 30s
 - Order status updates and system alerts
 - Admin broadcast functionality
 - Bell icon with unread badge and dropdown
+
+> Historical note: notifications were previously stored in Supabase (`notifications`
+> table). They were migrated to `tigu_notification` in SQLite; Supabase is decommissioned.
 
 ## Architecture
 
@@ -16,52 +21,43 @@ Real-time notification system for the Tigu B2B Delivery platform using **Supabas
 ┌─────────────────────────────────────────────────────────┐
 │                   Driver Mobile App                      │
 │  ┌──────────────┐  ┌─────────────┐  ┌────────────────┐  │
-│  │ Supabase     │  │ Notification│  │ NotificationBell│  │
-│  │ JS Client    │──│ Store       │──│ Component       │  │
+│  │ BFF Axios    │  │ Notification│  │ NotificationBell│  │
+│  │ client       │──│ Store       │──│ Component       │  │
 │  └──────┬───────┘  └─────────────┘  └────────────────┘  │
-│         │ Realtime Subscription                          │
+│         │ 30s polling                                    │
 └─────────┼────────────────────────────────────────────────┘
           │
           ▼
 ┌─────────────────────────────────────────────────────────┐
-│                 SUPABASE (PostgreSQL)                    │
-│  ┌─────────────────────────────────────────────────────┐│
-│  │  notifications table + RLS + Realtime enabled       ││
-│  └─────────────────────────────────────────────────────┘│
-└─────────────────────────────────────────────────────────┘
-          ▲
-          │ Insert notifications
-┌─────────┴───────────────────────────────────────────────┐
-│                 FastAPI Backend                          │
+│              FastAPI Backend + SQLite                    │
 │  ┌──────────────────┐  ┌─────────────────────────────┐  │
-│  │ notification_    │──│ Order Service triggers      │  │
-│  │ service.py       │  │ (status changes, assigns)   │  │
+│  │ notification_    │  │ tigu_notification table     │  │
+│  │ service.py       │──│                             │  │
 │  └──────────────────┘  └─────────────────────────────┘  │
 └─────────────────────────────────────────────────────────┘
 ```
 
 ## Database Schema
 
-**Table: `notifications`** (Supabase PostgreSQL)
+**Table: `tigu_notification`** (SQLite, created via SQLAlchemy `Base.metadata.create_all`)
 
 | Column | Type | Description |
 |--------|------|-------------|
-| id | UUID | Primary key |
-| driver_id | BIGINT | Driver ID from MySQL |
-| driver_phone | VARCHAR(20) | Driver phone for RLS |
+| id | INTEGER PK autoincrement | Primary key |
+| driver_id | BIGINT | Driver ID |
+| driver_phone | VARCHAR(20) | Driver phone (lookup key) |
 | type | VARCHAR(50) | Notification type |
-| title | TEXT | Notification title |
+| title | VARCHAR(200) | Notification title |
 | message | TEXT | Notification body |
 | priority | VARCHAR(20) | low, normal, high, urgent |
-| order_sn | VARCHAR(50) | Related order (optional) |
-| action_url | TEXT | Deep link URL (optional) |
-| metadata | JSONB | Additional data |
+| order_sn | VARCHAR(64) | Related order (optional) |
+| action_url | VARCHAR(512) | Deep link URL (optional) |
+| metadata | JSON | Additional data |
 | is_read | BOOLEAN | Read status |
-| read_at | TIMESTAMPTZ | Read timestamp |
+| read_at | DATETIME | Read timestamp |
 | is_dismissed | BOOLEAN | Dismissed status |
-| created_at | TIMESTAMPTZ | Creation timestamp |
-
-**SQL Migration:** `migrations/supabase_notifications.sql`
+| dismissed_at | DATETIME | Dismissed timestamp |
+| created_at | DATETIME | Creation timestamp |
 
 ## Notification Types
 
@@ -83,6 +79,16 @@ Real-time notification system for the Tigu B2B Delivery platform using **Supabas
 | POST | `/api/notifications/broadcast` | Broadcast to all/selected drivers |
 | POST | `/api/notifications/driver/{id}` | Send to specific driver |
 | POST | `/api/notifications/alert/{id}` | Send urgent alert to driver |
+
+### Driver Endpoints (require driver authentication)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/notifications/mine?limit=100&unread_only=false` | List own notifications |
+| POST | `/api/notifications/mine/{id}/read` | Mark one as read |
+| POST | `/api/notifications/mine/read-all` | Mark all as read |
+| POST | `/api/notifications/mine/{id}/dismiss` | Dismiss one |
+| POST | `/api/notifications/mine/clear` | Dismiss all |
 
 ### Request Examples
 
@@ -147,27 +153,30 @@ const notificationStore = useNotificationStore();
 console.log(notificationStore.unreadCount);
 console.log(notificationStore.notifications);
 
-// Actions
+// Actions (ids are numbers — local DB keys)
 await notificationStore.fetchNotifications();
-await notificationStore.markAsRead('notification-id');
+await notificationStore.markAsRead(12);
 await notificationStore.markAllAsRead();
-await notificationStore.dismissNotification('notification-id');
+await notificationStore.dismissNotification(12);
 ```
 
-### Realtime Subscription
+### Polling
 
-The store automatically subscribes to realtime updates when a user is logged in. New notifications appear instantly without page refresh.
+The store polls `GET /notifications/mine` every 30s when logged in and raises a
+browser notification for new high/urgent items. No realtime subscription.
 
 ## Backend Integration
 
 ### Creating Notifications Programmatically
 
 ```python
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.services import notification_service
 from app.services.notification_service import NotificationType, NotificationPriority
 
 # Order assigned notification
 await notification_service.create_order_assigned_notification(
+    session,
     driver_id=123,
     driver_phone="1234567890",
     order_sn="ORD-12345",
@@ -177,6 +186,7 @@ await notification_service.create_order_assigned_notification(
 
 # Order status change
 await notification_service.create_order_status_notification(
+    session,
     driver_id=123,
     driver_phone="1234567890",
     order_sn="ORD-12345",
@@ -187,6 +197,7 @@ await notification_service.create_order_status_notification(
 
 # System announcement
 await notification_service.create_system_announcement(
+    session,
     driver_id=123,
     driver_phone="1234567890",
     title="Welcome!",
@@ -195,6 +206,7 @@ await notification_service.create_system_announcement(
 
 # Broadcast to multiple drivers
 await notification_service.broadcast_notification(
+    session,
     driver_ids=[(1, "1111111111"), (2, "2222222222")],
     notification_type=NotificationType.SYSTEM_ANNOUNCEMENT,
     title="Holiday Schedule",
@@ -209,52 +221,46 @@ tigub2b_delivery/
 ├── frontend/
 │   ├── src/
 │   │   ├── lib/
-│   │   │   └── supabase.ts           # Supabase client config
+│   │   │   └── notifications.ts      # Notification types (local)
 │   │   ├── store/
-│   │   │   └── notifications.ts      # Pinia notification store
+│   │   │   └── notifications.ts      # Pinia store (BFF polling)
 │   │   ├── components/
 │   │   │   └── NotificationBell.vue  # Bell UI component
 │   │   └── locales/
 │   │       └── en.json               # Translations (notifications section)
-│   └── package.json                  # @supabase/supabase-js dependency
 │
 ├── bff/
 │   ├── app/
+│   │   ├── models/
+│   │   │   └── notification.py         # tigu_notification model
 │   │   ├── services/
-│   │   │   └── notification_service.py  # Notification business logic
+│   │   │   └── notification_service.py # SQLite business logic
 │   │   ├── api/v1/routes/
-│   │   │   └── notifications.py         # Admin API endpoints
+│   │   │   └── notifications.py        # Admin + driver endpoints
 │   │   └── core/
-│   │       └── config.py                # Supabase settings
-│   └── requirements.txt                 # supabase dependency
+│   │       └── config.py               # DB settings
 │
-├── migrations/
-│   └── supabase_notifications.sql       # Database schema
-│
-└── .env                                 # Environment variables
+└── .env                                 # Environment variables (no Supabase)
 ```
 
 ## Environment Variables
 
-```bash
-# Frontend (Vite)
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
+No notification-specific variables. The BFF database URL covers storage:
 
-# Backend (Python)
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```bash
+DATABASE_URL=sqlite+aiosqlite:///./data/delivery.db
 ```
 
 ## Setup Instructions
 
-### 1. Supabase Table Setup
+### 1. Create tables + seed
 
-Run the SQL migration in Supabase Dashboard → SQL Editor:
-
-```sql
--- See migrations/supabase_notifications.sql for full schema
+```bash
+cd bff
+DATABASE_URL="sqlite+aiosqlite:///./data/delivery.db" ./.venv/bin/python init_sqlite.py
 ```
+
+(`tigu_notification` is created via `Base.metadata.create_all`; no SQL migration needed.)
 
 ### 2. Install Dependencies
 
@@ -270,35 +276,23 @@ cd bff
 pip install -r requirements.txt
 ```
 
-### 3. Configure Environment
-
-Add Supabase credentials to `.env`:
-- `SUPABASE_URL` - Your Supabase project URL
-- `SUPABASE_SERVICE_ROLE_KEY` - Get from Supabase Dashboard → Settings → API
-
-### 4. Add NotificationBell to UI
+### 3. Add NotificationBell to UI
 
 Import and add `<NotificationBell />` to your navigation component.
 
 ## Security
 
-- **Row Level Security (RLS):** Drivers can only view/update their own notifications
-- **Service Role Key:** Backend uses service role key to bypass RLS for creating notifications
-- **JWT Claims:** RLS policies match `driver_phone` from JWT claims
+- Driver endpoints resolve identity from the JWT (`get_current_user`) and scope all
+  queries by that user's `phonenumber` — drivers only see their own notifications.
+- Admin endpoints require `get_current_admin`.
 
 ## Troubleshooting
 
 **Notifications not appearing:**
-1. Check Supabase Realtime is enabled on the notifications table
-2. Verify `driver_phone` matches between JWT and notification record
-3. Check browser console for WebSocket connection errors
+1. Verify BFF is running and `GET /api/notifications/mine` returns rows for the driver's phone
+2. Verify `driver_phone` on the notification matches `sys_user.phonenumber`
+3. Check browser console for API errors; ensure `delivery_token` is set
 
 **Backend can't create notifications:**
-1. Verify `SUPABASE_SERVICE_ROLE_KEY` is set correctly
-2. Check Supabase project URL matches
-3. Review backend logs for Supabase client errors
-
-**RLS blocking queries:**
-1. Ensure JWT contains `phonenumber` or `phone` claim
-2. Verify RLS policies are correctly configured
-3. Test queries in Supabase SQL Editor with RLS enabled
+1. Check `tigu_notification` table exists (`sqlite3 data/delivery.db ".tables"`)
+2. Review backend logs for SQLAlchemy errors
